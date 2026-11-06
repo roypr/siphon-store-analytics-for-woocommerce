@@ -48,7 +48,7 @@ class SILC_WIA_Admin {
 		self::$page_hook = add_submenu_page(
 			'woocommerce',
 			__( 'Store Insights with AI Lite', 'siphon-store-insight-lite' ),
-			__( 'Store Insights with AI Lite', 'siphon-store-insight-lite' ),
+			__( 'Store Insights Lite', 'siphon-store-insight-lite' ),
 			'manage_woocommerce',
 			'siphon-store-insight-lite',
 			array( __CLASS__, 'render_page' )
