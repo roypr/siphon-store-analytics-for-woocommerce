@@ -148,8 +148,15 @@ class SILC_WIA_Woo_Schema {
 			return $cached;
 		}
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$columns = $wpdb->get_results( "SHOW COLUMNS FROM `{$prefixed}`", ARRAY_A );
+		// $table is one of the hardcoded names returned by
+		// SILC_WIA_Woo_Schema::get_table_names(); %i lets $wpdb->prepare()
+		// quote it as an identifier, so no string concatenation reaches SQL.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Result is cached in the block below.
+		$columns = $wpdb->get_results(
+			$wpdb->prepare( 'SHOW COLUMNS FROM %i', $prefixed ),
+			ARRAY_A
+		);
+
 		if ( empty( $columns ) ) {
 			wp_cache_set( $cache_key, null, self::CACHE_GROUP, 300 );
 			return null;

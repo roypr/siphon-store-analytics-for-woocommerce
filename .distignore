@@ -1,0 +1,27 @@
+# Files excluded from the WordPress.org distribution (wp dist-archive / npm run dist).
+# Everything matched here stays in the Git repository but never ships in the plugin zip.
+
+# Build tooling
+node_modules/
+vendor/
+composer.json
+composer.lock
+package.json
+package-lock.json
+webpack.config.js
+eslint.config.mjs
+mago.toml
+scripts/
+
+# Unbuilt dev sources (the compiled assets/js/dashboard.js is shipped instead)
+assets/js/src/
+
+# Planning and documentation
+*.md
+!readme.txt
+.github/
+.gitignore
+.distignore
+
+# Build output
+dist/

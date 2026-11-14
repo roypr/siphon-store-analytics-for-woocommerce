@@ -192,10 +192,9 @@ class SILC_WIA_API {
 		if ( self::is_reasoning_model( $model ) ) {
 			// OpenAI reasoning models use max_completion_tokens.
 			// Some API providers still accept max_tokens.
-			$effective_max = self::get_effective_max_tokens( $model, $max_tokens );
-			$body['max_completion_tokens'] = 16000; // $effective_max;
+			$body['max_completion_tokens'] = self::get_effective_max_tokens( $model, $max_tokens );
 		} else {
-			$body['max_tokens']  = 16000; // $max_tokens;
+			$body['max_tokens']  = $max_tokens;
 			$body['temperature'] = $temperature;
 		}
 
@@ -224,7 +223,9 @@ class SILC_WIA_API {
 		$response = wp_remote_post(
 			$api_url . '/chat/completions',
 			array(
-				'timeout'   => 600,
+				// 90s is generous for a single completion and stays well inside
+				// the default max_execution_time on most shared hosts.
+				'timeout'   => 90,
 				'headers'   => array(
 					'Authorization' => 'Bearer ' . $settings['api_key'],
 					'Content-Type'  => 'application/json',
@@ -304,23 +305,22 @@ class SILC_WIA_API {
 		$user_prompt   = self::build_insight_user_prompt( $question, $schema_context );
 
 		$model      = $settings['model'];
-		$is_reason  = self::is_reasoning_model( $model );
 		$max_tokens = self::get_effective_max_tokens( $model, self::INSIGHT_MAX_TOKENS );
 
 		$messages = array(
-			array('role' => 'system', 'content' => $system_prompt),
-			array('role' => 'user',   'content' => $user_prompt),
+			array(
+				'role'    => 'system',
+				'content' => $system_prompt,
+			),
+			array(
+				'role'    => 'user',
+				'content' => $user_prompt,
+			),
 		);
 
 		$body = self::build_request_body( $model, $messages, $max_tokens, 0.2 );
 
-		// Debug logging.
-		error_log( '[SILC_WIA] Insight Request - Model: ' . $model . ', Reasoning: ' . ( $is_reason ? 'yes' : 'no' ) );
-		error_log('[SILC_WIA] Insight Request - System Prompt:' . $system_prompt);
-		error_log('[SILC_WIA] Insight Request - User Prompt:' . $user_prompt);
-
 		$result = self::send_request( $body );
-		error_log('[SILC_WIA] Insight Response: ' . print_r($result['data'], true));
 
 		if ( ! $result['success'] ) {
 			return array(
@@ -674,6 +674,3 @@ Otherwise, return ONLY valid JSON with the SQL query, output type, and configura
 		);
 	}
 }
-	// ----------------------------------------------------------------------- //
-	//  INSIGHT GENERATION
-	// ----------------------------------------------------------------------- //

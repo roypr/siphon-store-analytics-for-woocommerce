@@ -1,12 +1,12 @@
 === Store Insights with AI Lite ===
-Contributors: silc
-Tags: woocommerce, analytics, reports, sql, ai, charts, business-intelligence
-Requires at least: 6.0
-Tested up to: 7.0.2
+Contributors: siphontech
+Tags: woocommerce, analytics, reports, ai, charts
+Requires at least: 6.2
+Tested up to: 7.1
 Requires PHP: 7.4
 WC requires at least: 8.0
-WC tested up to: 10.9.4
-Stable tag: 3.0.0
+WC tested up to: 11.2
+Stable tag: 3.1.0
 License: GPL v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,8 +21,8 @@ Ask plain-English questions about your WooCommerce store and get instant charts,
 **🗣️ Natural Language to Data Visualization**  
 AI bridges the gap between asking a question and writing code. This plugin brings that power into your WooCommerce admin. No memorizing table names, no crafting SQL by hand — just ask, and the answer appears as a chart, a list, or a single highlighted number. You run the store; the plugin runs the queries.
 
-**🔒 True Data Privacy — Your Data Never Leaves Your Server**  
-The AI generates only the SQL query from database schema information (table names and column types). It **never** sees a single row of your actual customer, order, or product data. For industries with regulatory concerns — GDPR, HIPAA-adjacent workflows, PCI compliance — this is critical. Your sales numbers, customer emails, and order details stay exactly where they belong: inside your database.
+**🔒 Your Store Data Stays in Your Database**
+Only database schema metadata (table names and column names) is included in the prompt sent to the AI provider you configure. The AI never receives customer names, email addresses, order totals, or any other row-level data. Every query the plugin runs executes against your own local database.
 
 **📊 Visualization That Replaces Spreadsheet Diving**  
 Stop clicking through endless admin screens and exporting CSVs. A question produces a result in one of three rich formats: an interactive Chart.js visualization (bar, line, doughnut, pie), a clickable list with direct links to orders/products/customers, or a clean numeric answer. Insights that used to take 20 minutes of digging take 5 seconds of typing.
@@ -42,7 +42,7 @@ Stop clicking through endless admin screens and exporting CSVs. A question produ
 * **BYOK (Bring Your Own Key)** — Works with OpenAI, Azure OpenAI, Ollama, LocalAI, vLLM, and any OpenAI-compatible endpoint
 * **Reasoning Model Support** — Detects and handles reasoning models (o1, o3, DeepSeek-R1) with correct parameter mapping
 * **Auto-Detected Schema** — Dynamically discovers your WooCommerce tables and columns, HPOS-aware
-* **Strict SQL Validation** — SELECT-only whitelist; all DML/DDL blocked; table and function whitelisting
+* **Strict SQL Validation** — SELECT-only whitelist; all DML/DDL statements blocked; every table reference checked against a whitelist of known WooCommerce and WordPress tables
 * **Cache Layer** — Configurable result caching reduces duplicate API calls
 * **History Panel** — Revisit past insights without regenerating
 * **Refresh Button** — Re-execute a stored query against live data without calling the AI again
@@ -60,18 +60,16 @@ Stop clicking through endless admin screens and exporting CSVs. A question produ
 
 = Privacy & Security =
 
-* Your data **never touches the AI** — only database schema (table/column names) is sent
-* SQL queries are validated against a strict whitelist of allowed tables and functions
-* Only SELECT statements are permitted — no INSERT, UPDATE, DELETE, DROP, or multi-statement injection
-* All AJAX endpoints require WooCommerce admin capabilities
-* Nonce-verified requests with WordPress security best practices
-* **GDPR-friendly** — no customer data leaves your infrastructure
-* **HIPAA-adjacent safe** — no PHI is ever transmitted to third parties
-* **PCI-aware** — payment data never leaves your secure environment
+* Only database schema metadata (table and column names) is sent to the AI provider you configure — never row-level customer, order, or payment data
+* SQL queries are validated against a strict whitelist of known tables
+* Only SELECT statements are permitted — no INSERT, UPDATE, DELETE, DROP, or multi-statement queries
+* All AJAX endpoints require the `manage_woocommerce` capability and a valid nonce
+* The API key is stored in your site database and is never printed into the dashboard page
+* Requests to the AI provider go to the API URL you enter; no other external requests are made
 
 = Requirements =
 
-* WordPress 6.0+
+* WordPress 6.2+
 * WooCommerce 8.0+
 * PHP 7.4+
 * An API key from any OpenAI-compatible provider (optional — the built-in Library works without one)
@@ -136,15 +134,19 @@ Yes, with per-site settings.
 
 Results are cached (configurable TTL, default 1 hour) to avoid redundant API calls and database queries. Cache can be set to 0 to disable.
 
-== Screenshots ==
-
-1. Main dashboard — Ask a question and get a chart, list, or answer.
-2. Library panel — 30 pre-built insights, searchable, no API required.
-3. Settings panel — Configure your API provider inline.
-4. History panel — Revisit past insights.
-5. SQL details panel — Inspect generated queries and execution stats.
-
 == Changelog ==
+
+= 3.1.0 =
+* 🔒 Removed the bundled GitHub-based update checker — updates are delivered through WordPress.org only
+* 🔒 The API key is no longer printed into the dashboard page source
+* 🔒 Added `uninstall.php`; deactivating the plugin no longer deletes your settings or insight history
+* 🔒 Added suggested privacy policy text describing exactly what is sent to the AI provider
+* 🐛 The Max Tokens setting now takes effect again
+* 🐛 Query results are now capped in the database instead of after loading every row into memory
+* 🐛 Table alias handling in the SQL validator is now based on declared aliases instead of token length
+* 🧹 Removed debug logging that wrote prompts and full API responses to the PHP error log
+* 🧹 Removed dead code and aligned capability checks with the dashboard menu
+* 📝 Readme wording now describes the data flow factually
 
 = 3.0.0 =
 * Identity change — Plugin identity changed from WooInsight AI to Store Insights with AI Lite. Change made to comply with woocommerce branding guideline.

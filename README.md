@@ -12,14 +12,19 @@ Ask plain-English questions — _"What were my best selling products last month?
 
 AI bridges the gap between curiosity and code. This plugin brings that power into your WooCommerce dashboard. You run the store — the plugin writes and executes the queries. Every answer appears as a rich visualization: an interactive chart, a sortable list with clickable links, or a clean numeric answer.
 
-### 🔒 True Data Privacy
+### 🔒 Your Store Data Stays in Your Database
 
-The AI **never sees your actual data**. Only database schema metadata — table names and column types — is sent in the prompt. Your sales numbers, customer emails, and order details stay inside your database. This is critical for:
+The AI **never receives your actual data**. Only database schema metadata — table names and column names — is included in the prompt. Your sales numbers, customer emails, and order details stay inside your database.
 
-- **GDPR** compliance — no personal data transmitted to third parties
-- **HIPAA**-adjacent environments — no PHI exposure
-- **PCI** awareness — payment data never leaves your infrastructure
-- **Regulated industries** — financial, legal, healthcare
+What leaves the site on a question, and nothing else:
+
+| Sent | Not sent |
+|------|----------|
+| Your question, in plain text | Customer, order, product, or payment rows |
+| Table and column names | Any store values returned by a query |
+| Your API key (authorization header) | Any other site data |
+
+Every generated query runs against your own local database.
 
 ### 📊 Visualization Over Spreadsheets
 
@@ -132,7 +137,7 @@ Dynamically discovers your active WooCommerce order storage backend. Adjusts tab
 
 | Component | Minimum |
 |-----------|---------|
-| WordPress | 6.0+ |
+| WordPress | 6.2+ |
 | WooCommerce | 8.0+ |
 | PHP | 7.4+ |
 | API Key | Optional (Library works without) |
@@ -144,16 +149,26 @@ Dynamically discovers your active WooCommerce order storage backend. Adjusts tab
 ```bash
 # Install dependencies
 npm install
-composer install
 
 # Build JS bundle
 npm run build
 
 # Lint
 npm run lint
+
+# Build the WordPress.org distribution folder (dist/)
+npm run dist
 ```
 
 The React dashboard is built with `@wordpress/element` and `@wordpress/components` — zero third-party UI frameworks. Chart.js is bundled as a minimal asset (MIT license).
+
+---
+
+## ⚠️ Known limitations
+
+- **JS strings:** strings that come from PHP are translatable through the `silcWiaData.l10n` object (~32 keys). Prose that originates in the JS bundle itself — walkthrough steps, settings help text, empty-state copy — is still hardcoded English. Moving it to `wp.i18n` is a follow-up.
+- **PHP 7.4:** `Requires PHP: 7.4` is declared, but the development environment runs PHP 8.2. A real 7.4 run is still required before submitting.
+- **Free-form SQL:** the plugin's core feature is executing AI-generated SQL. The validator (`includes/class-sql-validator.php`) enforces SELECT-only, a table whitelist, and a keyword blocklist, and `execute()` documents why `$wpdb->prepare()` cannot apply. Expect a reviewer question and keep that explanation intact.
 
 ---
 

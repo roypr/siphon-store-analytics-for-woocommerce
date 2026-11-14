@@ -6,7 +6,7 @@
 
 /* global wp */
 
-import { l10n, defaults, settings } from './utils.js';
+import { l10n, defaults, data } from './utils.js';
 
 var el = wp.element.createElement;
 var Button = wp.components.Button;
@@ -107,7 +107,9 @@ export function renderSettingsPanel(props) {
 	var saveMsg = props.saveMsg;
 	var testResult = props.testResult;
 
-	var hasKey = settings.api_key && settings.api_key.length > 0;
+	// The API key itself is never exposed to the browser; the server only
+	// reports whether one is saved.
+	var hasKey = !!data.hasApiKey;
 
 	return el('div', { className: 'silc-wia-settings-panel' },
 
@@ -119,7 +121,7 @@ export function renderSettingsPanel(props) {
 				'\uD83E\uDD16 AI Provider'
 			),
 			el('div', { className: 'silc-wia-settings-section-desc' },
-				'Choose which AI service powers your insights. WooInsight works with any OpenAI-compatible API.'
+				'Choose which AI service powers your insights. This plugin works with any OpenAI-compatible API.'
 			),
 
 			// API URL
@@ -173,7 +175,7 @@ export function renderSettingsPanel(props) {
 				'\uDDD1\uFE0F\u200D\uD83D\uDD12 Authentication'
 			),
 			el('div', { className: 'silc-wia-settings-section-desc' },
-				'Your API key is stored securely in your WordPress database and is only sent to the API URL above. WooInsight never sends your data anywhere else.'
+				'Your API key is stored securely in your WordPress database and is only sent to the API URL above. This plugin makes no other external requests.'
 			),
 
 			// API Key

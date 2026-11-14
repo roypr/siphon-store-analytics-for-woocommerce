@@ -376,7 +376,6 @@ class SILC_WIA_Insights {
 		}
 
 		return $config;
-		return $config;
 	}
 
 	/**

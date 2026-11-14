@@ -19,22 +19,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 class SILC_WIA_SQL_Validator {
 
 	/**
-	 * Known safe SQL functions/expressions allowed in queries.
+	 * SQL keywords that can never be a table alias.
 	 */
-	private const ALLOWED_FUNCTIONS = array(
-		'COUNT', 'SUM', 'AVG', 'MIN', 'MAX', 'COALESCE', 'IFNULL', 'NULLIF',
-		'CONCAT', 'CONCAT_WS', 'GROUP_CONCAT',
-		'DATE', 'YEAR', 'MONTH', 'DAY', 'HOUR', 'MINUTE', 'SECOND',
-		'DATE_FORMAT', 'DATE_ADD', 'DATE_SUB', 'DATEDIFF',
-		'UNIX_TIMESTAMP', 'FROM_UNIXTIME',
-		'STR_TO_DATE', 'CAST', 'CONVERT',
-		'ROUND', 'FLOOR', 'CEIL', 'ABS',
-		'LOWER', 'UPPER', 'TRIM', 'SUBSTRING',
-		'IF', 'CASE', 'WHEN', 'THEN', 'ELSE', 'END',
-		'EXISTS', 'IN', 'BETWEEN', 'LIKE', 'NOT',
-		'IS', 'NULL',
-		'ASC', 'DESC',
-		'DISTINCT',
+	private const SQL_KEYWORDS = array(
+		'SELECT', 'FROM', 'WHERE', 'GROUP', 'ORDER', 'BY', 'HAVING', 'LIMIT',
+		'OFFSET', 'UNION', 'JOIN', 'INNER', 'LEFT', 'RIGHT', 'OUTER', 'CROSS',
+		'ON', 'USING', 'AS', 'AND', 'OR', 'NOT', 'IN', 'IS', 'NULL', 'CASE',
+		'WHEN', 'THEN', 'ELSE', 'END', 'ASC', 'DESC', 'DISTINCT', 'VALUES',
+		'SET', 'WITH',
 	);
 
 	/**
@@ -154,6 +146,20 @@ class SILC_WIA_SQL_Validator {
 			$whitelist[] = $prefix . $table;
 		}
 
+		// WordPress core tables the dashboard legitimately needs (products and
+		// orders are posts on legacy storage; customer lookups touch users).
+		$core_tables = array(
+			$prefix . 'posts',
+			$prefix . 'postmeta',
+			$prefix . 'users',
+			$prefix . 'usermeta',
+			$prefix . 'terms',
+			$prefix . 'term_taxonomy',
+			$prefix . 'term_relationships',
+			$prefix . 'termmeta',
+			$prefix . 'comments',
+		);
+
 		// Strip string literals to avoid false positives.
 		$stripped = preg_replace( "/'[^']*'/", "''", $sql );
 
@@ -165,6 +171,24 @@ class SILC_WIA_SQL_Validator {
 			if ( ! empty( $cte_matches[1] ) ) {
 				foreach ( $cte_matches[1] as $cte ) {
 					$cte_names[] = $cte;
+				}
+			}
+		}
+
+		// Collect table aliases declared in this query — "FROM `tbl` AS `x`" or
+		// the implicit "FROM tbl x" form — so that a later reference to the
+		// alias is not mistaken for an unknown table. Only explicitly declared
+		// aliases are accepted; never a guess based on the token's length.
+		$alias_names = array();
+		preg_match_all(
+			'/(?:FROM|JOIN)\s+`?(\w+)`?\s+(?:AS\s+)?`?(\w+)`?/i',
+			$stripped,
+			$alias_matches
+		);
+		if ( ! empty( $alias_matches[2] ) ) {
+			foreach ( $alias_matches[2] as $alias ) {
+				if ( ! in_array( strtoupper( $alias ), self::SQL_KEYWORDS, true ) ) {
+					$alias_names[] = $alias;
 				}
 			}
 		}
@@ -220,12 +244,12 @@ class SILC_WIA_SQL_Validator {
 
 			if ( ! $matched ) {
 				// Allow WordPress core tables that might be needed.
-				if ( in_array( $tbl, array( $prefix . 'posts', $prefix . 'postmeta', $prefix . 'users', $prefix . 'usermeta', $prefix . 'terms', $prefix . 'term_taxonomy', $prefix . 'term_relationships', $prefix . 'termmeta', $prefix . 'comments' ), true ) ) {
+				if ( in_array( $tbl, $core_tables, true ) ) {
 					$matched = true;
 				}
 
-				// Allow aliases that are single letters (a, b, p, pm, o, etc.).
-				if ( preg_match( '/^[a-z]{1,4}$/i', $tbl ) ) {
+				// Allow table aliases explicitly declared in this query.
+				if ( in_array( $tbl, $alias_names, true ) ) {
 					$matched = true;
 				}
 
@@ -306,15 +330,35 @@ class SILC_WIA_SQL_Validator {
 	/**
 	 * Execute a validated SQL query safely.
 	 *
+	 * $sql is an AI-generated, validator-approved SELECT statement. It carries
+	 * no bound parameters, so $wpdb->prepare() cannot be applied to it — the
+	 * entire identifier and literal surface is instead closed by
+	 * SILC_WIA_SQL_Validator::validate(), which enforces:
+	 *
+	 *   - SELECT / WITH only (no DML, DDL, or multi-statement queries)
+	 *   - a hard table whitelist built from the known WooCommerce + core tables
+	 *   - a forbidden-keyword and suspicious-pattern blocklist
+	 *   - rejection of comments, hex literals, and stacked statements
+	 *
+	 * Callers must pass every query through validate() first; execute() is
+	 * never reachable with user-supplied SQL.
+	 *
 	 * @param string $sql The validated SQL query.
 	 * @return array{success: bool, data: array|null, error: string, time_ms: float}
 	 */
 	public static function execute( string $sql ): array {
 		global $wpdb;
 
-		$start    = microtime( true );
-		$results  = $wpdb->get_results( $sql, ARRAY_A );
-		$time_ms  = ( microtime( true ) - $start ) * 1000;
+		// Cap the result set in the database rather than in PHP: fetching an
+		// unbounded table into memory would exhaust it on a large store.
+		$max_rows = 200;
+		$sql      = self::apply_row_limit( $sql, $max_rows );
+
+		$start = microtime( true );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- See the method docblock: validator-approved, SELECT-only statement with no bindable parameters.
+		$results = $wpdb->get_results( $sql, ARRAY_A );
+		$time_ms = ( microtime( true ) - $start ) * 1000;
 
 		if ( $wpdb->last_error ) {
 			return array(
@@ -324,8 +368,8 @@ class SILC_WIA_SQL_Validator {
 				'time_ms' => round( $time_ms, 2 ),
 			);
 		}
-		// Limit result size for display.
-		$max_rows = 200;
+
+		// Safety net in case the query already carried its own LIMIT.
 		if ( count( $results ) > $max_rows ) {
 			$results = array_slice( $results, 0, $max_rows );
 		}
@@ -340,6 +384,25 @@ class SILC_WIA_SQL_Validator {
 			'time_ms' => round( $time_ms, 2 ),
 			'rows'    => count( $results ),
 		);
+	}
+
+	/**
+	 * Append a LIMIT clause when the query does not already define one.
+	 *
+	 * Appending is safe for both plain SELECTs and WITH (CTE) queries — the
+	 * limit applies to the final result set, not to the common table
+	 * expression.
+	 *
+	 * @param string $sql      Validated SQL query.
+	 * @param int    $max_rows Maximum number of rows to fetch.
+	 * @return string SQL with a row limit.
+	 */
+	private static function apply_row_limit( string $sql, int $max_rows ): string {
+		if ( preg_match( '/\bLIMIT\b/i', $sql ) ) {
+			return $sql;
+		}
+
+		return rtrim( $sql, "; \t\n\r\0\x0B" ) . ' LIMIT ' . $max_rows;
 	}
 
 	/**

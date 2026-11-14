@@ -1,15 +1,16 @@
 {
   "name": "siphon-store-insight-lite",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "test",
     "build": "webpack --config webpack.config.js",
-    "lint": "eslint assets/js/src"
+    "lint": "eslint assets/js/src",
+    "dist": "node scripts/build-dist.js"
   },
   "author": "",
-  "license": "ISC",
+  "license": "GPL-2.0-or-later",
   "devDependencies": {
     "@babel/core": "^7.29.7",
     "@babel/plugin-transform-react-jsx": "^7.29.7",

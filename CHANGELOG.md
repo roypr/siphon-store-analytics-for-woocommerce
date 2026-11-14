@@ -2,6 +2,30 @@
 
 All notable changes to Store Insights with AI Lite will be documented in this file.
 
+## [3.1.0] — Nov 2026
+
+### Security
+- Removed the bundled `plugin-update-checker` library, the Composer autoloader, and the GitHub update-check hook. Updates now come from WordPress.org only, and the plugin makes no request to `api.github.com`.
+- The API key is no longer passed to the browser through `wp_localize_script`. Only a `hasApiKey` boolean is exposed.
+- Added `uninstall.php`; deactivating the plugin no longer deletes the settings or the insight history.
+- Added suggested privacy policy text via `wp_add_privacy_policy_content()`.
+- SQL validator: table aliases are now collected from declared `FROM`/`JOIN` aliases instead of accepting any 1–4 character token as a table name.
+- SQL execution: a `LIMIT 200` clause is appended before the query runs, so unbounded queries no longer load every row into memory. The schema lookup now uses `$wpdb->prepare( 'SHOW COLUMNS FROM %i', … )`.
+- Capability checks are consistent (`manage_woocommerce`) across the menu page, the AJAX endpoints, and the settings handlers.
+
+### Fixed
+- The Max Tokens setting takes effect again (`build_request_body()` had a hardcoded `16000`).
+- API request timeout reduced from 600s to 90s so it no longer exceeds `max_execution_time` on shared hosts.
+
+### Removed
+- Debug `error_log()` calls that wrote the system prompt, user prompt, and the full API response to the PHP error log.
+- Dead code: `handle_regen_insight()`, `ALLOWED_FUNCTIONS`, a duplicated `return`, and the unused `assets/js/chart.asset.php`.
+- Regulatory compliance claims from `readme.txt` and `README.md`, replaced with factual data-flow wording.
+- Bundled `vendor/`, `composer.json`, `composer.lock`, and the `Screenshots` section of the readme.
+
+### Added
+- `.distignore` and `npm run dist` for building the WordPress.org distribution folder.
+
 ## [3.0.0] — Nov 2026
 - **Identity change** — Plugin identity changed from WooInsight AI to Store Insights with AI Lite. Change made to comply with woocommerce branding guideline.
 

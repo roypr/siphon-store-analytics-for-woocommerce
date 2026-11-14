@@ -37,6 +37,7 @@ class SILC_WIA_Admin {
 		add_action( 'admin_menu', array( __CLASS__, 'add_menu_pages' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
 		add_action( 'admin_init', array( __CLASS__, 'register_settings' ) );
+		add_action( 'admin_init', array( __CLASS__, 'add_privacy_policy_content' ) );
 		add_action( 'wp_ajax_silc_wia_test_api', array( __CLASS__, 'handle_test_api' ) );
 		add_action( 'wp_ajax_silc_wia_save_settings', array( __CLASS__, 'handle_save_settings' ) );
 	}
@@ -74,6 +75,30 @@ class SILC_WIA_Admin {
 				),
 			)
 		);
+	}
+
+	/**
+	 * Declare what data leaves the site for the WordPress privacy policy guide.
+	 *
+	 * The only outbound request this plugin makes is the configured AI
+	 * provider call, so the suggested text describes exactly that.
+	 */
+	public static function add_privacy_policy_content(): void {
+		if ( ! function_exists( 'wp_add_privacy_policy_content' ) ) {
+			return;
+		}
+
+		$content = '<p class="privacy-policy-tutorial">'
+			. esc_html__( 'Suggested text: When you ask a question, the following is sent to the AI provider you configured under WooCommerce &rarr; Store Insights Lite &rarr; Settings:', 'siphon-store-insight-lite' )
+			. '</p><ul>'
+			. '<li>' . esc_html__( 'Your question, in plain text.', 'siphon-store-insight-lite' ) . '</li>'
+			. '<li>' . esc_html__( 'Database schema metadata only: table names and column names.', 'siphon-store-insight-lite' ) . '</li>'
+			. '<li>' . esc_html__( 'Your API key, sent as an authorization header so the provider can bill your account.', 'siphon-store-insight-lite' ) . '</li>'
+			. '</ul><p class="privacy-policy-tutorial">'
+			. esc_html__( 'No customer, order, product, or payment records are transmitted. Generated queries run against this site\'s own database. Insights you generate are stored in the site database and are removed when the plugin is deleted.', 'siphon-store-insight-lite' )
+			. '</p>';
+
+		wp_add_privacy_policy_content( 'Store Insights with AI Lite', wp_kses_post( $content ) );
 	}
 
 	/**
@@ -136,7 +161,9 @@ class SILC_WIA_Admin {
 			return;
 		}
 
-		if ( ! current_user_can( 'manage_options' ) ) {
+		// Same capability as the menu page and every AJAX endpoint, so shop
+		// managers who can open the dashboard can also use its controls.
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'siphon-store-insight-lite' ) ) );
 			return;
 		}
@@ -160,7 +187,9 @@ class SILC_WIA_Admin {
 			return;
 		}
 
-		if ( ! current_user_can( 'manage_options' ) ) {
+		// Same capability as the menu page, so the Save button never fails for
+		// a shop manager who was allowed to open the dashboard.
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'siphon-store-insight-lite' ) ) );
 			return;
 		}
@@ -243,22 +272,25 @@ class SILC_WIA_Admin {
 		require_once SILC_WIA_PATH . 'includes/class-api.php';
 		require_once SILC_WIA_PATH . 'includes/class-library.php';
 		$api_settings    = SILC_WIA_API::get_settings();
-		$api_configured  = ! (empty( $api_settings['api_url'] ) || empty($api_settings['model']) || empty($api_settings['api_key']));
+		$has_api_key     = ! empty( $api_settings['api_key'] );
+		$api_configured  = $has_api_key && ! empty( $api_settings['api_url'] ) && ! empty( $api_settings['model'] );
 		$is_reason_model = SILC_WIA_API::is_reasoning_model( $api_settings['model'] ?? '' );
 		$library_items   = SILC_WIA_Library::get_library_for_js();
 
+		// Note: the API key itself is deliberately never passed to the browser.
+		// Only booleans describing the saved configuration are exposed.
 		wp_localize_script( 'silc-wia-dashboard', 'silcWiaData', array(
 			'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
 			'nonce'            => wp_create_nonce( SILC_WIA_Ajax::NONCE_ACTION ),
 			'siteUrl'          => site_url(),
 			'pluginUrl'        => SILC_WIA_URL,
 			'apiConfigured'    => $api_configured,
+			'hasApiKey'        => $has_api_key,
 			'isReasoningModel' => $is_reason_model,
 			'pluginVersion'    => SILC_WIA_VERSION,
 			'libraryItems'     => $library_items,
 			'settings'         => array(
 				'api_url'     => $api_settings['api_url'] ?? SILC_WIA_API::DEFAULT_API_URL,
-				'api_key'     => $api_settings['api_key'] ?? '',
 				'model'       => $api_settings['model'] ?? SILC_WIA_API::DEFAULT_MODEL,
 				'max_tokens'  => $api_settings['max_tokens'] ?? SILC_WIA_API::DEFAULT_MAX_TOKENS,
 				'temperature' => $api_settings['temperature'] ?? SILC_WIA_API::DEFAULT_TEMPERATURE,

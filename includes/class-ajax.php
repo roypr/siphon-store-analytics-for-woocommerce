@@ -80,7 +80,6 @@ class SILC_WIA_Ajax {
 	// ----------------------------------------------------------------------- //
 
 	/**
-	/**
 	 * Handle: Generate a full insight (AI → SQL → execute → render).
 	 *
 	 * POST params: question (string)
@@ -169,99 +168,6 @@ class SILC_WIA_Ajax {
 		}
 		// Fallback: use first 60 chars of the question.
 		return mb_substr( $question, 0, 60 ) . ( mb_strlen( $question ) > 60 ? '...' : '' );
-	}
-
-	/**
-	 * Handle: Regenerate an insight from a previous question (re-runs full pipeline).
-	 *
-	 * POST params: question (string)
-	 * Response: Same as handle_generate_insight.
-	 */
-	public static function handle_regen_insight(): void {
-		if ( ! self::verify() ) {
-			return;
-		}
-
-		$question = isset( $_POST['question'] ) ? sanitize_text_field( wp_unslash( $_POST['question'] ) ) : '';
-		$question = trim( $question );
-
-		if ( empty( $question ) ) {
-			wp_send_json_error( array( 'message' => __( 'No question provided.', 'siphon-store-insight-lite' ) ) );
-			return;
-		}
-
-		require_once SILC_WIA_PATH . 'includes/class-insights.php';
-
-		$insight = SILC_WIA_Insights::generate_insight( $question );
-
-		if ( ! $insight['success'] ) {
-			wp_send_json_error( array(
-				'message'    => $insight['error'] ?? __( 'Failed to regenerate insight.', 'siphon-store-insight-lite' ),
-				'error_code' => $insight['error_code'] ?? '',
-				'question'   => $question,
-			) );
-			return;
-		}
-
-		// Update the existing history entry if found, or append a new one.
-		$title   = ! empty( $insight['title'] ) ? $insight['title'] : self::derive_title( $question, $insight );
-		$history = get_option( 'silc_wia_insight_history', array() );
-
-		// Look for an existing entry with the same question and update it.
-		$found = false;
-		foreach ( $history as &$entry ) {
-			if ( $entry['question'] === $question ) {
-				$entry['title']         = $title;
-				$entry['type']          = $insight['type'];
-				$entry['sql']           = $insight['sql'] ?? '';
-				$entry['sql_time_ms']   = $insight['sql_time_ms'] ?? 0;
-				$entry['rows_returned'] = $insight['rows_returned'] ?? 0;
-				$entry['columns']       = $insight['columns'] ?? array();
-				$entry['time']          = current_time( 'mysql' );
-				$entry['chart_config']  = $insight['chart_config'] ?? null;
-				$entry['list_data']     = $insight['list_data'] ?? null;
-				$entry['list_config']   = $insight['list_config'] ?? null;
-				$entry['answer_text']   = $insight['answer_text'] ?? null;
-				$entry['answer_value']  = $insight['answer_value'] ?? null;
-				$entry['answer_label']  = $insight['answer_label'] ?? null;
-				$entry['empty']         = $insight['empty'] ?? null;
-				$entry['empty_message'] = $insight['empty_message'] ?? null;
-				$found = true;
-				break;
-			}
-		}
-		unset( $entry );
-
-		if ( ! $found ) {
-			$history[] = array(
-				'id'            => uniqid( 'i_' ),
-				'question'      => $question,
-				'title'         => $title,
-				'type'          => $insight['type'],
-				'sql'           => $insight['sql'] ?? '',
-				'sql_time_ms'   => $insight['sql_time_ms'] ?? 0,
-				'rows_returned' => $insight['rows_returned'] ?? 0,
-				'columns'       => $insight['columns'] ?? array(),
-				'time'          => current_time( 'mysql' ),
-				'chart_config'  => $insight['chart_config'] ?? null,
-				'list_data'     => $insight['list_data'] ?? null,
-				'list_config'   => $insight['list_config'] ?? null,
-				'answer_text'   => $insight['answer_text'] ?? null,
-				'answer_value'  => $insight['answer_value'] ?? null,
-				'answer_label'  => $insight['answer_label'] ?? null,
-				'empty'         => $insight['empty'] ?? null,
-				'empty_message' => $insight['empty_message'] ?? null,
-			);
-		}
-
-		// Keep max 10 latest entries.
-		if ( count( $history ) > 10 ) {
-			$history = array_slice( $history, -10 );
-		}
-		update_option( 'silc_wia_insight_history', $history );
-
-		$insight['title'] = $title;
-		wp_send_json_success( $insight );
 	}
 
 	/**

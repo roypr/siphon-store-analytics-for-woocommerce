@@ -4,13 +4,12 @@
  * Plugin Name: Store Insights with AI Lite
  * Plugin URI:  https://github.com/roypr/siphon-store-insight-lite
  * Description: Natural language to SQL query tool for WooCommerce. Uses any OpenAI-compatible API (BYOK) to convert plain English questions into SQL queries against WooCommerce data.
- * Version:     3.0.0
+ * Version:     3.1.0
  * Author:      Roy Parthapratim
  * Author URI:  https://github.com/roypr
  * Text Domain: siphon-store-insight-lite
- * Domain Path: /languages
  * Requires PHP: 7.4
- * Requires at least: 6.0
+ * Requires at least: 6.2
  * WC requires at least: 8.0
  * License:     GPL v2 or later
  *
@@ -23,18 +22,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin constants.
-define( 'SILC_WIA_VERSION', '3.0.0' );
+define( 'SILC_WIA_VERSION', '3.1.0' );
 define( 'SILC_WIA_PATH', plugin_dir_path( __FILE__ ) );
 define( 'SILC_WIA_URL', plugin_dir_url( __FILE__ ) );
 define( 'SILC_WIA_BASENAME', plugin_basename( __FILE__ ) );
-
-/**
- * Load Composer autoloader if available (for plugin-update-checker).
- */
-$autoloader = SILC_WIA_PATH . 'vendor/autoload.php';
-if ( file_exists( $autoloader ) ) {
-	require_once $autoloader;
-}
 
 /**
  * Initialize the plugin after WooCommerce is loaded.
@@ -63,28 +54,6 @@ add_action( 'plugins_loaded', function () {
 } );
 
 /**
- * Initialize the plugin update checker.
- *
- * Checks for updates against the GitHub releases feed using
- * yahnis-elsts/plugin-update-checker library (loaded via Composer).
- * Runs early but after the autoloader is loaded.
- */
-add_action( 'init', function () {
-	if ( ! class_exists( 'YahnisElsts\\PluginUpdateChecker\\v5p7\\PucFactory' ) ) {
-		return;
-	}
-
-	$update_checker = YahnisElsts\PluginUpdateChecker\v5p7\PucFactory::buildUpdateChecker(
-		'https://github.com/roypr/siphon-store-insight-lite',
-		SILC_WIA_PATH . 'siphon-store-insight-lite.php',
-		'siphon-store-insight-lite'
-	);
-
-	// Use GitHub releases for update metadata.
-	$update_checker->getVcsApi()->enableReleaseAssets();
-} );
-
-/**
  * Activation hook.
  */
 register_activation_hook( __FILE__, function () {
@@ -97,14 +66,6 @@ register_activation_hook( __FILE__, function () {
 		deactivate_plugins( plugin_basename( __FILE__ ) );
 		wp_die( esc_html__( 'Store Insights with AI Lite requires WooCommerce to be installed.', 'siphon-store-insight-lite' ) );
 	}
-} );
-
-/**
- * Deactivation hook - cleanup.
- */
-register_deactivation_hook( __FILE__, function () {
-	delete_option( 'silc_wia_insight_history' );
-	delete_option( 'silc_wia_insight_cache' );
 } );
 
 /**

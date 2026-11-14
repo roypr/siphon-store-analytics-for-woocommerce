@@ -15,6 +15,14 @@ export default defineConfig([
     languageOptions: { sourceType: "module" } 
   },
   {
+    // Node-side build tooling, not part of the shipped bundle.
+    files: ["scripts/**/*.js", "webpack.config.js"],
+    languageOptions: {
+      sourceType: "commonjs",
+      globals: { ...globals.node },
+    },
+  },
+  {
     files: ["**/*.css"],
     plugins: {
       css,
