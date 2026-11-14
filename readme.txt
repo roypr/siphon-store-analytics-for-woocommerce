@@ -6,7 +6,7 @@ Tested up to: 7.1
 Requires PHP: 7.4
 WC requires at least: 8.0
 WC tested up to: 11.2
-Stable tag: 3.1.0
+Stable tag: 3.2.0
 License: GPL v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -29,7 +29,7 @@ Stop clicking through endless admin screens and exporting CSVs. A question produ
 
 = How It Works =
 
-1. Install the plugin and add your API key (any OpenAI-compatible provider — OpenAI, Azure, Ollama, LocalAI, vLLM, etc.)
+1. Install the plugin and add your API key (OpenAI, Claude, OpenRouter, DeepSeek, Groq, Mistral, xAI, or any OpenAI-compatible endpoint such as Azure, Ollama, LocalAI or vLLM)
 2. Ask a question in plain English
 3. The AI generates a structured JSON response containing a SQL query and display configuration
 4. The SQL runs against your local WooCommerce database — securely validated and restricted to SELECT-only
@@ -39,14 +39,15 @@ Stop clicking through endless admin screens and exporting CSVs. A question produ
 
 * **Full AI Pipeline** — Natural language → SQL → execute → visualize, all in one click
 * **30 Built-In Library Queries** — Works out of the box without an API key. Browse pre-built insights for revenue, orders, customers, inventory, and more
-* **BYOK (Bring Your Own Key)** — Works with OpenAI, Azure OpenAI, Ollama, LocalAI, vLLM, and any OpenAI-compatible endpoint
-* **Reasoning Model Support** — Detects and handles reasoning models (o1, o3, DeepSeek-R1) with correct parameter mapping
+* **BYOK (Bring Your Own Key)** — OpenAI, Claude (Anthropic), OpenRouter, DeepSeek, Groq, Mistral, xAI, plus Azure OpenAI, Ollama, LocalAI, vLLM and any OpenAI-compatible endpoint
+* **Reasoning Model Support** — Detects and handles reasoning models (o-series, GPT-5/6, DeepSeek, Claude extended thinking) with correct parameter mapping
 * **Auto-Detected Schema** — Dynamically discovers your WooCommerce tables and columns, HPOS-aware
 * **Strict SQL Validation** — SELECT-only whitelist; all DML/DDL statements blocked; every table reference checked against a whitelist of known WooCommerce and WordPress tables
+* **Credential Columns Never Exposed** — Password hashes, activation keys and session token meta are removed from the schema sent to the AI and are rejected by the validator
 * **Cache Layer** — Configurable result caching reduces duplicate API calls
 * **History Panel** — Revisit past insights without regenerating
 * **Refresh Button** — Re-execute a stored query against live data without calling the AI again
-* **Settings Panel** — Configure API URL, key, model, max tokens, temperature, and cache TTL inline
+* **Settings Panel** — Pick a provider, then set key, model, max tokens, temperature, and cache TTL inline
 * **HPOS & Legacy Compatible** — Automatically adapts table references based on active order storage backend
 * **Lightweight** — React dashboard powered by WordPress core @wordpress/element and @wordpress/components; zero third-party UI frameworks
 
@@ -61,6 +62,7 @@ Stop clicking through endless admin screens and exporting CSVs. A question produ
 = Privacy & Security =
 
 * Only database schema metadata (table and column names) is sent to the AI provider you configure — never row-level customer, order, or payment data
+* Password hashes, activation keys and session tokens are not included in the schema and cannot be queried
 * SQL queries are validated against a strict whitelist of known tables
 * Only SELECT statements are permitted — no INSERT, UPDATE, DELETE, DROP, or multi-statement queries
 * All AJAX endpoints require the `manage_woocommerce` capability and a valid nonce
@@ -72,13 +74,19 @@ Stop clicking through endless admin screens and exporting CSVs. A question produ
 * WordPress 6.2+
 * WooCommerce 8.0+
 * PHP 7.4+
-* An API key from any OpenAI-compatible provider (optional — the built-in Library works without one)
+* An API key from any supported provider (optional — the built-in Library works without one)
 
 = Bring Your Own Key (BYOK) =
 
-The plugin is API-agnostic. Any provider exposing an `/chat/completions` endpoint works:
+The plugin supports the providers below, and any other OpenAI-compatible endpoint:
 
 * **OpenAI** (api.openai.com)
+* **Claude / Anthropic** (api.anthropic.com) — native Messages API, not an OpenAI-compatible shim
+* **OpenRouter** (openrouter.ai)
+* **DeepSeek** (api.deepseek.com)
+* **Groq** (api.groq.com)
+* **Mistral** (api.mistral.ai)
+* **xAI / Grok** (api.x.ai)
 * **Azure OpenAI** (your-instance.openai.azure.com)
 * **Ollama** (localhost:11434)
 * **LocalAI** (self-hosted)
@@ -112,7 +120,7 @@ No. The built-in Library provides 30 pre-built insights that execute directly ag
 
 = Which AI models work best? =
 
-GPT-4o-mini provides excellent cost/performance. GPT-4o and Claude 3.5 Sonnet produce the most accurate SQL. For self-hosted setups, Llama 3 70B and DeepSeek-V3 work well via Ollama or vLLM. Reasoning models (o1, o3, DeepSeek-R1) are fully supported.
+Any current chat model works. Each provider's default model is preselected in Settings and can be replaced with any model id the provider lists. Smaller/faster models are cheapest; larger models produce more accurate SQL for complex questions. Reasoning models (o-series, GPT-5/6, DeepSeek, Claude extended thinking) are supported with the correct parameter set for each provider.
 
 = Is my store data sent to the AI? =
 
@@ -135,6 +143,15 @@ Yes, with per-site settings.
 Results are cached (configurable TTL, default 1 hour) to avoid redundant API calls and database queries. Cache can be set to 0 to disable.
 
 == Changelog ==
+
+= 3.2.0 =
+* 🔒 Password hashes, activation keys and session tokens are removed from the schema sent to the AI and rejected by the SQL validator
+* 🔒 Changing the API URL no longer reuses the previously saved API key
+* 🔌 Pick a provider (OpenAI, Claude, OpenRouter, DeepSeek, Groq, Mistral, xAI or Custom) and the endpoint is filled in for you
+* 🔌 Claude is now supported natively through Anthropic's Messages API
+* 🔌 The completion-limit parameter is chosen per provider (`max_tokens` vs `max_completion_tokens`) and retried if an endpoint rejects it
+* 🐛 The JSON retry now sends the model's previous answer back, so it can correct its output
+* 📝 Provider list and privacy wording updated
 
 = 3.1.0 =
 * 🔒 Removed the bundled GitHub-based update checker — updates are delivered through WordPress.org only

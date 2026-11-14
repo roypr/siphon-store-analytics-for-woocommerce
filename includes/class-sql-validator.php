@@ -6,6 +6,20 @@
  * against known WooCommerce tables are allowed. All DML/DDL statements
  * are rejected outright.
  *
+ * Three independent gates run before a query is accepted:
+ *
+ * 1. Statement shape — the query must start with SELECT or WITH, must not
+ *    contain a second statement, and must not contain a blocklisted keyword.
+ *    Strings and quoted literals are stripped before the keyword scan so a
+ *    value such as CONCAT('Coupon #', id) is not mistaken for a comment or a
+ *    forbidden keyword.
+ * 2. Table whitelist — every FROM/JOIN reference must be a known WooCommerce
+ *    or core table. Declared aliases and CTE names are collected from the
+ *    query itself; no identifier is ever accepted merely for being short.
+ * 3. Protected columns — credential material (password hashes, activation
+ *    keys, session meta) is rejected even when it is named explicitly, since
+ *    those columns are also stripped from the schema sent to the AI.
+ *
  * @package SILC_WooInsight_AI
  */
 
@@ -45,6 +59,21 @@ class SILC_WIA_SQL_Validator {
 	);
 
 	/**
+	 * Identifiers that may never appear in a query.
+	 *
+	 * Password hashes, activation keys, and session/auth metadata are removed
+	 * from the schema the AI sees, so no legitimate analytics query needs
+	 * them. They are rejected here as well so a crafted or hallucinated query
+	 * cannot read credential material through the AI path.
+	 */
+	private const PROTECTED_IDENTIFIERS = array(
+		'user_pass',
+		'user_activation_key',
+		'post_password',
+		'session_tokens',
+	);
+
+	/**
 	 * Validate and sanitize a generated SQL query.
 	 *
 	 * @param string $sql The raw SQL query to validate.
@@ -77,21 +106,52 @@ class SILC_WIA_SQL_Validator {
 			return $result;
 		}
 		// 2. Block forbidden keywords.
+		//
+		// String literals are replaced with an empty quoted placeholder first,
+		// so characters that are meaningful only inside a value — a '#' in
+		// CONCAT( 'Coupon #', id ), a '--' in a note — are not mistaken for
+		// comment markers or forbidden keywords. Backslash escapes are
+		// honoured so a literal can't be "closed early".
+		$upper_no_literals = (string) preg_replace( "/'(?:[^'\\\\]|\\\\.)*'/", "''", $upper );
+		$upper_no_literals = (string) preg_replace( '/"(?:[^"\\\\]|\\\\.)*"/', '""', $upper_no_literals );
+
 		foreach ( self::FORBIDDEN_KEYWORDS as $keyword ) {
 			// Use word-boundary matching for SQL keywords to avoid false
 			// positives with column/table names (e.g., date_created vs CREATE).
 			// Comment/function-call patterns (--, #, CHAR(, etc.) use strpos.
 			$found = false;
 			if ( preg_match( '/^\w/', $keyword ) && preg_match( '/\w$/', $keyword ) ) {
-				$found = (bool) preg_match( '/\b' . preg_quote( $keyword, '/' ) . '\b/', $upper );
+				$found = (bool) preg_match( '/\b' . preg_quote( $keyword, '/' ) . '\b/', $upper_no_literals );
 			} else {
-				$found = ( false !== strpos( $upper, $keyword ) );
+				$found = ( false !== strpos( $upper_no_literals, $keyword ) );
 			}
 			if ( $found ) {
 				$result['error'] = sprintf(
 					/* translators: %s: forbidden keyword */
 					__( 'Query contains forbidden keyword: %s', 'store-insights-for-woocommerce' ),
 					$keyword
+				);
+				return $result;
+			}
+		}
+
+		// 2b. Reject protected identifiers (password hashes, activation keys,
+		// session meta). They are stripped from the schema the AI receives, so
+		// a reference to one can only come from a crafted question or a
+		// hallucinated column.
+		//
+		// Unlike the keyword scan this runs against the raw query, string
+		// literals included: wp_usermeta.meta_key holds the session meta key as
+		// a *value*, so WHERE meta_key = 'session_tokens' would otherwise read
+		// session tokens without ever naming a protected column. The cost is
+		// that a literal which merely mentions one of these words is rejected
+		// too — an acceptable trade for credential data.
+		foreach ( self::PROTECTED_IDENTIFIERS as $identifier ) {
+			if ( preg_match( '/\b' . preg_quote( $identifier, '/' ) . '\b/i', $upper ) ) {
+				$result['error'] = sprintf(
+					/* translators: %s: protected column name */
+					__( 'Query references a protected column: %s', 'store-insights-for-woocommerce' ),
+					$identifier
 				);
 				return $result;
 			}

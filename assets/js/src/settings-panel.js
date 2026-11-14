@@ -11,6 +11,140 @@ import { l10n, defaults, data } from './utils.js';
 var el = wp.element.createElement;
 var Button = wp.components.Button;
 
+// Named providers. Picking one auto-fills the endpoint so the user only has to
+// paste a key; "Custom" reveals the URL field for any other OpenAI-compatible
+// service (Ollama, vLLM, Azure, …).
+//
+// The registry (endpoints, default models, key hints) is owned by the server —
+// SILC_WIA_Provider_Adapter — and passed in through data.providers, so default
+// model ids live in exactly one place. FALLBACK_PROVIDERS only keeps the page
+// usable if that payload is missing (e.g. a stale build).
+//
+// Claude is detected from its URL server-side (SILC_WIA_Provider_Adapter) and
+// routed to Anthropic's native Messages API, so no extra setting is needed.
+var FALLBACK_PROVIDERS = {
+	openai: {
+		label: 'OpenAI',
+		url: 'https://api.openai.com/v1',
+		model: 'gpt-6-luna',
+		keyPlaceholder: 'sk-...',
+	},
+	anthropic: {
+		label: 'Claude (Anthropic)',
+		url: 'https://api.anthropic.com/v1',
+		model: 'claude-haiku-5-5',
+		keyPlaceholder: 'sk-ant-...',
+	},
+	openrouter: {
+		label: 'OpenRouter',
+		url: 'https://openrouter.ai/api/v1',
+		model: 'openai/gpt-6-luna',
+		keyPlaceholder: 'sk-or-v1-...',
+	},
+	deepseek: {
+		label: 'DeepSeek',
+		url: 'https://api.deepseek.com/v1',
+		model: 'deepseek-flash',
+		keyPlaceholder: 'sk-...',
+	},
+	groq: {
+		label: 'Groq',
+		url: 'https://api.groq.com/openai/v1',
+		model: 'openai/gpt-oss-120b',
+		keyPlaceholder: 'gsk_...',
+	},
+	mistral: {
+		label: 'Mistral',
+		url: 'https://api.mistral.ai/v1',
+		model: 'mistral-large-latest',
+		keyPlaceholder: 'Mistral API key',
+	},
+	xai: {
+		label: 'xAI (Grok)',
+		url: 'https://api.x.ai/v1',
+		model: 'grok-4.5',
+		keyPlaceholder: 'xai-...',
+	},
+	custom: {
+		label: 'Custom',
+		url: '',
+		model: '',
+		keyPlaceholder: 'sk-...',
+	},
+};
+
+var SERVER_PROVIDERS = data.providers || {};
+
+var PROVIDERS = Object.keys(FALLBACK_PROVIDERS).reduce(function (acc, slug) {
+	acc[slug] = Object.assign({}, FALLBACK_PROVIDERS[slug], SERVER_PROVIDERS[slug] || {});
+	return acc;
+}, {});
+
+/**
+ * Normalize an endpoint for comparison (same rule as the server's
+ * untrailingslashit).
+ *
+ * @param {string} url API base URL.
+ * @return {string} URL without a trailing slash.
+ */
+function normalizeUrl(url) {
+	return String(url || '').replace(/\/+$/, '');
+}
+
+/**
+ * Match a stored endpoint back to a known provider so the select reflects the
+ * saved configuration. An unrecognised or blank endpoint is treated as Custom
+ * (keeping the URL field usable).
+ *
+ * @param {string} url API base URL.
+ * @return {string} Provider slug.
+ */
+function detectProvider(url) {
+	var normalized = normalizeUrl(url);
+	var slugs = Object.keys(PROVIDERS);
+
+	for (var i = 0; i < slugs.length; i++) {
+		var def = PROVIDERS[slugs[i]];
+		if (def.url && normalizeUrl(def.url) === normalized) {
+			return slugs[i];
+		}
+	}
+
+	return 'custom';
+}
+
+/**
+ * Apply a provider choice to the settings form.
+ *
+ * @param {Function} updateSetting Settings setter from the parent.
+ * @param {Object}   formSettings  Current form values.
+ * @param {Event}    event         Change event of the provider select.
+ */
+function handleProviderChange(updateSetting, formSettings, event) {
+	var next = event.target.value;
+	var def = PROVIDERS[next] || {};
+
+	// Named providers own their endpoint; Custom keeps the URL editable so a
+	// previous provider's endpoint cannot be saved by accident.
+	if (def.url) {
+		updateSetting('api_url', def.url);
+	} else if (detectProvider(formSettings.api_url) !== 'custom') {
+		updateSetting('api_url', '');
+	}
+
+	// A typed key belongs to the provider it was entered for.
+	if (formSettings.api_key) {
+		updateSetting('api_key', '');
+	}
+
+	// A model id is provider-specific. Use the new provider's default whenever
+	// it has one: keeping the previous provider's model (e.g. a GPT id on
+	// Anthropic) would make every request fail.
+	if (def.model) {
+		updateSetting('model', def.model);
+	}
+}
+
 /**
  * Helper: a labelled input row.
  *
@@ -107,9 +241,27 @@ export function renderSettingsPanel(props) {
 	var saveMsg = props.saveMsg;
 	var testResult = props.testResult;
 
+	// Derived from the endpoint, so it always reflects what would actually be
+	// saved. A blank or unknown endpoint reads as "Custom".
+	var providerSlug = detectProvider(formSettings.api_url);
+	var providerDef = PROVIDERS[providerSlug] || PROVIDERS.custom;
+
 	// The API key itself is never exposed to the browser; the server only
-	// reports whether one is saved.
-	var hasKey = !!data.hasApiKey;
+	// reports whether one is saved. A stored key belongs to the endpoint it
+	// was saved with, so the "key is saved" hint only applies while that
+	// endpoint is still selected — the server drops the key otherwise.
+	var savedUrl = normalizeUrl((data.settings || {}).api_url);
+	var keyApplies = normalizeUrl(formSettings.api_url) === savedUrl;
+	var hasKey = !!data.hasApiKey && keyApplies;
+	var keyHelp;
+
+	if (!!data.hasApiKey && !keyApplies) {
+		keyHelp = 'A key is saved for a different API URL. Enter a key for the selected provider \u2014 saving removes the old one.';
+	} else if (hasKey && !formSettings.api_key) {
+		keyHelp = 'A key is already saved. Type a new one to replace it, or leave blank to keep the current key.';
+	} else {
+		keyHelp = 'Paste your API key here. Need one? Sign up at your AI provider and create a key from their dashboard.';
+	}
 
 	return el('div', { className: 'silc-wia-settings-panel' },
 
@@ -121,47 +273,49 @@ export function renderSettingsPanel(props) {
 				'\uD83E\uDD16 AI Provider'
 			),
 			el('div', { className: 'silc-wia-settings-section-desc' },
-				'Choose which AI service powers your insights. This plugin works with any OpenAI-compatible API.'
+				'Choose which AI service powers your insights. OpenAI-compatible providers and Claude (Anthropic) are supported.'
+			),
+
+			// Provider
+			el(SettingsField, {
+				label: 'Provider',
+				help: 'Pick a provider to fill in its API URL and default model, or choose Custom to enter any other endpoint.',
+			},
+				el('select', {
+					value: providerSlug,
+					onChange: function (e) { handleProviderChange(updateSetting, formSettings, e); },
+				},
+					Object.keys(PROVIDERS).map(function (slug) {
+						return el('option', { key: slug, value: slug }, PROVIDERS[slug].label);
+					})
+				)
 			),
 
 			// API URL
 			el(SettingsField, {
 				label: l10n.settingsApiUrl || 'API URL',
-				help: 'The address of your AI provider\u2019s API. The default works with OpenAI (ChatGPT). Most providers use the same format.',
+				help: providerDef.url
+					? 'Filled in from the provider you selected. Edit it only if you use a proxy or gateway.'
+					: 'The address of your AI provider\u2019s API, for example http://localhost:11434/v1 for Ollama.',
 			},
 				el('input', {
 					type: 'url',
 					value: formSettings.api_url,
-					placeholder: defaults.api_url,
+					placeholder: providerDef.url || 'https://api.example.com/v1',
 					onChange: function (e) { updateSetting('api_url', e.target.value); },
-				}),
-				// Provider quick-links
-				el('div', { className: 'silc-wia-settings-provider-links' },
-					el('span', { className: 'label' }, 'Popular providers:'),
-					el('span', {
-						className: 'provider-link',
-						onClick: function () { updateSetting('api_url', 'https://api.openai.com/v1'); },
-					}, 'OpenAI'),
-					el('span', {
-						className: 'provider-link',
-						onClick: function () { updateSetting('api_url', 'https://api.anthropic.com/v1'); },
-					}, 'Anthropic'),
-					el('span', {
-						className: 'provider-link',
-						onClick: function () { updateSetting('api_url', 'https://api.deepseek.com/v1'); },
-					}, 'DeepSeek'),
-				)
+				})
 			),
 
 			// Model
 			el(SettingsField, {
 				label: l10n.settingsModel || 'Model',
-				help: 'The AI model to use. Stick with the default unless you know what you\u2019re doing. Popular options: gpt-4o-mini (fast/cheap), gpt-4o (powerful), claude-3-haiku, deepseek-r1.',
+				help: 'The model id exactly as your provider lists it.'
+					+ (providerDef.model ? ' The default for ' + providerDef.label + ' is ' + providerDef.model + '.' : ''),
 			},
 				el('input', {
 					type: 'text',
 					value: formSettings.model,
-					placeholder: defaults.model,
+					placeholder: providerDef.model,
 					onChange: function (e) { updateSetting('model', e.target.value); },
 				})
 			),
@@ -181,14 +335,12 @@ export function renderSettingsPanel(props) {
 			// API Key
 			el(SettingsField, {
 				label: l10n.settingsApiKey || 'API Key',
-				help: hasKey && !formSettings.api_key
-					? 'A key is already saved. Type a new one to replace it, or leave blank to keep the current key.'
-					: 'Paste your API key here. Need one? Sign up at your AI provider and create a key from their dashboard.',
+				help: keyHelp,
 			},
 				el('input', {
 					type: 'password',
 					value: formSettings.api_key,
-					placeholder: hasKey ? 'API key is saved \u2014 enter new one to replace' : 'sk-...',
+					placeholder: hasKey ? 'API key is saved \u2014 enter new one to replace' : (providerDef.keyPlaceholder || 'sk-...'),
 					onChange: function (e) { updateSetting('api_key', e.target.value); },
 					autoComplete: 'off',
 				}),

@@ -2,6 +2,24 @@
 
 All notable changes to Store Insights for WooCommerce will be documented in this file.
 
+## [3.2.0] — Nov 2026
+
+### Security
+- Credential columns are no longer exposed: `user_pass`, `user_activation_key`, `post_password` and session-token meta (`session_tokens`) are stripped from the schema sent to the AI, from the schema REST payload, and from the prompt, and the SQL validator now rejects any query that names them — including `wp_usermeta` lookups that target the session meta key as a value.
+- The SQL validator now strips string literals with escape handling before the forbidden-keyword scan, so a legitimate value such as `CONCAT('Coupon #', id)` is no longer mistaken for a comment marker or keyword, while stacked statements and comment/hex payloads are still rejected.
+- Changing the API URL no longer silently reuses the previously stored API key. A key is provider-specific, so saving a different endpoint without entering a new key clears it and the settings screen explains why.
+
+### Changed
+- New `SILC_WIA_Provider_Adapter` owns the provider registry (endpoint, default model, wire format, completion-limit parameter, key hints). The settings screen reads it from the server instead of carrying its own copy.
+- The settings screen now selects a provider (OpenAI, Claude, OpenRouter, DeepSeek, Groq, Mistral, xAI, Custom) and fills the endpoint; Custom keeps the free-text URL field for Azure, Ollama, LocalAI, vLLM, LM Studio and any other compatible gateway.
+- The completion-limit parameter is chosen per provider instead of guessed from the model name: OpenAI, OpenRouter and Groq send `max_completion_tokens`; Anthropic, DeepSeek, Mistral and xAI send `max_tokens`. If an endpoint rejects the choice, the request is retried once with the other name (temperature is dropped when the error blames it).
+- Claude is supported natively: requests go to `/v1/messages` with `x-api-key` and `anthropic-version`, the system prompt is hoisted out of `messages`, response content blocks are mapped back to the OpenAI envelope, and extended thinking is requested only where the model accepts it.
+- Default model ids refreshed per provider, and a stored model that cannot belong to the configured endpoint (for example a GPT id after switching to Claude) is replaced with that provider's default instead of being sent.
+- The Test Connection button now goes through the same provider-aware request path as a real insight.
+
+### Removed
+- The "Function whitelist" claim in `README.md`, which did not match the validator (it blocklists, it does not whitelist functions).
+
 ## [3.1.0] — Nov 2026
 
 ### Security

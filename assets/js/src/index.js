@@ -346,16 +346,26 @@ function WooInsightDashboard() {
 				if (resp.success) {
 					setSaveMsg({ type: 'success', text: resp.data.message || l10n.saved });
 					setSettingsDirty(false);
-					// If API key was saved, clear the field.
-					if (formSettings.api_key) {
-						setFormSettings(function (prev) {
-							var next = Object.assign({}, prev);
+					// Mirror what the server actually stored: the key field is
+					// cleared after a save, the endpoint loses a trailing slash,
+					// and an empty model is replaced with the provider default.
+					setFormSettings(function (prev) {
+						var next = Object.assign({}, prev);
+						if (formSettings.api_key) {
 							next.api_key = '';
-							return next;
-						});
-					}
-					// Reload page to reflect new config.
-					if (resp.data.has_api_key && !apiConfigured) {
+						}
+						if (resp.data.api_url) {
+							next.api_url = resp.data.api_url;
+						}
+						if (resp.data.model) {
+							next.model = resp.data.model;
+						}
+						return next;
+					});
+					// Reload page to reflect new config. A cleared key changes
+					// what the Authentication section reports, so it counts as
+					// a config change too.
+					if ((resp.data.has_api_key && !apiConfigured) || resp.data.api_key_cleared) {
 						setTimeout(function () { window.location.reload(); }, 1000);
 					}
 				} else {

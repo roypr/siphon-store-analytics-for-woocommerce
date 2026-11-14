@@ -106,26 +106,32 @@ User Question (plain English)
 ### Security
 
 - **SELECT-only** — No INSERT, UPDATE, DELETE, DROP, ALTER, or multi-statement queries
-- **Table whitelist** — Only known WooCommerce tables allowed
-- **Function whitelist** — Only safe SQL functions permitted (COUNT, SUM, AVG, DATE_FORMAT, COALESCE, etc.)
+- **Table whitelist** — Only known WooCommerce and WordPress core tables allowed
+- **Credential columns blocked** — `user_pass`, `user_activation_key`, `post_password` and session-token meta are stripped from the schema and rejected by the validator
 - **Capability check** — `manage_woocommerce` required for all AJAX endpoints
 - **Nonce verification** — All requests validated with WordPress nonces
 
 ### BYOK — Bring Your Own Key
 
-Works with any OpenAI-compatible `/chat/completions` endpoint:
+Ships with an endpoint registry for the common providers, plus a Custom option for
+any other OpenAI-compatible endpoint:
 
-- **OpenAI** — `api.openai.com`
-- **Azure OpenAI** — Your instance endpoint
-- **Ollama** — `localhost:11434`
-- **LocalAI** — Self-hosted
-- **vLLM** — Self-hosted
-- **LM Studio** — Local
-- Any compatible proxy or gateway
+- **OpenAI** — `api.openai.com` (`max_completion_tokens`)
+- **Claude / Anthropic** — `api.anthropic.com`, native Messages API (`/v1/messages`, `x-api-key`)
+- **OpenRouter** — `openrouter.ai/api/v1`
+- **DeepSeek** — `api.deepseek.com`
+- **Groq** — `api.groq.com/openai/v1`
+- **Mistral** — `api.mistral.ai`
+- **xAI / Grok** — `api.x.ai`
+- **Azure OpenAI / Ollama / LocalAI / vLLM / LM Studio** — Custom endpoint
+
+The completion-limit parameter is chosen per provider (`max_tokens` vs
+`max_completion_tokens`); if an endpoint rejects the choice, the request is
+retried once with the other name.
 
 ### Reasoning Model Support
 
-Auto-detects reasoning models (o1, o3, DeepSeek-R1, Claude 3.5 Opus, Gemini Flash Thinking) and adjusts parameters: omits temperature, folds system prompt into user message, and allocates appropriate token budget.
+Auto-detects reasoning models (o-series, GPT-5/6, DeepSeek, Gemini thinking, Claude extended thinking) and adjusts parameters: omits temperature, keeps Claude's thinking budget inside the non-streaming ceiling, and allocates an appropriate token budget.
 
 ### HPOS & Legacy Compatible
 

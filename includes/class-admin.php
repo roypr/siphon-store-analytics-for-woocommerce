@@ -26,6 +26,14 @@ class SILC_WIA_Admin {
 	private static $page_hook = '';
 
 	/**
+	 * Set when sanitize_settings() dropped a stored key because the endpoint
+	 * changed, so the AJAX handler can tell the user why the key is gone.
+	 *
+	 * @var bool
+	 */
+	private static $api_key_cleared = false;
+
+	/**
 	 * Option name for API settings.
 	 */
 	const SETTINGS_OPTION = 'silc_wia_api_settings';
@@ -109,21 +117,49 @@ class SILC_WIA_Admin {
 	 */
 	public static function sanitize_settings( $input ): array {
 		$current = get_option( self::SETTINGS_OPTION, array() );
+		$current = is_array( $current ) ? $current : array();
 		$output  = array();
 
-		$output['api_url'] = isset( $input['api_url'] )
+		self::$api_key_cleared = false;
+
+		$output['api_url'] = ! empty( $input['api_url'] )
 			? esc_url_raw( untrailingslashit( trim( $input['api_url'] ) ) )
 			: SILC_WIA_API::DEFAULT_API_URL;
 
+		$previous_url = isset( $current['api_url'] ) ? untrailingslashit( (string) $current['api_url'] ) : '';
+		$url_changed  = '' !== $previous_url && $previous_url !== $output['api_url'];
+
 		if ( ! empty( $input['api_key'] ) ) {
 			$output['api_key'] = sanitize_text_field( $input['api_key'] );
-		} elseif ( isset( $current['api_key'] ) ) {
+
+			// A pasted key usually identifies its provider ("sk-ant-…",
+			// "sk-or-…", "gsk_…"). Only the plugin's built-in default endpoint
+			// is ever replaced, so a deliberately selected provider or a custom
+			// URL always wins over the guess.
+			$output['api_url'] = untrailingslashit(
+				SILC_WIA_Provider_Adapter::suggest_url_for_key( $output['api_key'], $output['api_url'] )
+			);
+		} elseif ( isset( $current['api_key'] ) && ! $url_changed ) {
+			// An empty field means "keep the saved key" — but only while the
+			// endpoint stays the same. A key is provider-specific, so keeping
+			// it after a provider switch would only produce a 401 (or send a
+			// credential to an endpoint it was not issued for).
 			$output['api_key'] = $current['api_key'];
+		} else {
+			$output['api_key'] = '';
+
+			if ( $url_changed && ! empty( $current['api_key'] ) ) {
+				self::$api_key_cleared = true;
+			}
 		}
 
-		$output['model'] = isset( $input['model'] )
-			? sanitize_text_field( trim( $input['model'] ) )
-			: SILC_WIA_API::DEFAULT_MODEL;
+		// An empty model field means "use the endpoint's default". Resolved
+		// after the endpoint, because key-based routing can change it.
+		$model = isset( $input['model'] ) ? sanitize_text_field( trim( $input['model'] ) ) : '';
+
+		$output['model'] = '' !== $model
+			? $model
+			: SILC_WIA_API::get_default_model_for_url( $output['api_url'] );
 
 		$output['max_tokens'] = isset( $input['max_tokens'] )
 			? max( 50, min( 8192, intval( $input['max_tokens'] ) ) )
@@ -204,10 +240,19 @@ class SILC_WIA_Admin {
 		$sanitized = self::sanitize_settings( $input );
 		update_option( self::SETTINGS_OPTION, $sanitized );
 
+		$message = __( 'Settings saved.', 'store-insights-for-woocommerce' );
+
+		if ( self::$api_key_cleared ) {
+			$message = __( 'Settings saved. The stored API key was removed because the API URL changed — enter a key for the new provider.', 'store-insights-for-woocommerce' );
+		}
+
 		wp_send_json_success( array(
-			'message'          => __( 'Settings saved.', 'store-insights-for-woocommerce' ),
-			'has_api_key'      => ! empty( $sanitized['api_key'] ),
-			'is_reasoning'     => SILC_WIA_API::is_reasoning_model( $sanitized['model'] ?? '' ),
+			'message'         => $message,
+			'api_url'         => $sanitized['api_url'],
+			'model'           => $sanitized['model'],
+			'has_api_key'     => ! empty( $sanitized['api_key'] ),
+			'api_key_cleared' => self::$api_key_cleared,
+			'is_reasoning'    => SILC_WIA_API::is_reasoning_model( $sanitized['model'] ?? '' ),
 		) );
 	}
 
@@ -276,6 +321,7 @@ class SILC_WIA_Admin {
 		$api_configured  = $has_api_key && ! empty( $api_settings['api_url'] ) && ! empty( $api_settings['model'] );
 		$is_reason_model = SILC_WIA_API::is_reasoning_model( $api_settings['model'] ?? '' );
 		$library_items   = SILC_WIA_Library::get_library_for_js();
+		$api_url         = $api_settings['api_url'] ?? SILC_WIA_API::DEFAULT_API_URL;
 
 		// Note: the API key itself is deliberately never passed to the browser.
 		// Only booleans describing the saved configuration are exposed.
@@ -289,8 +335,12 @@ class SILC_WIA_Admin {
 			'isReasoningModel' => $is_reason_model,
 			'pluginVersion'    => SILC_WIA_VERSION,
 			'libraryItems'     => $library_items,
+			// Endpoint, default model, and key hints live on the server
+			// (SILC_WIA_Provider_Adapter) so the settings screen never carries
+			// a second copy of the provider list.
+			'providers'        => SILC_WIA_Provider_Adapter::all(),
 			'settings'         => array(
-				'api_url'     => $api_settings['api_url'] ?? SILC_WIA_API::DEFAULT_API_URL,
+				'api_url'     => $api_url,
 				'model'       => $api_settings['model'] ?? SILC_WIA_API::DEFAULT_MODEL,
 				'max_tokens'  => $api_settings['max_tokens'] ?? SILC_WIA_API::DEFAULT_MAX_TOKENS,
 				'temperature' => $api_settings['temperature'] ?? SILC_WIA_API::DEFAULT_TEMPERATURE,

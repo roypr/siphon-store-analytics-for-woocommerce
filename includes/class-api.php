@@ -1,12 +1,21 @@
 <?php
 /**
- * OpenAI-Compatible API Client
+ * AI Provider Client
  *
- * Handles communication with any OpenAI-compatible API endpoint
- * (OpenAI, Azure, Ollama, LocalAI, vLLM, etc.) for insight generation.
+ * Handles communication with the configured AI provider for insight
+ * generation. Two wire formats are supported:
  *
- * Supports both standard instruct models and reasoning models (o1, o3,
- * DeepSeek-R1, etc.) with appropriate parameter handling for each.
+ * - OpenAI-compatible /chat/completions (OpenAI, OpenRouter, DeepSeek, Groq,
+ *   Mistral, xAI, Ollama, LocalAI, vLLM, Azure OpenAI, …)
+ * - Anthropic's native /messages (Claude)
+ *
+ * Provider-specific differences (endpoint, auth headers, envelope, and the
+ * completion-limit parameter name) live in SILC_WIA_Provider_Adapter so the
+ * rest of this class stays provider-agnostic.
+ *
+ * Supports both standard instruct models and reasoning models (o-series,
+ * GPT-5/6, DeepSeek, Gemini thinking, Claude extended thinking, …) with
+ * appropriate parameter handling for each.
  *
  * @package SILC_WooInsight_AI
  */
@@ -15,6 +24,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once SILC_WIA_PATH . 'includes/class-provider-adapter.php';
+
 /**
  * API client class.
  */
@@ -22,12 +33,52 @@ class SILC_WIA_API {
 
 	/**
 	 * Default settings.
+	 *
+	 * DEFAULT_MODEL is the fallback for the default endpoint (OpenAI). Per
+	 * provider defaults live in SILC_WIA_Provider_Adapter so the settings
+	 * screen and the server agree on a single set of model ids.
 	 */
 	const DEFAULT_API_URL       = 'https://api.openai.com/v1';
-	const DEFAULT_MODEL         = 'gpt-4o-mini';
+	const DEFAULT_MODEL         = 'gpt-6-luna';
 	const DEFAULT_MAX_TOKENS    = 500;
 	const DEFAULT_TEMPERATURE   = 0.2;
 	const DEFAULT_CACHE_TTL     = 3600; // 1 hour in seconds.
+
+	/**
+	 * Previous built-in default model.
+	 *
+	 * Installations that never picked a model still store this value. It is
+	 * treated as "unset" by get_settings() and replaced with the current
+	 * provider default, so an upgrade does not keep calling a retired model.
+	 */
+	const LEGACY_DEFAULT_MODEL = 'gpt-4o-mini';
+
+	/**
+	 * Anthropic (Claude) endpoint + required API version header.
+	 *
+	 * Claude's native Messages API differs from the OpenAI-compatible
+	 * providers this class otherwise targets:
+	 * - POST {url}/messages, not /chat/completions
+	 * - x-api-key + anthropic-version headers, not Authorization: Bearer
+	 * - a top-level "system" string, not a system-role message
+	 * - content is an array of typed blocks, not choices[0].message.content
+	 * These differences are bridged in build_anthropic_request_body() and
+	 * normalize_anthropic_response() so callers never see them.
+	 */
+	const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1';
+	const ANTHROPIC_VERSION = '2023-06-01';
+
+	/**
+	 * Extended-thinking token budget for Claude models.
+	 *
+	 * ANTHROPIC_THINKING_MAX_TOKENS doubles as the output ceiling for every
+	 * Claude request: wp_remote_post() cannot stream, and the Messages API
+	 * rejects a non-streaming request whose max_tokens exceeds ~21,333. It is
+	 * kept comfortably under that point, so a request stays a plain blocking
+	 * call. budget_tokens must stay below max_tokens.
+	 */
+	const ANTHROPIC_THINKING_BUDGET_TOKENS = 8000;
+	const ANTHROPIC_THINKING_MAX_TOKENS    = 16000;
 
 	/**
 	 * Max tokens for insight generation (JSON output needs more).
@@ -36,19 +87,74 @@ class SILC_WIA_API {
 
 	/**
 	 * Max tokens for reasoning models (need extra budget for reasoning content).
+	 *
+	 * Reasoning tokens are billed and counted against the completion limit, so
+	 * a small budget can return an empty answer once the hidden reasoning has
+	 * consumed it. Claude is clamped to ANTHROPIC_THINKING_MAX_TOKENS by
+	 * build_anthropic_request_body(), since the Messages API refuses larger
+	 * non-streaming requests.
 	 */
-	const REASONING_MAX_TOKENS = 4000;
+	const REASONING_MAX_TOKENS = 32000;
 
 	/**
 	 * Patterns that identify reasoning models.
+	 *
+	 * Covers current reasoning/thinking model families across providers:
+	 * - OpenAI: o1/o3/o4 series, gpt-5 and gpt-6 series.
+	 * - DeepSeek: R1, reasoner variants and the V4 thinking modes.
+	 * - Google: Gemini 2.0 Flash Thinking and 2.5/3 thinking variants.
+	 * - Anthropic: Claude 3.7 Sonnet, Claude 4/4.5/5 (extended thinking).
+	 * - xAI: Grok 3 and later.
+	 * - Qwen: QwQ and Qwen3 thinking variants.
 	 */
 	const REASONING_MODEL_PATTERNS = array(
-		'/^o1-/i',
-		'/^o3-/i',
-		'/deepseek-reasoner/i',
-		'/deepseek-r1/i',
-		'/claude-3-opus/i',
+		'/^o[134](-|$)/i',
+		'/^gpt-[56]/i',
+		'/deepseek/i',
 		'/gemini-2\.0-flash-thinking/i',
+		'/^gemini-[23].*thinking/i',
+		'/^claude-opus-4/i',
+		'/^claude-sonnet-4/i',
+		'/^claude-haiku-4-5/i',
+		'/^claude-(opus|sonnet|haiku)-5/i',
+		'/^claude-3-7-sonnet/i',
+		'/^(fable|mythos)-5/i',
+		'/^grok-[3-9]/i',
+		'/^qwq/i',
+		'/^qwen3.*thinking/i',
+	);
+
+	/**
+	 * Claude models that use ADAPTIVE thinking.
+	 *
+	 * On these generations thinking is controlled by the API automatically
+	 * and the legacy `thinking` object is NOT accepted — sending
+	 * `{"type":"enabled","budget_tokens":N}` (or `{"type":"disabled"}` where
+	 * disallowed) returns HTTP 400. The field must simply be omitted.
+	 */
+	const CLAUDE_ADAPTIVE_THINKING_PATTERNS = array(
+		'/^claude-(opus|sonnet|haiku)-5/i',
+		'/^claude-opus-4[.\-][78]/i',
+		'/^(fable|mythos)-5(\.|$|-)/i',
+	);
+
+	/**
+	 * Claude models that use the LEGACY extended-thinking form.
+	 *
+	 * These accept `{"type":"enabled","budget_tokens":N}`:
+	 * - Opus 4.5, Sonnet 4.5, Haiku 4.5: `enabled` + `budget_tokens` only.
+	 * - Opus 4.6, Sonnet 4.6: adaptive, or `enabled` + `budget_tokens`
+	 *   (deprecated but still accepted).
+	 * - Claude 3.7 Sonnet: `enabled` + `budget_tokens`.
+	 *
+	 * The minor version is written with either a dot ("Claude Sonnet 4.5") or
+	 * a hyphen (the API model id, e.g. `claude-sonnet-4-5-20250929`), so both
+	 * separators must match.
+	 */
+	const CLAUDE_BUDGET_THINKING_PATTERNS = array(
+		'/^claude-(opus|sonnet)-4[.\-][56]/i',
+		'/^claude-haiku-4-5/i',
+		'/^claude-3-7-sonnet/i',
 	);
 
 	// ----------------------------------------------------------------------- //
@@ -57,6 +163,11 @@ class SILC_WIA_API {
 
 	/**
 	 * Get API settings.
+	 *
+	 * A stored model id can outlive the endpoint it belongs to: the built-in
+	 * default changed over time, and a provider switch leaves the previous
+	 * provider's model behind. Both cases are corrected here so no request is
+	 * sent with a model the endpoint cannot serve.
 	 *
 	 * @return array
 	 */
@@ -76,7 +187,36 @@ class SILC_WIA_API {
 			$saved = array();
 		}
 
-		return wp_parse_args( $saved, $defaults );
+		$settings = wp_parse_args( $saved, $defaults );
+
+		// A stored value that is still the old built-in default means the user
+		// never chose a model — follow the current provider default instead of
+		// calling a model the provider has retired.
+		if ( self::LEGACY_DEFAULT_MODEL === $settings['model'] ) {
+			$settings['model'] = self::get_default_model_for_url( (string) $settings['api_url'] );
+		}
+
+		// A model id is provider-specific. If the saved model clearly belongs
+		// to a different provider (e.g. a GPT id left behind after switching
+		// to Claude), use the endpoint's default instead of sending a request
+		// that cannot succeed.
+		if ( ! SILC_WIA_Provider_Adapter::model_matches_provider( (string) $settings['model'], (string) $settings['api_url'] ) ) {
+			$settings['model'] = self::get_default_model_for_url( (string) $settings['api_url'] );
+		}
+
+		return $settings;
+	}
+
+	/**
+	 * Resolve the default model for an API URL.
+	 *
+	 * @param string $api_url API base URL.
+	 * @return string Model id.
+	 */
+	public static function get_default_model_for_url( string $api_url ): string {
+		$model = SILC_WIA_Provider_Adapter::get_default_model( $api_url );
+
+		return '' !== $model ? $model : self::DEFAULT_MODEL;
 	}
 
 	/**
@@ -91,13 +231,26 @@ class SILC_WIA_API {
 	}
 
 	/**
+	 * Whether an API URL points at Anthropic's native API.
+	 *
+	 * Single switch that decides which wire format (OpenAI-compatible vs
+	 * Claude Messages API) the rest of the class uses. Delegates to the
+	 * provider adapter so detection lives in one place.
+	 *
+	 * @param string $api_url API base URL.
+	 * @return bool
+	 */
+	public static function is_anthropic( string $api_url ): bool {
+		return SILC_WIA_Provider_Adapter::is_anthropic( $api_url );
+	}
+
+	/**
 	 * Check if the configured model is a reasoning model.
 	 *
-	 * Reasoning models (o1, o3, DeepSeek-R1, etc.) require different
-	 * parameter handling:
+	 * Reasoning models (o-series, GPT-5/6, DeepSeek, Claude extended thinking,
+	 * etc.) require different parameter handling:
 	 * - No temperature parameter
-	 * - Higher max_tokens budget (reasoning content consumes tokens)
-	 * - System prompts handled differently
+	 * - Higher completion budget (reasoning content consumes tokens)
 	 *
 	 * @param string $model Model name.
 	 * @return bool
@@ -109,6 +262,38 @@ class SILC_WIA_API {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Detect which extended-thinking mechanism a Claude model uses.
+	 *
+	 * Returns one of:
+	 * - 'adaptive' — thinking is managed by the API; the request must omit
+	 *   the `thinking` field entirely (sending `enabled`/`budget_tokens` or
+	 *   `disabled` returns HTTP 400 on these models).
+	 * - 'budget'   — legacy form: `{"type":"enabled","budget_tokens":N}`.
+	 * - 'none'     — not a Claude thinking model (or not a Claude model).
+	 *
+	 * Adaptive models are checked first because some generations (Opus 4.6 /
+	 * Sonnet 4.6) appear in both lists — the deprecated budget form still
+	 * works there, but omitting `thinking` is always safe, so 'adaptive'
+	 * wins.
+	 *
+	 * @param string $model Model name.
+	 * @return string 'adaptive' | 'budget' | 'none'.
+	 */
+	public static function get_claude_thinking_mode( string $model ): string {
+		foreach ( self::CLAUDE_ADAPTIVE_THINKING_PATTERNS as $pattern ) {
+			if ( preg_match( $pattern, $model ) ) {
+				return 'adaptive';
+			}
+		}
+		foreach ( self::CLAUDE_BUDGET_THINKING_PATTERNS as $pattern ) {
+			if ( preg_match( $pattern, $model ) ) {
+				return 'budget';
+			}
+		}
+		return 'none';
 	}
 
 	/**
@@ -130,13 +315,30 @@ class SILC_WIA_API {
 	}
 
 	/**
-	 * Extract the assistant message content from an API response,
-	 * including reasoning_content if present.
+	 * Extract the assistant message content from an API response.
+	 *
+	 * Handles both shapes:
+	 * - Claude Messages API: `content` is an array of typed blocks; only
+	 *   `type: "text"` blocks are visible output (a `thinking` block is
+	 *   skipped).
+	 * - OpenAI-compatible: `choices[0].message.content` is a plain string.
 	 *
 	 * @param array $data Decoded API response.
 	 * @return string The visible content text.
 	 */
 	private static function extract_content( array $data ): string {
+		if ( isset( $data['content'] ) && is_array( $data['content'] ) ) {
+			$text = '';
+			foreach ( $data['content'] as $block ) {
+				if ( is_array( $block ) && 'text' === ( $block['type'] ?? '' ) && isset( $block['text'] ) && is_string( $block['text'] ) ) {
+					$text .= $block['text'];
+				}
+			}
+			if ( '' !== $text ) {
+				return $text;
+			}
+		}
+
 		if ( isset( $data['choices'][0]['message']['content'] ) && is_string( $data['choices'][0]['message']['content'] ) ) {
 			return $data['choices'][0]['message']['content'];
 		}
@@ -172,29 +374,38 @@ class SILC_WIA_API {
 	// ----------------------------------------------------------------------- //
 
 	/**
-	 * Build the request body for a chat completion call.
+	 * Build an OpenAI-shaped chat request body for the configured provider.
 	 *
-	 * Automatically adjusts parameters for reasoning vs instruct models.
+	 * Single place that decides:
+	 * - which completion-limit parameter to send (provider dependent);
+	 * - whether a temperature value is allowed (reasoning models reject any
+	 *   non-default value, Anthropic deprecates it).
 	 *
-	 * @param string $model         Model name.
-	 * @param array  $messages      Message array.
-	 * @param int    $max_tokens    Max tokens for output.
-	 * @param float  $temperature   Temperature (ignored for reasoning models).
-	 * @return array
+	 * The body is always built in the OpenAI wire format; send_request()
+	 * translates it to the Messages API when the endpoint is Anthropic.
+	 *
+	 * @param string     $model       Model name.
+	 * @param array      $messages    Chat messages (OpenAI shape).
+	 * @param int        $max_tokens  Completion token limit.
+	 * @param float|null $temperature Optional sampling temperature.
+	 * @param string     $api_url     API base URL (empty for the configured one).
+	 * @return array Request body.
 	 */
-	private static function build_request_body( string $model, array $messages, int $max_tokens, float $temperature = 0.2 ): array {
+	private static function build_chat_body( string $model, array $messages, int $max_tokens, ?float $temperature = null, string $api_url = '' ): array {
+		if ( '' === $api_url ) {
+			$settings = self::get_settings();
+			$api_url  = (string) $settings['api_url'];
+		}
+
+		$token_param = SILC_WIA_Provider_Adapter::get_token_param( $api_url, $model );
+
 		$body = array(
-			'model'    => $model,
-			'messages' => $messages,
+			'model'      => $model,
+			'messages'   => $messages,
+			$token_param => $max_tokens,
 		);
 
-		// Reasoning models use max_completion_tokens instead of max_tokens.
-		if ( self::is_reasoning_model( $model ) ) {
-			// OpenAI reasoning models use max_completion_tokens.
-			// Some API providers still accept max_tokens.
-			$body['max_completion_tokens'] = self::get_effective_max_tokens( $model, $max_tokens );
-		} else {
-			$body['max_tokens']  = $max_tokens;
+		if ( null !== $temperature && SILC_WIA_Provider_Adapter::supports_temperature( $api_url, $model ) ) {
 			$body['temperature'] = $temperature;
 		}
 
@@ -202,7 +413,137 @@ class SILC_WIA_API {
 	}
 
 	/**
+	 * Translate an OpenAI-shaped request body into Claude's Messages format.
+	 *
+	 * Callers build bodies for the OpenAI wire format (model/messages plus
+	 * max_tokens or max_completion_tokens). This bridges the gaps so they do
+	 * not need to know about the provider:
+	 * - the system-role turn is moved into a top-level `system` string, since
+	 *   Claude has no `system` role inside `messages`;
+	 * - `max_completion_tokens` is mapped to `max_tokens`, and the value is
+	 *   clamped to the non-streaming ceiling;
+	 * - `temperature` is never sent: Claude rejects it while thinking is
+	 *   enabled, and newer Claude models deprecate it outright.
+	 *
+	 * @param array $body OpenAI-shaped request body.
+	 * @return array Claude Messages request body.
+	 */
+	private static function build_anthropic_request_body( array $body ): array {
+		$model    = isset( $body['model'] ) ? (string) $body['model'] : self::DEFAULT_MODEL;
+		$messages = ( isset( $body['messages'] ) && is_array( $body['messages'] ) ) ? $body['messages'] : array();
+
+		$system             = '';
+		$turns              = array();
+		$has_assistant_turn = false;
+
+		foreach ( $messages as $message ) {
+			if ( ! is_array( $message ) ) {
+				continue;
+			}
+
+			$role = isset( $message['role'] ) ? (string) $message['role'] : '';
+
+			if ( 'system' === $role ) {
+				$piece  = isset( $message['content'] ) && is_string( $message['content'] ) ? $message['content'] : '';
+				$system = ( '' === $system ) ? $piece : $system . "\n\n" . $piece;
+				continue;
+			}
+
+			if ( 'assistant' === $role ) {
+				$has_assistant_turn = true;
+			}
+
+			$turns[] = $message;
+		}
+
+		$max_tokens = 0;
+		if ( isset( $body['max_tokens'] ) ) {
+			$max_tokens = (int) $body['max_tokens'];
+		} elseif ( isset( $body['max_completion_tokens'] ) ) {
+			$max_tokens = (int) $body['max_completion_tokens'];
+		}
+		if ( $max_tokens <= 0 ) {
+			$max_tokens = self::DEFAULT_MAX_TOKENS;
+		}
+
+		// The Messages API refuses a non-streaming request whose max_tokens
+		// exceeds ~21,333, and wp_remote_post() cannot stream. Clamp to the
+		// safe ceiling.
+		$max_tokens = min( $max_tokens, self::ANTHROPIC_THINKING_MAX_TOKENS );
+
+		$anthropic = array(
+			'model'      => $model,
+			'max_tokens' => $max_tokens,
+			'messages'   => $turns,
+		);
+
+		if ( '' !== $system ) {
+			$anthropic['system'] = $system;
+		}
+
+		// Extended thinking is only requested on a fresh, single-turn call.
+		// The JSON-retry flow replays the previous assistant turn as plain
+		// text (without its thinking block), which the Messages API rejects
+		// while thinking is enabled — so thinking is skipped whenever the
+		// conversation already contains an assistant turn.
+		if ( ! $has_assistant_turn && self::is_reasoning_model( $model ) ) {
+			$thinking_mode = self::get_claude_thinking_mode( $model );
+
+			if ( 'budget' === $thinking_mode ) {
+				// Legacy extended-thinking models (4.5/4.6, 3.7 Sonnet):
+				// explicit `enabled` + budget_tokens. budget_tokens must stay
+				// below max_tokens, and the total must stay under the
+				// ~21,333-token point where the Messages API requires
+				// streaming (wp_remote_post() cannot stream).
+				$anthropic['max_tokens'] = max( $max_tokens, self::ANTHROPIC_THINKING_MAX_TOKENS );
+				$anthropic['thinking']   = array(
+					'type'          => 'enabled',
+					'budget_tokens' => self::ANTHROPIC_THINKING_BUDGET_TOKENS,
+				);
+			}
+			// 'adaptive' (Opus 5+, Sonnet 5, Opus 4.7/4.8, Fable/Mythos 5.x):
+			// omit the `thinking` field entirely — the API manages thinking
+			// itself and rejects the legacy object with HTTP 400.
+			// 'none' (non-Claude reasoning model on an Anthropic URL, or an
+			// unrecognized Claude name): omit as well, the safest default.
+		}
+
+		return $anthropic;
+	}
+
+	/**
+	 * Normalize a Claude response into the OpenAI envelope callers expect.
+	 *
+	 * Callers read `data.choices[0].message.content`, so the visible text is
+	 * projected onto that path. The original Claude fields are left intact.
+	 *
+	 * @param array $data Decoded Claude response.
+	 * @return array OpenAI-shaped response.
+	 */
+	private static function normalize_anthropic_response( array $data ): array {
+		$data['choices'] = array(
+			array(
+				'message' => array(
+					'role'    => 'assistant',
+					'content' => self::extract_content( $data ),
+				),
+			),
+		);
+
+		return $data;
+	}
+
+	/**
 	 * Send a chat completion request and return the parsed response.
+	 *
+	 * The caller always supplies an OpenAI-shaped body. When the configured
+	 * API URL points at Anthropic, the body is translated to the Messages API
+	 * format and the response is normalized back to the OpenAI envelope, so
+	 * callers stay provider-agnostic.
+	 *
+	 * If an OpenAI-compatible endpoint rejects the completion-limit parameter
+	 * (or a temperature value) the request is retried once with the parameter
+	 * renamed/removed — see SILC_WIA_Provider_Adapter::adapt_rejected_body().
 	 *
 	 * @param array $body Request body.
 	 * @return array{success: bool, data: array|null, error: string}
@@ -218,19 +559,60 @@ class SILC_WIA_API {
 			);
 		}
 
-		$api_url = untrailingslashit( $settings['api_url'] );
+		$api_url   = untrailingslashit( $settings['api_url'] );
+		$is_claude = self::is_anthropic( $api_url );
+
+		$result = self::dispatch_request( $body, $api_url, (string) $settings['api_key'], $is_claude );
+
+		// Provider drift guard: the OpenAI-compatible ecosystem does not agree
+		// on the completion-limit parameter name, and a routing layer such as
+		// OpenRouter may forward to an upstream that lags its own docs.
+		if ( ! $result['success'] && ! $is_claude ) {
+			$adapted = SILC_WIA_Provider_Adapter::adapt_rejected_body( $body, (string) $result['error'] );
+
+			if ( null !== $adapted ) {
+				$result = self::dispatch_request( $adapted, $api_url, (string) $settings['api_key'], $is_claude );
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Perform one HTTP request against the configured endpoint.
+	 *
+	 * @param array  $body      OpenAI-shaped request body.
+	 * @param string $api_url   API base URL (no trailing slash).
+	 * @param string $api_key   API key.
+	 * @param bool   $is_claude Whether the endpoint is Anthropic's.
+	 * @param int    $timeout   Request timeout in seconds.
+	 * @return array{success: bool, data: array|null, error: string}
+	 */
+	private static function dispatch_request( array $body, string $api_url, string $api_key, bool $is_claude, int $timeout = 90 ): array {
+		if ( $is_claude ) {
+			$body     = self::build_anthropic_request_body( $body );
+			$endpoint = $api_url . '/messages';
+			$headers  = array(
+				'Content-Type'      => 'application/json',
+				'x-api-key'         => $api_key,
+				'anthropic-version' => self::ANTHROPIC_VERSION,
+			);
+		} else {
+			$endpoint = $api_url . '/chat/completions';
+			$headers  = array(
+				'Content-Type'  => 'application/json',
+				'Authorization' => 'Bearer ' . $api_key,
+			);
+		}
 
 		$response = wp_remote_post(
-			$api_url . '/chat/completions',
+			$endpoint,
 			array(
 				// 90s is generous for a single completion and stays well inside
 				// the default max_execution_time on most shared hosts.
-				'timeout'   => 90,
-				'headers'   => array(
-					'Authorization' => 'Bearer ' . $settings['api_key'],
-					'Content-Type'  => 'application/json',
-				),
-				'body'      => wp_json_encode( $body ),
+				'timeout' => $timeout,
+				'headers' => $headers,
+				'body'    => wp_json_encode( $body ),
 			)
 		);
 
@@ -250,6 +632,9 @@ class SILC_WIA_API {
 		$body_raw    = wp_remote_retrieve_body( $response );
 		$data        = json_decode( $body_raw, true );
 
+		// Claude's error envelope is {"type":"error","error":{"type":...,"message":...}}
+		// — the same $data['error']['message'] lookup used for OpenAI-compatible
+		// errors works unchanged here.
 		if ( $status_code !== 200 ) {
 			$error_msg = isset( $data['error']['message'] ) ? $data['error']['message'] : sprintf(
 				/* translators: %d: HTTP status code */
@@ -261,6 +646,10 @@ class SILC_WIA_API {
 				'data'    => null,
 				'error'   => $error_msg,
 			);
+		}
+
+		if ( $is_claude && is_array( $data ) ) {
+			$data = self::normalize_anthropic_response( $data );
 		}
 
 		return array(
@@ -304,7 +693,7 @@ class SILC_WIA_API {
 
 		$user_prompt   = self::build_insight_user_prompt( $question, $schema_context );
 
-		$model      = $settings['model'];
+		$model      = (string) $settings['model'];
 		$max_tokens = self::get_effective_max_tokens( $model, self::INSIGHT_MAX_TOKENS );
 
 		$messages = array(
@@ -318,7 +707,7 @@ class SILC_WIA_API {
 			),
 		);
 
-		$body = self::build_request_body( $model, $messages, $max_tokens, 0.2 );
+		$body = self::build_chat_body( $model, $messages, $max_tokens, 0.2, (string) $settings['api_url'] );
 
 		$result = self::send_request( $body );
 
@@ -345,9 +734,19 @@ class SILC_WIA_API {
 
 		if ( null === $insight ) {
 			// Retry: send the previous assistant response back as context,
-			// including reasoning_content if the API returned it.
-			$retry_body            = $body;
-			$assistant_msg         = self::build_assistant_retry_message( $result['data'] );
+			// including reasoning_content if the API returned it, then ask for
+			// pure JSON.
+			//
+			// The assistant turn must be replayed, not skipped: Claude's
+			// Messages API rejects two consecutive user turns, and the model
+			// can only correct its own output if it can see it.
+			$retry_body = $body;
+			$assistant  = self::build_assistant_retry_message( $result['data'] );
+
+			if ( '' !== (string) $assistant['content'] ) {
+				$retry_body['messages'][] = $assistant;
+			}
+
 			$retry_body['messages'][] = array(
 				'role'    => 'user',
 				'content' => 'Your previous response was not valid JSON. Return ONLY valid JSON with no markdown, no explanation, just the JSON object.',
@@ -610,6 +1009,10 @@ Otherwise, return ONLY valid JSON with the SQL query, output type, and configura
 	/**
 	 * Test the API connection with a simple request.
 	 *
+	 * Goes through the same dispatch path as a real call, so a provider whose
+	 * endpoint, headers, or parameter names differ (Claude, for instance) is
+	 * verified exactly as it will be used later.
+	 *
 	 * @return array{success: bool, message: string}
 	 */
 	public static function test_connection(): array {
@@ -622,49 +1025,36 @@ Otherwise, return ONLY valid JSON with the SQL query, output type, and configura
 			);
 		}
 
-		$api_url  = untrailingslashit( $settings['api_url'] );
-		$model    = $settings['model'];
-		$is_reason = self::is_reasoning_model( $model );
-
-		$body = array(
-			'model'    => $model,
-			'messages' => array(
-				array( 'role' => 'user', 'content' => 'Say "ok" and nothing else.' ),
-			),
+		$api_url   = untrailingslashit( (string) $settings['api_url'] );
+		$model     = (string) $settings['model'];
+		$is_claude = self::is_anthropic( $api_url );
+		$messages  = array(
+			array( 'role' => 'user', 'content' => 'Say "ok" and nothing else.' ),
 		);
 
-		if ( $is_reason ) {
-			$body['max_completion_tokens'] = 20;
-		} else {
-			$body['max_tokens'] = 10;
-		}
-
-		$response = wp_remote_post(
-			$api_url . '/chat/completions',
-			array(
-				'timeout'   => 30,
-				'headers'   => array(
-					'Authorization' => 'Bearer ' . $settings['api_key'],
-					'Content-Type'  => 'application/json',
-				),
-				'body'      => wp_json_encode( $body ),
-			)
-		);
-
-		if ( is_wp_error( $response ) ) {
-			return array(
-				'success' => false,
-				'message' => $response->get_error_message(),
+		if ( $is_claude ) {
+			// Built directly rather than through build_anthropic_request_body():
+			// a connection check must not enable extended thinking (it would
+			// burn the thinking budget just to prove the key works).
+			$body = array(
+				'model'      => $model,
+				'max_tokens' => 10,
+				'messages'   => $messages,
 			);
+		} else {
+			// 20 tokens so reasoning models have room to answer "ok".
+			$body = self::build_chat_body( $model, $messages, 20, null, $api_url );
 		}
 
-		$status_code = wp_remote_retrieve_response_code( $response );
-		if ( $status_code !== 200 ) {
-			$response_body = json_decode( wp_remote_retrieve_body( $response ), true );
-			$error = isset( $response_body['error']['message'] ) ? $response_body['error']['message'] : "HTTP $status_code";
+		$result = self::dispatch_request( $body, $api_url, (string) $settings['api_key'], $is_claude, 30 );
+
+		if ( ! $result['success'] ) {
+			$spec = SILC_WIA_Provider_Adapter::get( $api_url );
+
 			return array(
 				'success' => false,
-				'message' => $error,
+				/* translators: 1: provider name, 2: API error message */
+				'message' => sprintf( __( '%1$s: %2$s', 'store-insights-for-woocommerce' ), (string) $spec['label'], (string) $result['error'] ),
 			);
 		}
 

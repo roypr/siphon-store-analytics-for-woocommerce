@@ -27,6 +27,21 @@ class SILC_WIA_Woo_Schema {
 	const CACHE_GROUP = 'silc_wia_schema';
 
 	/**
+	 * Columns that must never be exposed to the AI.
+	 *
+	 * These are password hashes, activation keys, and similar credential
+	 * material that serve no legitimate purpose in read-only analytics
+	 * queries. They are stripped from every schema payload sent to the AI
+	 * (and from the admin schema endpoint), and the SQL validator rejects any
+	 * query that names them.
+	 */
+	const SENSITIVE_COLUMNS = array(
+		'user_pass',
+		'user_activation_key',
+		'post_password',
+	);
+
+	/**
 	 * Get the WordPress table prefix.
 	 *
 	 * @return string
@@ -438,7 +453,14 @@ class SILC_WIA_Woo_Schema {
 
 		foreach ( $fallback as $table => $default_cols ) {
 			$dynamic = self::discover_columns( $table );
-			$schemas[ $table ] = null !== $dynamic ? $dynamic : $default_cols;
+			$cols    = null !== $dynamic ? $dynamic : $default_cols;
+
+			// Strip sensitive columns (password hashes, activation keys) so
+			// they are neither advertised to the AI nor returned by the schema
+			// endpoint.
+			$cols = array_values( array_diff( $cols, self::SENSITIVE_COLUMNS ) );
+
+			$schemas[ $table ] = $cols;
 		}
 
 		if ( $active_only && ! self::is_hpos_enabled() ) {
@@ -654,8 +676,8 @@ class SILC_WIA_Woo_Schema {
 	 * order storage backend (HPOS or legacy). This prevents the AI from seeing
 	 * tables and rules that don't apply to the current site.
 	 *
-	 * generate_insight() in class-api.php uses this method, ensuring a single
-	 * method, ensuring a single source of truth for schema context.
+	 * generate_insight() in class-api.php uses this method, which keeps the
+	 * schema context in one place.
 	 *
 	 * @return string
 	 */
@@ -670,6 +692,12 @@ class SILC_WIA_Woo_Schema {
 		foreach ( self::get_table_schemas( true ) as $table => $cols ) {
 			$lines[] = $prefix . $table . ' ( ' . implode( ', ', $cols ) . ' )';
 		}
+
+		$lines[] = '';
+		$lines[] = 'Sensitive columns are intentionally omitted from this schema and must never be queried:';
+		$lines[] = '- ' . $prefix . 'users: user_pass and user_activation_key (password hashes / reset keys)';
+		$lines[] = '- ' . $prefix . 'posts: post_password';
+		$lines[] = '- ' . $prefix . 'usermeta: session_tokens and other credential meta values';
 
 		$lines[] = '';
 		$lines[] = '=== WOOCOMMERCE POST TYPES ===';
@@ -744,6 +772,7 @@ class SILC_WIA_Woo_Schema {
 		$lines[] = '- Use DATE() function for date comparisons.';
 		$lines[] = '- For date ranges, compare against date_created_gmt or post_date.';
 		$lines[] = '- Prefer wp_wc_order_stats for high-level order analytics.';
+		$lines[] = '- Never select password hashes, activation keys, or session/auth meta values; those columns are not part of this schema.';
 
 		return implode( "\n", $lines );
 	}
