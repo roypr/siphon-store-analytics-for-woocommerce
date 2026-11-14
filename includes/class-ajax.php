@@ -111,37 +111,28 @@ class SILC_WIA_Ajax {
 			return;
 		}
 
-		// Save to insight history with full result data and AI-generated title.
-		$title = ! empty( $insight['title'] ) ? $insight['title'] : self::derive_title( $question, $insight );
+		// Save to insight history. Only the question, the query and the
+		// presentation config are kept: the result rows may contain customer
+		// names, emails and addresses, and replaying the entry re-executes the
+		// SQL (see SILC_WIA_Storage).
+		$title  = ! empty( $insight['title'] ) ? $insight['title'] : self::derive_title( $question, $insight );
+		$render = is_array( $insight['render_config'] ?? null ) ? $insight['render_config'] : array();
 
-		$history    = get_option( 'silc_wia_insight_history', array() );
-		$history[]  = array(
-			'id'            => uniqid( 'i_' ),
-			'question'      => $question,
-			'title'         => $title,
-			'type'          => $insight['type'],
-			'sql'           => $insight['sql'] ?? '',
-			'sql_time_ms'   => $insight['sql_time_ms'] ?? 0,
-			'rows_returned' => $insight['rows_returned'] ?? 0,
-			'columns'       => $insight['columns'] ?? array(),
-			'time'          => current_time( 'mysql' ),
-			// Full result data for instant replay from history.
-			'chart_config'  => $insight['chart_config'] ?? null,
-			'list_data'     => $insight['list_data'] ?? null,
-			'list_config'   => $insight['list_config'] ?? null,
-			'answer_text'   => $insight['answer_text'] ?? null,
-			'answer_value'  => $insight['answer_value'] ?? null,
-			'answer_label'  => $insight['answer_label'] ?? null,
-			'empty'         => $insight['empty'] ?? null,
-			'empty_message' => $insight['empty_message'] ?? null,
-			'blocks'        => $insight['blocks'] ?? array(),
-			'queries'       => $insight['queries'] ?? array(),
+		SILC_WIA_Storage::append_history(
+			array(
+				'id'            => uniqid( 'i_' ),
+				'question'      => $question,
+				'title'         => $title,
+				'type'          => $render['type'] ?? $insight['type'],
+				'sql'           => $insight['sql'] ?? '',
+				'sql_time_ms'   => $insight['sql_time_ms'] ?? 0,
+				'rows_returned' => $insight['rows_returned'] ?? 0,
+				'time'          => current_time( 'mysql' ),
+				'chart_config'  => $render['chart_config'] ?? null,
+				'list_config'   => $render['list_config'] ?? null,
+				'answer_text'   => $render['answer_text'] ?? null,
+			)
 		);
-		// Keep max 10 latest entries.
-		if ( count( $history ) > 10 ) {
-			$history = array_slice( $history, -10 );
-		}
-		update_option( 'silc_wia_insight_history', $history );
 
 		// Include title in response.
 		$insight['title'] = $title;
@@ -178,10 +169,8 @@ class SILC_WIA_Ajax {
 			return;
 		}
 
-		$history = get_option( 'silc_wia_insight_history', array() );
-
 		wp_send_json_success( array(
-			'history' => array_reverse( $history ),
+			'history' => array_reverse( SILC_WIA_Storage::get_history() ),
 		) );
 	}
 
@@ -193,7 +182,7 @@ class SILC_WIA_Ajax {
 			return;
 		}
 
-		delete_option( 'silc_wia_insight_history' );
+		SILC_WIA_Storage::clear_history();
 
 		wp_send_json_success( array(
 			'message' => __( 'Insight history cleared.', 'store-insights-for-woocommerce' ),

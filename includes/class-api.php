@@ -40,7 +40,7 @@ class SILC_WIA_API {
 	 */
 	const DEFAULT_API_URL       = 'https://api.openai.com/v1';
 	const DEFAULT_MODEL         = 'gpt-6-luna';
-	const DEFAULT_MAX_TOKENS    = 500;
+	const DEFAULT_MAX_TOKENS    = 1500;
 	const DEFAULT_TEMPERATURE   = 0.2;
 	const DEFAULT_CACHE_TTL     = 3600; // 1 hour in seconds.
 
@@ -81,9 +81,19 @@ class SILC_WIA_API {
 	const ANTHROPIC_THINKING_MAX_TOKENS    = 16000;
 
 	/**
-	 * Max tokens for insight generation (JSON output needs more).
+	 * Output budget used when the Max Tokens setting is unset or lower than the
+	 * minimum the JSON payload needs.
+	 *
+	 * A truncated response cannot be parsed, so this is also the floor applied
+	 * to the setting (SILC_WIA_Admin::sanitize_settings() clamps to the same
+	 * value).
 	 */
 	const INSIGHT_MAX_TOKENS = 1500;
+
+	/**
+	 * Lowest value the Max Tokens setting may take.
+	 */
+	const MIN_MAX_TOKENS = 800;
 
 	/**
 	 * Max tokens for reasoning models (need extra budget for reasoning content).
@@ -242,6 +252,68 @@ class SILC_WIA_API {
 	 */
 	public static function is_anthropic( string $api_url ): bool {
 		return SILC_WIA_Provider_Adapter::is_anthropic( $api_url );
+	}
+
+	/**
+	 * Whether an API URL may be used without exposing the key.
+	 *
+	 * The API key and the prompt travel in the request body/headers, so plain
+	 * HTTP is only acceptable when the request never leaves the machine or the
+	 * local network (Ollama, LocalAI, vLLM, LM Studio). Everything else must be
+	 * HTTPS.
+	 *
+	 * @param string $url API base URL.
+	 * @return bool
+	 */
+	public static function is_allowed_api_url( string $url ): bool {
+		$url = trim( $url );
+
+		if ( '' === $url ) {
+			return false;
+		}
+
+		$scheme = strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) );
+
+		if ( 'https' === $scheme ) {
+			return true;
+		}
+
+		return self::is_local_host( (string) wp_parse_url( $url, PHP_URL_HOST ) );
+	}
+
+	/**
+	 * Whether a host is local (loopback, private network or a mDNS-style name).
+	 *
+	 * @param string $host Host name or IP.
+	 * @return bool
+	 */
+	public static function is_local_host( string $host ): bool {
+		$host = strtolower( trim( $host, '[]' ) );
+
+		if ( '' === $host ) {
+			return false;
+		}
+
+		if ( in_array( $host, array( 'localhost', '127.0.0.1', '0.0.0.0', '::1' ), true ) ) {
+			return true;
+		}
+
+		if ( '.localhost' === substr( $host, -10 ) ) {
+			return true;
+		}
+
+		if ( false !== filter_var( $host, FILTER_VALIDATE_IP ) ) {
+			// Private (RFC 1918) and reserved (loopback, link-local) ranges.
+			return false === filter_var( $host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE );
+		}
+
+		if ( '.local' === substr( $host, -6 ) || '.test' === substr( $host, -5 ) ) {
+			return true;
+		}
+
+		// A bare host name (docker service, "ollama") has no dot and can only
+		// resolve inside the local network.
+		return false === strpos( $host, '.' );
 	}
 
 	/**
@@ -589,6 +661,16 @@ class SILC_WIA_API {
 	 * @return array{success: bool, data: array|null, error: string}
 	 */
 	private static function dispatch_request( array $body, string $api_url, string $api_key, bool $is_claude, int $timeout = 90 ): array {
+		// Last line of defence: a plain-HTTP URL that was stored before this
+		// rule existed must not send the API key and prompt in clear text.
+		if ( ! self::is_allowed_api_url( $api_url ) ) {
+			return array(
+				'success' => false,
+				'data'    => null,
+				'error'   => __( 'The API URL must use HTTPS. Plain HTTP is only allowed for local endpoints such as http://localhost:11434/v1.', 'store-insights-for-woocommerce' ),
+			);
+		}
+
 		if ( $is_claude ) {
 			$body     = self::build_anthropic_request_body( $body );
 			$endpoint = $api_url . '/messages';
@@ -693,8 +775,20 @@ class SILC_WIA_API {
 
 		$user_prompt   = self::build_insight_user_prompt( $question, $schema_context );
 
-		$model      = (string) $settings['model'];
-		$max_tokens = self::get_effective_max_tokens( $model, self::INSIGHT_MAX_TOKENS );
+		$model = (string) $settings['model'];
+
+		// The Max Tokens setting is the output budget for this call. The
+		// minimum exists because a response cut off mid-JSON cannot be parsed,
+		// so anything below it is raised (the settings screen clamps to the
+		// same range). Reasoning models still get the larger budget from
+		// get_effective_max_tokens().
+		$base_tokens = (int) ( $settings['max_tokens'] ?? 0 );
+
+		if ( $base_tokens < self::MIN_MAX_TOKENS ) {
+			$base_tokens = max( self::INSIGHT_MAX_TOKENS, self::MIN_MAX_TOKENS );
+		}
+
+		$max_tokens = self::get_effective_max_tokens( $model, $base_tokens );
 
 		$messages = array(
 			array(

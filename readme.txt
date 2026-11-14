@@ -6,7 +6,7 @@ Tested up to: 7.1
 Requires PHP: 7.4
 WC requires at least: 8.0
 WC tested up to: 11.2
-Stable tag: 3.2.0
+Stable tag: 3.2.1
 License: GPL v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,7 +22,7 @@ Ask plain-English questions about your WooCommerce store and get instant charts,
 AI bridges the gap between asking a question and writing code. This plugin brings that power into your WooCommerce admin. No memorizing table names, no crafting SQL by hand — just ask, and the answer appears as a chart, a list, or a single highlighted number. You run the store; the plugin runs the queries.
 
 **🔒 Your Store Data Stays in Your Database**
-Only database schema metadata (table names and column names) is included in the prompt sent to the AI provider you configure. The AI never receives customer names, email addresses, order totals, or any other row-level data. Every query the plugin runs executes against your own local database.
+Only database schema metadata (table names and column names) is included in the prompt sent to the AI provider you configure, over HTTPS. The AI never receives customer names, email addresses, order totals, or any other row-level data. Every query the plugin runs executes against your own local database.
 
 **📊 Visualization That Replaces Spreadsheet Diving**  
 Stop clicking through endless admin screens and exporting CSVs. A question produces a result in one of three rich formats: an interactive Chart.js visualization (bar, line, doughnut, pie), a clickable list with direct links to orders/products/customers, or a clean numeric answer. Insights that used to take 20 minutes of digging take 5 seconds of typing.
@@ -66,8 +66,10 @@ Stop clicking through endless admin screens and exporting CSVs. A question produ
 * SQL queries are validated against a strict whitelist of known tables
 * Only SELECT statements are permitted — no INSERT, UPDATE, DELETE, DROP, or multi-statement queries
 * All AJAX endpoints require the `manage_woocommerce` capability and a valid nonce
-* The API key is stored in your site database and is never printed into the dashboard page
-* Requests to the AI provider go to the API URL you enter; no other external requests are made
+* The API key is stored in your site database (in an option that is not autoloaded) and is never printed into the dashboard page
+* Requests to the AI provider go to the API URL you enter and must use HTTPS; plain HTTP is only accepted for local endpoints such as `http://localhost:11434/v1`. No other external requests are made
+* Generated insights keep the question, the SQL and the display settings so they can be re-run — the result rows are not stored. The rendered answer is cached for the duration set under Cache Duration
+* Uninstalling removes the settings, the history, the cached results and the legacy options this plugin created
 
 = Requirements =
 
@@ -143,6 +145,15 @@ Yes, with per-site settings.
 Results are cached (configurable TTL, default 1 hour) to avoid redundant API calls and database queries. Cache can be set to 0 to disable.
 
 == Changelog ==
+
+= 3.2.1 =
+* 🔒 Insight history no longer keeps result rows — opening a past insight re-runs its query
+* 🔒 The settings and history options are no longer autoloaded on every request
+* 🔒 Plain-HTTP API URLs are refused (HTTPS required, except for local endpoints)
+* 🔒 Uninstalling now also removes cached results and a legacy option
+* 🐛 The Max Tokens setting now controls the request budget (800–8192, default 1500)
+* 🐛 Refreshing a chart keeps the original chart type and transform
+* 📝 Privacy text now lists what is stored locally and the HTTPS requirement
 
 = 3.2.0 =
 * 🔒 Password hashes, activation keys and session tokens are removed from the schema sent to the AI and rejected by the SQL validator

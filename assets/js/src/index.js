@@ -200,35 +200,6 @@ function WooInsightDashboard() {
 			});
 	}, [question]);
 
-	var handleLoadHistory = useCallback(function (item) {
-		// Destroy existing chart.
-		if (typeof SILC_WIA_Charts !== 'undefined') {
-			SILC_WIA_Charts.destroyChart('insight-chart-canvas');
-		}
-
-		setQuestion(item.question || '');
-		setActivePanel(null);
-		setHasRun(true);
-		setError(null);
-		setLoading(false);
-		// Load the full stored result directly (no re-generation).
-		setInsightData({
-			type:          item.type,
-			sql:           item.sql,
-			sql_time_ms:   item.sql_time_ms,
-			rows_returned: item.rows_returned,
-			columns:       item.columns,
-			title:         item.title || '',
-			chart_config:  item.chart_config || null,
-			list_data:     item.list_data || null,
-			list_config:   item.list_config || null,
-			answer_text:   item.answer_text || null,
-			answer_value:  item.answer_value || null,
-			answer_label:  item.answer_label || null,
-			empty:         item.empty || null,
-			empty_message: item.empty_message || null,
-		});
-	}, []);
 
 	var handleClearHistory = useCallback(function () {
 		doAction('clear_insight_history').then(function (resp) {
@@ -249,13 +220,18 @@ function WooInsightDashboard() {
 		setLoading(true);
 		setError(null);
 
+		// `chart_config`/`list_config`/`answer_text` on a rendered result are
+		// post-render (they carry the data). The pre-render copy returned as
+		// `render_config` is what the server can re-render from.
+		var config = insightData.render_config || insightData;
+
 		doAction('execute_sql', {
 			sql: insightData.sql,
-			type: insightData.type || 'answer',
-			chart_config: insightData.chart_config ? JSON.stringify(insightData.chart_config) : '',
-			list_config: insightData.list_config ? JSON.stringify(insightData.list_config) : '',
-			answer_text: insightData.answer_text || '',
-			title: insightData.title || '',
+			type: config.type || insightData.type || 'answer',
+			chart_config: config.chart_config ? JSON.stringify(config.chart_config) : '',
+			list_config: config.list_config ? JSON.stringify(config.list_config) : '',
+			answer_text: config.answer_text || '',
+			title: config.title || insightData.title || '',
 		})
 			.then(function (resp) {
 				setLoading(false);
@@ -306,6 +282,18 @@ function WooInsightDashboard() {
 				setError('Network error. Please try again.');
 			});
 	}, []);
+
+	// A history entry holds the question, the SQL and its presentation config —
+	// never the result rows (the server stores them without data). Loading one
+	// therefore re-runs its query, exactly like a Library item: no customer
+	// rows sit in the options table, and the numbers shown are current.
+	var handleLoadHistory = useCallback(function (item) {
+		if (!item || !item.sql) {
+			return;
+		}
+
+		handleLibraryItem(item);
+	}, [handleLibraryItem]);
 
 	var toggleSidebar = useCallback(function () {
 		setSidebarExpanded(function (prev) { return !prev; });

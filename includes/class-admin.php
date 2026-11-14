@@ -89,7 +89,8 @@ class SILC_WIA_Admin {
 	 * Declare what data leaves the site for the WordPress privacy policy guide.
 	 *
 	 * The only outbound request this plugin makes is the configured AI
-	 * provider call, so the suggested text describes exactly that.
+	 * provider call, so the suggested text describes exactly that — plus what
+	 * is kept locally, since a generated answer can contain customer data.
 	 */
 	public static function add_privacy_policy_content(): void {
 		if ( ! function_exists( 'wp_add_privacy_policy_content' ) ) {
@@ -97,13 +98,15 @@ class SILC_WIA_Admin {
 		}
 
 		$content = '<p class="privacy-policy-tutorial">'
-			. esc_html__( 'Suggested text: When you ask a question, the following is sent to the AI provider you configured under WooCommerce &rarr; Store Insights &rarr; Settings:', 'store-insights-for-woocommerce' )
+			. esc_html__( 'Suggested text: When you ask a question, the following is sent over HTTPS to the AI provider you configured under WooCommerce &rarr; Store Insights &rarr; Settings:', 'store-insights-for-woocommerce' )
 			. '</p><ul>'
 			. '<li>' . esc_html__( 'Your question, in plain text.', 'store-insights-for-woocommerce' ) . '</li>'
 			. '<li>' . esc_html__( 'Database schema metadata only: table names and column names.', 'store-insights-for-woocommerce' ) . '</li>'
 			. '<li>' . esc_html__( 'Your API key, sent as an authorization header so the provider can bill your account.', 'store-insights-for-woocommerce' ) . '</li>'
 			. '</ul><p class="privacy-policy-tutorial">'
-			. esc_html__( 'No customer, order, product, or payment records are transmitted. Generated queries run against this site\'s own database. Insights you generate are stored in the site database and are removed when the plugin is deleted.', 'store-insights-for-woocommerce' )
+			. esc_html__( 'No customer, order, product, or payment records are transmitted. Generated queries run against this site\'s own database.', 'store-insights-for-woocommerce' )
+			. '</p><p class="privacy-policy-tutorial">'
+			. esc_html__( 'Locally, the plugin keeps the question, the generated query and its display settings so past insights can be re-run; it does not keep the result rows. A generated answer is cached for the duration configured under Cache Duration so the same question does not call the AI twice. All of this data is removed when the plugin is deleted. Password hashes, activation keys and session tokens are never included in the schema sent to the provider and cannot be queried.', 'store-insights-for-woocommerce' )
 			. '</p>';
 
 		wp_add_privacy_policy_content( 'Store Insights for WooCommerce', wp_kses_post( $content ) );
@@ -162,7 +165,7 @@ class SILC_WIA_Admin {
 			: SILC_WIA_API::get_default_model_for_url( $output['api_url'] );
 
 		$output['max_tokens'] = isset( $input['max_tokens'] )
-			? max( 50, min( 8192, intval( $input['max_tokens'] ) ) )
+			? max( SILC_WIA_API::MIN_MAX_TOKENS, min( 8192, intval( $input['max_tokens'] ) ) )
 			: SILC_WIA_API::DEFAULT_MAX_TOKENS;
 
 		$output['temperature'] = isset( $input['temperature'] )
@@ -237,8 +240,22 @@ class SILC_WIA_Admin {
 			return;
 		}
 
+		// The API key and the prompt travel with every request, so plain HTTP
+		// is refused unless the endpoint is local.
+		if ( ! empty( $input['api_url'] ) && ! SILC_WIA_API::is_allowed_api_url( (string) $input['api_url'] ) ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'The API URL must use HTTPS. Plain HTTP is only allowed for local endpoints such as http://localhost:11434/v1.', 'store-insights-for-woocommerce' ),
+				)
+			);
+			return;
+		}
+
 		$sanitized = self::sanitize_settings( $input );
-		update_option( self::SETTINGS_OPTION, $sanitized );
+
+		// The settings option holds the API key, so it is written without
+		// autoload (see SILC_WIA_Storage).
+		SILC_WIA_Storage::save( self::SETTINGS_OPTION, $sanitized );
 
 		$message = __( 'Settings saved.', 'store-insights-for-woocommerce' );
 

@@ -85,7 +85,7 @@ User Question (plain English)
 ┌──────────────────────┐
 │   SQL Validator      │  ← SELECT-only whitelist
 │   Table whitelist    │     DML/DDL blocked
-│   Function whitelist │     Multi-statement blocked
+│   Column blocklist   │     Multi-statement blocked
 └──────────────────────┘
         │
         ▼
@@ -110,6 +110,10 @@ User Question (plain English)
 - **Credential columns blocked** — `user_pass`, `user_activation_key`, `post_password` and session-token meta are stripped from the schema and rejected by the validator
 - **Capability check** — `manage_woocommerce` required for all AJAX endpoints
 - **Nonce verification** — All requests validated with WordPress nonces
+- **HTTPS required** — The API key and prompt are only sent over HTTPS; plain HTTP is accepted only for local endpoints (localhost, private ranges, `.local`/`.test`, single-label hosts)
+- **No result rows stored** — History keeps the question, SQL and display config, and re-runs the query when an entry is opened; the rendered answer is cached for the configured TTL only
+- **Secrets not autoloaded** — The settings option (API key) and the history option are excluded from the autoloaded options blob
+- **Clean uninstall** — Settings, history, cached results and legacy options are removed when the plugin is deleted
 
 ### BYOK — Bring Your Own Key
 

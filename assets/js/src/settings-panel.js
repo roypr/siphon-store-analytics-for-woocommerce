@@ -294,9 +294,10 @@ export function renderSettingsPanel(props) {
 			// API URL
 			el(SettingsField, {
 				label: l10n.settingsApiUrl || 'API URL',
-				help: providerDef.url
+				help: (providerDef.url
 					? 'Filled in from the provider you selected. Edit it only if you use a proxy or gateway.'
-					: 'The address of your AI provider\u2019s API, for example http://localhost:11434/v1 for Ollama.',
+					: 'The address of your AI provider\u2019s API, for example http://localhost:11434/v1 for Ollama.')
+					+ ' HTTPS is required unless the endpoint is on this machine or your local network.',
 			},
 				el('input', {
 					type: 'url',
@@ -381,12 +382,12 @@ export function renderSettingsPanel(props) {
 			// Max Tokens
 			el(SettingsField, {
 				label: l10n.settingsMaxTokens || 'Max Tokens',
-				help: 'Maximum length of the AI\u2019s response. Higher = more detailed but slower. 500 is a good starting point.',
+				help: 'Maximum length of the AI\u2019s response, in tokens. Higher values allow longer answers and chart descriptions. The minimum is 800 so the JSON reply is not cut off mid-object.',
 			},
 				el(NumberField, {
 					value: formSettings.max_tokens,
 					placeholder: defaults.max_tokens,
-					min: 50, max: 8192, step: 50,
+					min: 800, max: 8192, step: 100,
 					onChange: function (v) { updateSetting('max_tokens', v); },
 				})
 			),

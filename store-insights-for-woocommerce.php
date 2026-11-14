@@ -4,7 +4,7 @@
  * Plugin Name: Store Insights for WooCommerce
  * Plugin URI:  https://github.com/roypr/store-insights-for-woocommerce
  * Description: Natural language to SQL query tool for WooCommerce. Uses your own AI provider key (OpenAI, Claude, OpenRouter, DeepSeek, Groq, Mistral, xAI, or any OpenAI-compatible endpoint) to convert plain English questions into SQL queries against WooCommerce data.
- * Version:     3.2.0
+ * Version:     3.2.1
  * Author:      Roy Parthapratim
  * Author URI:  https://github.com/roypr
  * Text Domain: store-insights-for-woocommerce
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin constants.
-define( 'SILC_WIA_VERSION', '3.2.0' );
+define( 'SILC_WIA_VERSION', '3.2.1' );
 define( 'SILC_WIA_PATH', plugin_dir_path( __FILE__ ) );
 define( 'SILC_WIA_URL', plugin_dir_url( __FILE__ ) );
 define( 'SILC_WIA_BASENAME', plugin_basename( __FILE__ ) );
@@ -43,10 +43,14 @@ add_action( 'plugins_loaded', function () {
 	// Load required files.
 	require_once SILC_WIA_PATH . 'includes/class-woo-schema.php';
 	require_once SILC_WIA_PATH . 'includes/class-api.php';
+	require_once SILC_WIA_PATH . 'includes/class-storage.php';
 	require_once SILC_WIA_PATH . 'includes/class-admin.php';
 	require_once SILC_WIA_PATH . 'includes/class-ajax.php';
 	require_once SILC_WIA_PATH . 'includes/class-insight-renderer.php';
 	require_once SILC_WIA_PATH . 'includes/class-insights.php';
+
+	// One-time storage layout upgrade (no-op after the first request).
+	SILC_WIA_Storage::maybe_migrate();
 
 	// Initialize.
 	SILC_WIA_Admin::init();
