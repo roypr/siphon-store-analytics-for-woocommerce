@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Plugin Name: Store Insights with AI Lite
- * Plugin URI:  https://github.com/roypr/siphon-store-insight-lite
+ * Plugin Name: Store Insights for WooCommerce
+ * Plugin URI:  https://github.com/roypr/store-insights-for-woocommerce
  * Description: Natural language to SQL query tool for WooCommerce. Uses any OpenAI-compatible API (BYOK) to convert plain English questions into SQL queries against WooCommerce data.
  * Version:     3.1.0
  * Author:      Roy Parthapratim
  * Author URI:  https://github.com/roypr
- * Text Domain: siphon-store-insight-lite
+ * Text Domain: store-insights-for-woocommerce
  * Requires PHP: 7.4
  * Requires at least: 6.2
  * WC requires at least: 8.0
@@ -34,7 +34,7 @@ add_action( 'plugins_loaded', function () {
 	// Ensure WooCommerce is active.
 	if ( ! class_exists( 'WooCommerce' ) ) {
 		add_action( 'admin_notices', function () {
-			$message = __( 'Store Insights with AI Lite requires WooCommerce to be installed and activated.', 'siphon-store-insight-lite' );
+			$message = __( 'Store Insights for WooCommerce requires WooCommerce to be installed and activated.', 'store-insights-for-woocommerce' );
 			printf( '<div class="notice notice-warning"><p>%s</p></div>', esc_html( $message ) );
 		} );
 		return;
@@ -59,12 +59,12 @@ add_action( 'plugins_loaded', function () {
 register_activation_hook( __FILE__, function () {
 	if ( version_compare( PHP_VERSION, '7.4', '<' ) ) {
 		deactivate_plugins( plugin_basename( __FILE__ ) );
-		wp_die( esc_html__( 'Store Insights with AI Lite requires PHP 7.4 or higher.', 'siphon-store-insight-lite' ) );
+		wp_die( esc_html__( 'Store Insights for WooCommerce requires PHP 7.4 or higher.', 'store-insights-for-woocommerce' ) );
 	}
 
 	if ( ! class_exists( 'WooCommerce' ) ) {
 		deactivate_plugins( plugin_basename( __FILE__ ) );
-		wp_die( esc_html__( 'Store Insights with AI Lite requires WooCommerce to be installed.', 'siphon-store-insight-lite' ) );
+		wp_die( esc_html__( 'Store Insights for WooCommerce requires WooCommerce to be installed.', 'store-insights-for-woocommerce' ) );
 	}
 } );
 
@@ -74,8 +74,8 @@ register_activation_hook( __FILE__, function () {
 add_filter( 'plugin_action_links_' . SILC_WIA_BASENAME, function ( $links ) {
 	$dashboard_link = sprintf(
 		'<a href="%s">%s</a>',
-		esc_url( admin_url( 'admin.php?page=siphon-store-insight-lite' ) ),
-		esc_html__( 'Dashboard', 'siphon-store-insight-lite' )
+		esc_url( admin_url( 'admin.php?page=store-insights-for-woocommerce' ) ),
+		esc_html__( 'Dashboard', 'store-insights-for-woocommerce' )
 	);
 	array_unshift( $links, $dashboard_link );
 

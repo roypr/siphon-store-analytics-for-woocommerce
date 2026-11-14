@@ -1,5 +1,5 @@
 /**
- * Store Insights with AI Lite — Walkthrough / Onboarding Tour
+ * Store Insights for WooCommerce — Walkthrough / Onboarding Tour
  *
  * A simple guided tour that highlights key UI elements for first-time users.
  * Uses localStorage to remember dismissal. No external dependencies.

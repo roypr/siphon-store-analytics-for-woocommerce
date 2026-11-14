@@ -99,7 +99,7 @@ class SILC_WIA_Insights {
 				'success' => false,
 				'error'   => sprintf(
 					/* translators: %s: database error */
-					__( 'Query error: %s', 'siphon-store-insight-lite' ),
+					__( 'Query error: %s', 'store-insights-for-woocommerce' ),
 					$execution['error']
 				),
 				'type' => 'error',
@@ -153,13 +153,13 @@ class SILC_WIA_Insights {
 	public static function get_error_message( string $error_code ): string {
 		switch ( $error_code ) {
 			case 'FORBIDDEN':
-				return __( 'This action is not allowed. I can only answer questions about your store data — I cannot modify or delete anything.', 'siphon-store-insight-lite' );
+				return __( 'This action is not allowed. I can only answer questions about your store data — I cannot modify or delete anything.', 'store-insights-for-woocommerce' );
 			case 'OUT_OF_SCOPE':
-				return __( 'I can only help with WooCommerce store questions. Try asking about sales, products, orders, or customers.', 'siphon-store-insight-lite' );
+				return __( 'I can only help with WooCommerce store questions. Try asking about sales, products, orders, or customers.', 'store-insights-for-woocommerce' );
 			case 'NOT_WOOCOMMERCE':
-				return __( 'I only work with WooCommerce store data. That request involves non-store content I cannot access.', 'siphon-store-insight-lite' );
+				return __( 'I only work with WooCommerce store data. That request involves non-store content I cannot access.', 'store-insights-for-woocommerce' );
 			default:
-				return __( 'Unable to process this request.', 'siphon-store-insight-lite' );
+				return __( 'Unable to process this request.', 'store-insights-for-woocommerce' );
 		}
 	}
 
@@ -173,12 +173,12 @@ class SILC_WIA_Insights {
 	 * @return array
 	 */
 	private static function build_empty_response( string $question, string $sql, string $type, float $sql_time ): array {
-		$empty_message = __( 'No results found.', 'siphon-store-insight-lite' );
+		$empty_message = __( 'No results found.', 'store-insights-for-woocommerce' );
 
 		if ( preg_match( '/last\s+(week|month|year|7\s*days|30\s*days)/i', $question ) ) {
-			$empty_message = __( 'No data found for the specified period.', 'siphon-store-insight-lite' );
+			$empty_message = __( 'No data found for the specified period.', 'store-insights-for-woocommerce' );
 		} elseif ( preg_match( '/pending|cancelled|refunded|failed/i', $question ) ) {
-			$empty_message = __( 'No orders found with that status.', 'siphon-store-insight-lite' );
+			$empty_message = __( 'No orders found with that status.', 'store-insights-for-woocommerce' );
 		}
 
 		return array(
@@ -343,7 +343,7 @@ class SILC_WIA_Insights {
 			case 'chart':
 				$config['chart_config'] = array(
 					'chart_type' => 'bar',
-					'title'      => __( 'Results', 'siphon-store-insight-lite' ),
+					'title'      => __( 'Results', 'store-insights-for-woocommerce' ),
 					'labels'     => array(),
 					'datasets'   => array(),
 				);
@@ -424,7 +424,7 @@ class SILC_WIA_Insights {
 				'success' => false,
 				'error'   => sprintf(
 					/* translators: %s: database error */
-					__( 'Query error: %s', 'siphon-store-insight-lite' ),
+					__( 'Query error: %s', 'store-insights-for-woocommerce' ),
 					$execution['error']
 				),
 				'type' => 'error',
@@ -446,7 +446,7 @@ class SILC_WIA_Insights {
 				'sql_time_ms'   => $sql_time,
 				'rows_returned' => 0,
 				'empty'         => true,
-				'empty_message' => __( 'No results found.', 'siphon-store-insight-lite' ),
+				'empty_message' => __( 'No results found.', 'store-insights-for-woocommerce' ),
 				'columns'       => array(),
 				'chart_config'  => null,
 				'list_data'     => null,

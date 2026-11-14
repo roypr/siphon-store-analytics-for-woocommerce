@@ -1,5 +1,5 @@
 /**
- * Store Insights with AI Lite — Sidebar component
+ * Store Insights for WooCommerce — Sidebar component
  *
  * @package SILC_WooInsight_AI
  */

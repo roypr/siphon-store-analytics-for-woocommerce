@@ -1,4 +1,4 @@
-=== Store Insights with AI Lite ===
+=== Store Insights for WooCommerce ===
 Contributors: siphontech
 Tags: woocommerce, analytics, reports, ai, charts
 Requires at least: 6.2
@@ -14,7 +14,7 @@ Ask plain-English questions about your WooCommerce store and get instant charts,
 
 == Description ==
 
-**Store Insights with AI Lite** turns natural language into data visualizations. Type a question like _"What were my best selling products last month?"_ or _"Show me pending orders"_ and get back beautiful charts, sortable lists, and precise answers — all pulled directly from your WooCommerce database.
+**Store Insights for WooCommerce** turns natural language into data visualizations. Type a question like _"What were my best selling products last month?"_ or _"Show me pending orders"_ and get back beautiful charts, sortable lists, and precise answers — all pulled directly from your WooCommerce database.
 
 = Three Pillars That Set It Apart =
 
@@ -97,9 +97,9 @@ Categories include:
 
 == Installation ==
 
-1. Upload the `siphon-store-insight-lite` folder to `/wp-content/plugins/` or install via the WordPress plugin directory.
+1. Upload the `store-insights-for-woocommerce` folder to `/wp-content/plugins/` or install via the WordPress plugin directory.
 2. Activate the plugin through the 'Plugins' menu.
-3. Navigate to **WooCommerce → Store Insights with AI Lite**.
+3. Navigate to **WooCommerce → Store Insights**.
 4. Open the ⚙️ **Settings** panel in the sidebar.
 5. Enter your API URL and API Key (or skip — the built-in Library works without an API).
 6. Start asking questions or browse the Library.
@@ -147,6 +147,9 @@ Results are cached (configurable TTL, default 1 hour) to avoid redundant API cal
 * 🧹 Removed debug logging that wrote prompts and full API responses to the PHP error log
 * 🧹 Removed dead code and aligned capability checks with the dashboard menu
 * 📝 Readme wording now describes the data flow factually
+
+= 3.1.0 =
+* Identity change — Plugin identity changed from Store Insights with AI Lite to Store Insights for WooCommerce. Change made to comply with woocommerce and wp branding guideline.
 
 = 3.0.0 =
 * Identity change — Plugin identity changed from WooInsight AI to Store Insights with AI Lite. Change made to comply with woocommerce branding guideline.

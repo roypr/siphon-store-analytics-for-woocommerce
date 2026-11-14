@@ -1,5 +1,7 @@
 All changes are in and verified. Summary:
 
+### Renaming completed
+
 ## What changed
 
 **Update mechanism (Blocker 2)**

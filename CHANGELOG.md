@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Store Insights with AI Lite will be documented in this file.
+All notable changes to Store Insights for WooCommerce will be documented in this file.
 
 ## [3.1.0] — Nov 2026
 
@@ -25,6 +25,9 @@ All notable changes to Store Insights with AI Lite will be documented in this fi
 
 ### Added
 - `.distignore` and `npm run dist` for building the WordPress.org distribution folder.
+
+## [3.1.0] - Nov 2026
+- **Identity change** — Plugin identity changed from Store Insights with AI Lite to Store Insights for WooCommerce. Change made to comply with woocommerce and wp branding guideline.
 
 ## [3.0.0] — Nov 2026
 - **Identity change** — Plugin identity changed from WooInsight AI to Store Insights with AI Lite. Change made to comply with woocommerce branding guideline.

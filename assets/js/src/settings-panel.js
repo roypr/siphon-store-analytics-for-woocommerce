@@ -1,5 +1,5 @@
 /**
- * Store Insights with AI Lite — Settings panel renderer
+ * Store Insights for WooCommerce — Settings panel renderer
  *
  * @package SILC_WooInsight_AI
  */

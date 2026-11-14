@@ -61,7 +61,7 @@ class SILC_WIA_SQL_Validator {
 		$sql = trim( $sql );
 
 		if ( empty( $sql ) ) {
-			$result['error'] = __( 'Empty SQL query.', 'siphon-store-insight-lite' );
+			$result['error'] = __( 'Empty SQL query.', 'store-insights-for-woocommerce' );
 			return $result;
 		}
 
@@ -73,7 +73,7 @@ class SILC_WIA_SQL_Validator {
 
 		// 1. Must start with SELECT or WITH (CTE).
 		if ( ! preg_match( '/^\s*(SELECT|WITH)\b/i', $sql ) ) {
-			$result['error'] = __( 'Only SELECT and WITH (CTE) queries are allowed.', 'siphon-store-insight-lite' );
+			$result['error'] = __( 'Only SELECT and WITH (CTE) queries are allowed.', 'store-insights-for-woocommerce' );
 			return $result;
 		}
 		// 2. Block forbidden keywords.
@@ -90,7 +90,7 @@ class SILC_WIA_SQL_Validator {
 			if ( $found ) {
 				$result['error'] = sprintf(
 					/* translators: %s: forbidden keyword */
-					__( 'Query contains forbidden keyword: %s', 'siphon-store-insight-lite' ),
+					__( 'Query contains forbidden keyword: %s', 'store-insights-for-woocommerce' ),
 					$keyword
 				);
 				return $result;
@@ -104,7 +104,7 @@ class SILC_WIA_SQL_Validator {
 		$stripped = preg_replace( "/'[^']*'/", '', $sql );
 		$stripped = preg_replace( '/"[^"]*"/', '', $stripped );
 		if ( substr_count( $stripped, ';' ) > 0 ) {
-			$result['error'] = __( 'Multi-statement queries are not allowed.', 'siphon-store-insight-lite' );
+			$result['error'] = __( 'Multi-statement queries are not allowed.', 'store-insights-for-woocommerce' );
 			return $result;
 		}
 
@@ -117,7 +117,7 @@ class SILC_WIA_SQL_Validator {
 
 		// 5. Check for suspicious patterns (hex, eval, etc.).
 		if ( self::has_suspicious_patterns( $sql ) ) {
-			$result['error'] = __( 'Query contains suspicious patterns.', 'siphon-store-insight-lite' );
+			$result['error'] = __( 'Query contains suspicious patterns.', 'store-insights-for-woocommerce' );
 			return $result;
 		}
 
@@ -264,7 +264,7 @@ class SILC_WIA_SQL_Validator {
 					'valid' => false,
 					'error' => sprintf(
 						/* translators: %s: table name */
-						__( 'Unauthorized table reference: %s', 'siphon-store-insight-lite' ),
+						__( 'Unauthorized table reference: %s', 'store-insights-for-woocommerce' ),
 						$tbl
 					),
 				);

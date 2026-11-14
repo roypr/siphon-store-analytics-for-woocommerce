@@ -1,5 +1,5 @@
 /**
- * Store Insights with AI Lite — Result renderers (chart, list, answer)
+ * Store Insights for WooCommerce — Result renderers (chart, list, answer)
  *
  * @package SILC_WooInsight_AI
  */

@@ -1,5 +1,5 @@
 /**
- * Store Insights with AI Lite — Utility functions and constants
+ * Store Insights for WooCommerce — Utility functions and constants
  *
  * @package SILC_WooInsight_AI
  */

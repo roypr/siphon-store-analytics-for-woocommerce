@@ -48,10 +48,10 @@ class SILC_WIA_Admin {
 	public static function add_menu_pages(): void {
 		self::$page_hook = add_submenu_page(
 			'woocommerce',
-			__( 'Store Insights with AI Lite', 'siphon-store-insight-lite' ),
-			__( 'Store Insights Lite', 'siphon-store-insight-lite' ),
+			__( 'Store Insights for WooCommerce', 'store-insights-for-woocommerce' ),
+			__( 'Store Insights', 'store-insights-for-woocommerce' ),
 			'manage_woocommerce',
-			'siphon-store-insight-lite',
+			'store-insights-for-woocommerce',
 			array( __CLASS__, 'render_page' )
 		);
 	}
@@ -89,16 +89,16 @@ class SILC_WIA_Admin {
 		}
 
 		$content = '<p class="privacy-policy-tutorial">'
-			. esc_html__( 'Suggested text: When you ask a question, the following is sent to the AI provider you configured under WooCommerce &rarr; Store Insights Lite &rarr; Settings:', 'siphon-store-insight-lite' )
+			. esc_html__( 'Suggested text: When you ask a question, the following is sent to the AI provider you configured under WooCommerce &rarr; Store Insights &rarr; Settings:', 'store-insights-for-woocommerce' )
 			. '</p><ul>'
-			. '<li>' . esc_html__( 'Your question, in plain text.', 'siphon-store-insight-lite' ) . '</li>'
-			. '<li>' . esc_html__( 'Database schema metadata only: table names and column names.', 'siphon-store-insight-lite' ) . '</li>'
-			. '<li>' . esc_html__( 'Your API key, sent as an authorization header so the provider can bill your account.', 'siphon-store-insight-lite' ) . '</li>'
+			. '<li>' . esc_html__( 'Your question, in plain text.', 'store-insights-for-woocommerce' ) . '</li>'
+			. '<li>' . esc_html__( 'Database schema metadata only: table names and column names.', 'store-insights-for-woocommerce' ) . '</li>'
+			. '<li>' . esc_html__( 'Your API key, sent as an authorization header so the provider can bill your account.', 'store-insights-for-woocommerce' ) . '</li>'
 			. '</ul><p class="privacy-policy-tutorial">'
-			. esc_html__( 'No customer, order, product, or payment records are transmitted. Generated queries run against this site\'s own database. Insights you generate are stored in the site database and are removed when the plugin is deleted.', 'siphon-store-insight-lite' )
+			. esc_html__( 'No customer, order, product, or payment records are transmitted. Generated queries run against this site\'s own database. Insights you generate are stored in the site database and are removed when the plugin is deleted.', 'store-insights-for-woocommerce' )
 			. '</p>';
 
-		wp_add_privacy_policy_content( 'Store Insights with AI Lite', wp_kses_post( $content ) );
+		wp_add_privacy_policy_content( 'Store Insights for WooCommerce', wp_kses_post( $content ) );
 	}
 
 	/**
@@ -146,7 +146,7 @@ class SILC_WIA_Admin {
 	public static function render_page(): void {
 		?>
 		<div class="wrap silc-wia-wrap">
-			<h1 class="screen-reader-text"><?php esc_html_e( 'Store Insights with AI Lite', 'siphon-store-insight-lite' ); ?></h1>
+			<h1 class="screen-reader-text"><?php esc_html_e( 'Store Insights for WooCommerce', 'store-insights-for-woocommerce' ); ?></h1>
 			<div id="silc-wia-dashboard"></div>
 		</div>
 		<?php
@@ -157,14 +157,14 @@ class SILC_WIA_Admin {
 	 */
 	public static function handle_test_api(): void {
 		if ( ! check_ajax_referer( SILC_WIA_Ajax::NONCE_ACTION, 'nonce', false ) ) {
-			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'siphon-store-insight-lite' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'store-insights-for-woocommerce' ) ) );
 			return;
 		}
 
 		// Same capability as the menu page and every AJAX endpoint, so shop
 		// managers who can open the dashboard can also use its controls.
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'siphon-store-insight-lite' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'store-insights-for-woocommerce' ) ) );
 			return;
 		}
 
@@ -183,21 +183,21 @@ class SILC_WIA_Admin {
 	 */
 	public static function handle_save_settings(): void {
 		if ( ! check_ajax_referer( SILC_WIA_Ajax::NONCE_ACTION, 'nonce', false ) ) {
-			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'siphon-store-insight-lite' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'store-insights-for-woocommerce' ) ) );
 			return;
 		}
 
 		// Same capability as the menu page, so the Save button never fails for
 		// a shop manager who was allowed to open the dashboard.
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'siphon-store-insight-lite' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'store-insights-for-woocommerce' ) ) );
 			return;
 		}
 
 		$input = isset( $_POST['settings'] ) ? json_decode( wp_unslash( $_POST['settings'] ), true ) : array();
 
 		if ( ! is_array( $input ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid settings data.', 'siphon-store-insight-lite' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid settings data.', 'store-insights-for-woocommerce' ) ) );
 			return;
 		}
 
@@ -205,7 +205,7 @@ class SILC_WIA_Admin {
 		update_option( self::SETTINGS_OPTION, $sanitized );
 
 		wp_send_json_success( array(
-			'message'          => __( 'Settings saved.', 'siphon-store-insight-lite' ),
+			'message'          => __( 'Settings saved.', 'store-insights-for-woocommerce' ),
 			'has_api_key'      => ! empty( $sanitized['api_key'] ),
 			'is_reasoning'     => SILC_WIA_API::is_reasoning_model( $sanitized['model'] ?? '' ),
 		) );
@@ -304,38 +304,38 @@ class SILC_WIA_Admin {
 				'cache_ttl'   => SILC_WIA_API::DEFAULT_CACHE_TTL,
 			),
 			'l10n' => array(
-				'askQuestion'        => __( 'Ask anything about your WooCommerce store...', 'siphon-store-insight-lite' ),
-				'getInsight'         => __( 'Get AI Insight', 'siphon-store-insight-lite' ),
-				'generatingInsight'  => __( 'Generating insight...', 'siphon-store-insight-lite' ),
-				'enterQuestion'      => __( 'Enter your question in plain English', 'siphon-store-insight-lite' ),
-				'results'            => __( 'Results', 'siphon-store-insight-lite' ),
-				'noResults'          => __( 'No results found.', 'siphon-store-insight-lite' ),
-				'errorOccurred'      => __( 'Something went wrong:', 'siphon-store-insight-lite' ),
-				'apiNotConfigured'   => __( 'API not configured', 'siphon-store-insight-lite' ),
-				'apiReady'           => __( 'AI Ready', 'siphon-store-insight-lite' ),
-				'tryAsking'          => __( 'Try asking:', 'siphon-store-insight-lite' ),
-				'clearHistory'       => __( 'Clear', 'siphon-store-insight-lite' ),
-				'noHistory'          => __( 'No past insights yet.', 'siphon-store-insight-lite' ),
-				'openInNewTab'       => __( 'Open in new tab', 'siphon-store-insight-lite' ),
-				'noInsightHistory'   => __( 'No insight history yet.', 'siphon-store-insight-lite' ),
-				'save'               => __( 'Save Settings', 'siphon-store-insight-lite' ),
-				'saving'             => __( 'Saving...', 'siphon-store-insight-lite' ),
-				'saved'              => __( 'Settings saved!', 'siphon-store-insight-lite' ),
-				'testConnection'     => __( 'Test Connection', 'siphon-store-insight-lite' ),
-				'testing'            => __( 'Testing...', 'siphon-store-insight-lite' ),
-				'connectionOk'       => __( 'Connection successful!', 'siphon-store-insight-lite' ),
-				'connectionFail'     => __( 'Connection failed.', 'siphon-store-insight-lite' ),
-				'settingsApiUrl'     => __( 'API URL', 'siphon-store-insight-lite' ),
-				'settingsApiKey'     => __( 'API Key', 'siphon-store-insight-lite' ),
-				'settingsModel'      => __( 'Model', 'siphon-store-insight-lite' ),
-				'settingsMaxTokens'  => __( 'Max Tokens', 'siphon-store-insight-lite' ),
-				'settingsTemp'       => __( 'Temperature', 'siphon-store-insight-lite' ),
-				'settingsCache'      => __( 'Cache Duration', 'siphon-store-insight-lite' ),
-				'sqlDetails'         => __( 'SQL & Details', 'siphon-store-insight-lite' ),
-				'history'            => __( 'History', 'siphon-store-insight-lite' ),
-				'library'            => __( 'Library', 'siphon-store-insight-lite' ),
-				'settings'           => __( 'Settings', 'siphon-store-insight-lite' ),
-				'refresh'            => __( 'Refresh', 'siphon-store-insight-lite' ),
+				'askQuestion'        => __( 'Ask anything about your WooCommerce store...', 'store-insights-for-woocommerce' ),
+				'getInsight'         => __( 'Get AI Insight', 'store-insights-for-woocommerce' ),
+				'generatingInsight'  => __( 'Generating insight...', 'store-insights-for-woocommerce' ),
+				'enterQuestion'      => __( 'Enter your question in plain English', 'store-insights-for-woocommerce' ),
+				'results'            => __( 'Results', 'store-insights-for-woocommerce' ),
+				'noResults'          => __( 'No results found.', 'store-insights-for-woocommerce' ),
+				'errorOccurred'      => __( 'Something went wrong:', 'store-insights-for-woocommerce' ),
+				'apiNotConfigured'   => __( 'API not configured', 'store-insights-for-woocommerce' ),
+				'apiReady'           => __( 'AI Ready', 'store-insights-for-woocommerce' ),
+				'tryAsking'          => __( 'Try asking:', 'store-insights-for-woocommerce' ),
+				'clearHistory'       => __( 'Clear', 'store-insights-for-woocommerce' ),
+				'noHistory'          => __( 'No past insights yet.', 'store-insights-for-woocommerce' ),
+				'openInNewTab'       => __( 'Open in new tab', 'store-insights-for-woocommerce' ),
+				'noInsightHistory'   => __( 'No insight history yet.', 'store-insights-for-woocommerce' ),
+				'save'               => __( 'Save Settings', 'store-insights-for-woocommerce' ),
+				'saving'             => __( 'Saving...', 'store-insights-for-woocommerce' ),
+				'saved'              => __( 'Settings saved!', 'store-insights-for-woocommerce' ),
+				'testConnection'     => __( 'Test Connection', 'store-insights-for-woocommerce' ),
+				'testing'            => __( 'Testing...', 'store-insights-for-woocommerce' ),
+				'connectionOk'       => __( 'Connection successful!', 'store-insights-for-woocommerce' ),
+				'connectionFail'     => __( 'Connection failed.', 'store-insights-for-woocommerce' ),
+				'settingsApiUrl'     => __( 'API URL', 'store-insights-for-woocommerce' ),
+				'settingsApiKey'     => __( 'API Key', 'store-insights-for-woocommerce' ),
+				'settingsModel'      => __( 'Model', 'store-insights-for-woocommerce' ),
+				'settingsMaxTokens'  => __( 'Max Tokens', 'store-insights-for-woocommerce' ),
+				'settingsTemp'       => __( 'Temperature', 'store-insights-for-woocommerce' ),
+				'settingsCache'      => __( 'Cache Duration', 'store-insights-for-woocommerce' ),
+				'sqlDetails'         => __( 'SQL & Details', 'store-insights-for-woocommerce' ),
+				'history'            => __( 'History', 'store-insights-for-woocommerce' ),
+				'library'            => __( 'Library', 'store-insights-for-woocommerce' ),
+				'settings'           => __( 'Settings', 'store-insights-for-woocommerce' ),
+				'refresh'            => __( 'Refresh', 'store-insights-for-woocommerce' ),
 			),
 		) );
 

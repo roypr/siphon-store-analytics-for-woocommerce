@@ -1,5 +1,5 @@
 /**
- * Store Insights with AI Lite - Chart.js Renderer
+ * Store Insights for WooCommerce - Chart.js Renderer
  *
  * Vanilla JS wrapper around Chart.js with proper lifecycle management
  * and rich visual styling.
