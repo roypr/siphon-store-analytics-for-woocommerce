@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-15T07:00:24+01:00\n"
+"POT-Creation-Date: 2026-11-15T07:45:13+01:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: store-insights-for-woocommerce\n"
@@ -71,188 +71,192 @@ msgstr ""
 
 #: includes/class-admin.php:219
 #: includes/class-admin.php:245
-#: includes/class-ajax.php:47
+#: includes/class-ajax.php:67
+#: includes/class-ajax.php:98
+#: includes/class-ajax.php:189
+#: includes/class-ajax.php:207
+#: includes/class-ajax.php:231
 msgid "Security check failed."
 msgstr ""
 
 #: includes/class-admin.php:226
 #: includes/class-admin.php:252
-#: includes/class-ajax.php:52
+#: includes/class-ajax.php:55
 msgid "Insufficient permissions."
 msgstr ""
 
-#: includes/class-admin.php:265
+#: includes/class-admin.php:268
 msgid "Invalid settings data."
 msgstr ""
 
-#: includes/class-admin.php:276
+#: includes/class-admin.php:279
 #: includes/class-api.php:670
 msgid "The API URL must use HTTPS. Plain HTTP is only allowed for local endpoints such as http://localhost:11434/v1."
 msgstr ""
 
-#: includes/class-admin.php:288
+#: includes/class-admin.php:291
 msgid "Settings saved."
 msgstr ""
 
-#: includes/class-admin.php:291
+#: includes/class-admin.php:294
 msgid "Settings saved. The stored API key was removed because the API URL changed — enter a key for the new provider."
 msgstr ""
 
-#: includes/class-admin.php:402
+#: includes/class-admin.php:405
 msgid "Ask anything about your WooCommerce store..."
 msgstr ""
 
-#: includes/class-admin.php:403
+#: includes/class-admin.php:406
 msgid "Get AI Insight"
 msgstr ""
 
-#: includes/class-admin.php:404
+#: includes/class-admin.php:407
 msgid "Generating insight..."
 msgstr ""
 
-#: includes/class-admin.php:405
+#: includes/class-admin.php:408
 msgid "Enter your question in plain English"
 msgstr ""
 
-#: includes/class-admin.php:406
+#: includes/class-admin.php:409
 #: includes/class-insights.php:372
 msgid "Results"
 msgstr ""
 
-#: includes/class-admin.php:407
+#: includes/class-admin.php:410
 #: includes/class-insight-renderer.php:642
 #: includes/class-insights.php:190
 #: includes/class-insights.php:479
 msgid "No results found."
 msgstr ""
 
-#: includes/class-admin.php:408
+#: includes/class-admin.php:411
 msgid "Something went wrong:"
 msgstr ""
 
-#: includes/class-admin.php:409
+#: includes/class-admin.php:412
 msgid "API not configured"
 msgstr ""
 
-#: includes/class-admin.php:410
+#: includes/class-admin.php:413
 msgid "AI Ready"
 msgstr ""
 
-#: includes/class-admin.php:411
+#: includes/class-admin.php:414
 msgid "Try asking:"
 msgstr ""
 
-#: includes/class-admin.php:412
+#: includes/class-admin.php:415
 msgid "Clear"
 msgstr ""
 
-#: includes/class-admin.php:413
+#: includes/class-admin.php:416
 msgid "No past insights yet."
 msgstr ""
 
-#: includes/class-admin.php:414
+#: includes/class-admin.php:417
 msgid "Open in new tab"
 msgstr ""
 
-#: includes/class-admin.php:415
+#: includes/class-admin.php:418
 msgid "No insight history yet."
 msgstr ""
 
-#: includes/class-admin.php:416
+#: includes/class-admin.php:419
 msgid "Save Settings"
 msgstr ""
 
-#: includes/class-admin.php:417
+#: includes/class-admin.php:420
 msgid "Saving..."
 msgstr ""
 
-#: includes/class-admin.php:418
+#: includes/class-admin.php:421
 msgid "Settings saved!"
 msgstr ""
 
-#: includes/class-admin.php:419
+#: includes/class-admin.php:422
 msgid "Test Connection"
 msgstr ""
 
-#: includes/class-admin.php:420
+#: includes/class-admin.php:423
 msgid "Testing..."
 msgstr ""
 
-#: includes/class-admin.php:421
+#: includes/class-admin.php:424
 #: includes/class-api.php:1157
 msgid "Connection successful!"
 msgstr ""
 
-#: includes/class-admin.php:422
+#: includes/class-admin.php:425
 msgid "Connection failed."
 msgstr ""
 
-#: includes/class-admin.php:423
+#: includes/class-admin.php:426
 msgid "API URL"
 msgstr ""
 
-#: includes/class-admin.php:424
+#: includes/class-admin.php:427
 msgid "API Key"
 msgstr ""
 
-#: includes/class-admin.php:425
+#: includes/class-admin.php:428
 msgid "Model"
 msgstr ""
 
-#: includes/class-admin.php:426
+#: includes/class-admin.php:429
 msgid "Max Tokens"
 msgstr ""
 
-#: includes/class-admin.php:427
+#: includes/class-admin.php:430
 msgid "Temperature"
 msgstr ""
 
-#: includes/class-admin.php:428
+#: includes/class-admin.php:431
 msgid "Cache Duration"
 msgstr ""
 
-#: includes/class-admin.php:429
+#: includes/class-admin.php:432
 msgid "SQL & Details"
 msgstr ""
 
-#: includes/class-admin.php:430
+#: includes/class-admin.php:433
 msgid "History"
 msgstr ""
 
-#: includes/class-admin.php:431
+#: includes/class-admin.php:434
 msgid "Library"
 msgstr ""
 
-#: includes/class-admin.php:432
+#: includes/class-admin.php:435
 msgid "Settings"
 msgstr ""
 
-#: includes/class-admin.php:433
+#: includes/class-admin.php:436
 msgid "Refresh"
 msgstr ""
 
-#: includes/class-ajax.php:97
+#: includes/class-ajax.php:110
 msgid "No question provided."
 msgstr ""
 
-#: includes/class-ajax.php:107
+#: includes/class-ajax.php:120
 msgid "Failed to generate insight."
 msgstr ""
 
-#: includes/class-ajax.php:195
+#: includes/class-ajax.php:218
 msgid "Insight history cleared."
 msgstr ""
 
-#: includes/class-ajax.php:223
+#: includes/class-ajax.php:254
 msgid "Invalid result data."
 msgstr ""
 
-#: includes/class-ajax.php:233
-#: includes/class-ajax.php:293
+#: includes/class-ajax.php:264
+#: includes/class-ajax.php:331
 msgid "Failed to execute SQL."
 msgstr ""
 
-#: includes/class-ajax.php:250
+#: includes/class-ajax.php:282
 msgid "No SQL query provided."
 msgstr ""
 
