@@ -633,7 +633,7 @@ class SILC_WIA_Provider_Adapter {
 			return '';
 		}
 
-		$host = function_exists( 'wp_parse_url' ) ? wp_parse_url( $api_url, PHP_URL_HOST ) : parse_url( $api_url, PHP_URL_HOST );
+		$host = wp_parse_url( $api_url, PHP_URL_HOST );
 
 		return is_string( $host ) ? strtolower( $host ) : '';
 	}

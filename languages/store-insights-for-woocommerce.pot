@@ -1,0 +1,731 @@
+# Copyright (C) 2026 Roy Parthapratim
+# This file is distributed under the GPL v2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Store Insights for WooCommerce 3.2.1\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/store-insights-for-woocommerce\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-11-15T07:00:24+01:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: store-insights-for-woocommerce\n"
+
+#. Plugin Name of the plugin
+#: store-insights-for-woocommerce.php
+#: includes/class-admin.php:59
+#: includes/class-admin.php:208
+msgid "Store Insights for WooCommerce"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: store-insights-for-woocommerce.php
+msgid "https://github.com/roypr/store-insights-for-woocommerce"
+msgstr ""
+
+#. Description of the plugin
+#: store-insights-for-woocommerce.php
+msgid "Natural language to SQL query tool for WooCommerce. Uses your own AI provider key (OpenAI, Claude, OpenRouter, DeepSeek, Groq, Mistral, xAI, or any OpenAI-compatible endpoint) to convert plain English questions into SQL queries against WooCommerce data."
+msgstr ""
+
+#. Author of the plugin
+#: store-insights-for-woocommerce.php
+msgid "Roy Parthapratim"
+msgstr ""
+
+#. Author URI of the plugin
+#: store-insights-for-woocommerce.php
+msgid "https://github.com/roypr"
+msgstr ""
+
+#: includes/class-admin.php:60
+msgid "Store Insights"
+msgstr ""
+
+#: includes/class-admin.php:101
+msgid "Suggested text: When you ask a question, the following is sent over HTTPS to the AI provider you configured under WooCommerce &rarr; Store Insights &rarr; Settings:"
+msgstr ""
+
+#: includes/class-admin.php:103
+msgid "Your question, in plain text."
+msgstr ""
+
+#: includes/class-admin.php:104
+msgid "Database schema metadata only: table names and column names."
+msgstr ""
+
+#: includes/class-admin.php:105
+msgid "Your API key, sent as an authorization header so the provider can bill your account."
+msgstr ""
+
+#: includes/class-admin.php:107
+msgid "No customer, order, product, or payment records are transmitted. Generated queries run against this site's own database."
+msgstr ""
+
+#: includes/class-admin.php:109
+msgid "Locally, the plugin keeps the question, the generated query and its display settings so past insights can be re-run; it does not keep the result rows. A generated answer is cached for the duration configured under Cache Duration so the same question does not call the AI twice. All of this data is removed when the plugin is deleted. Password hashes, activation keys and session tokens are never included in the schema sent to the provider and cannot be queried."
+msgstr ""
+
+#: includes/class-admin.php:219
+#: includes/class-admin.php:245
+#: includes/class-ajax.php:47
+msgid "Security check failed."
+msgstr ""
+
+#: includes/class-admin.php:226
+#: includes/class-admin.php:252
+#: includes/class-ajax.php:52
+msgid "Insufficient permissions."
+msgstr ""
+
+#: includes/class-admin.php:265
+msgid "Invalid settings data."
+msgstr ""
+
+#: includes/class-admin.php:276
+#: includes/class-api.php:670
+msgid "The API URL must use HTTPS. Plain HTTP is only allowed for local endpoints such as http://localhost:11434/v1."
+msgstr ""
+
+#: includes/class-admin.php:288
+msgid "Settings saved."
+msgstr ""
+
+#: includes/class-admin.php:291
+msgid "Settings saved. The stored API key was removed because the API URL changed — enter a key for the new provider."
+msgstr ""
+
+#: includes/class-admin.php:402
+msgid "Ask anything about your WooCommerce store..."
+msgstr ""
+
+#: includes/class-admin.php:403
+msgid "Get AI Insight"
+msgstr ""
+
+#: includes/class-admin.php:404
+msgid "Generating insight..."
+msgstr ""
+
+#: includes/class-admin.php:405
+msgid "Enter your question in plain English"
+msgstr ""
+
+#: includes/class-admin.php:406
+#: includes/class-insights.php:372
+msgid "Results"
+msgstr ""
+
+#: includes/class-admin.php:407
+#: includes/class-insight-renderer.php:642
+#: includes/class-insights.php:190
+#: includes/class-insights.php:479
+msgid "No results found."
+msgstr ""
+
+#: includes/class-admin.php:408
+msgid "Something went wrong:"
+msgstr ""
+
+#: includes/class-admin.php:409
+msgid "API not configured"
+msgstr ""
+
+#: includes/class-admin.php:410
+msgid "AI Ready"
+msgstr ""
+
+#: includes/class-admin.php:411
+msgid "Try asking:"
+msgstr ""
+
+#: includes/class-admin.php:412
+msgid "Clear"
+msgstr ""
+
+#: includes/class-admin.php:413
+msgid "No past insights yet."
+msgstr ""
+
+#: includes/class-admin.php:414
+msgid "Open in new tab"
+msgstr ""
+
+#: includes/class-admin.php:415
+msgid "No insight history yet."
+msgstr ""
+
+#: includes/class-admin.php:416
+msgid "Save Settings"
+msgstr ""
+
+#: includes/class-admin.php:417
+msgid "Saving..."
+msgstr ""
+
+#: includes/class-admin.php:418
+msgid "Settings saved!"
+msgstr ""
+
+#: includes/class-admin.php:419
+msgid "Test Connection"
+msgstr ""
+
+#: includes/class-admin.php:420
+msgid "Testing..."
+msgstr ""
+
+#: includes/class-admin.php:421
+#: includes/class-api.php:1157
+msgid "Connection successful!"
+msgstr ""
+
+#: includes/class-admin.php:422
+msgid "Connection failed."
+msgstr ""
+
+#: includes/class-admin.php:423
+msgid "API URL"
+msgstr ""
+
+#: includes/class-admin.php:424
+msgid "API Key"
+msgstr ""
+
+#: includes/class-admin.php:425
+msgid "Model"
+msgstr ""
+
+#: includes/class-admin.php:426
+msgid "Max Tokens"
+msgstr ""
+
+#: includes/class-admin.php:427
+msgid "Temperature"
+msgstr ""
+
+#: includes/class-admin.php:428
+msgid "Cache Duration"
+msgstr ""
+
+#: includes/class-admin.php:429
+msgid "SQL & Details"
+msgstr ""
+
+#: includes/class-admin.php:430
+msgid "History"
+msgstr ""
+
+#: includes/class-admin.php:431
+msgid "Library"
+msgstr ""
+
+#: includes/class-admin.php:432
+msgid "Settings"
+msgstr ""
+
+#: includes/class-admin.php:433
+msgid "Refresh"
+msgstr ""
+
+#: includes/class-ajax.php:97
+msgid "No question provided."
+msgstr ""
+
+#: includes/class-ajax.php:107
+msgid "Failed to generate insight."
+msgstr ""
+
+#: includes/class-ajax.php:195
+msgid "Insight history cleared."
+msgstr ""
+
+#: includes/class-ajax.php:223
+msgid "Invalid result data."
+msgstr ""
+
+#: includes/class-ajax.php:233
+#: includes/class-ajax.php:293
+msgid "Failed to execute SQL."
+msgstr ""
+
+#: includes/class-ajax.php:250
+msgid "No SQL query provided."
+msgstr ""
+
+#: includes/class-api.php:630
+#: includes/class-api.php:767
+msgid "API key is not configured. Please go to Settings and add your API key."
+msgstr ""
+
+#. translators: %s: error message
+#: includes/class-api.php:707
+#, php-format
+msgid "API request failed: %s"
+msgstr ""
+
+#. translators: %d: HTTP status code
+#: includes/class-api.php:723
+#, php-format
+msgid "API returned HTTP %d"
+msgstr ""
+
+#: includes/class-api.php:822
+msgid "API returned an empty response."
+msgstr ""
+
+#: includes/class-api.php:861
+msgid "Could not parse insight JSON from the API response."
+msgstr ""
+
+#: includes/class-api.php:1118
+msgid "No API key configured."
+msgstr ""
+
+#. translators: 1: provider name, 2: API error message
+#: includes/class-api.php:1151
+#, php-format
+msgid "%1$s: %2$s"
+msgstr ""
+
+#: includes/class-insight-renderer.php:645
+#: includes/class-insights.php:193
+msgid "No data found for the specified period."
+msgstr ""
+
+#: includes/class-insight-renderer.php:647
+#: includes/class-insights.php:195
+msgid "No orders found with that status."
+msgstr ""
+
+#: includes/class-insight-renderer.php:651
+msgid "No data"
+msgstr ""
+
+#. translators: %s: database error
+#: includes/class-insights.php:105
+#: includes/class-insights.php:457
+#, php-format
+msgid "Query error: %s"
+msgstr ""
+
+#: includes/class-insights.php:170
+msgid "This action is not allowed. I can only answer questions about your store data — I cannot modify or delete anything."
+msgstr ""
+
+#: includes/class-insights.php:172
+msgid "I can only help with WooCommerce store questions. Try asking about sales, products, orders, or customers."
+msgstr ""
+
+#: includes/class-insights.php:174
+msgid "I only work with WooCommerce store data. That request involves non-store content I cannot access."
+msgstr ""
+
+#: includes/class-insights.php:176
+msgid "Unable to process this request."
+msgstr ""
+
+#: includes/class-sql-validator.php:93
+msgid "Empty SQL query."
+msgstr ""
+
+#: includes/class-sql-validator.php:105
+msgid "Only SELECT and WITH (CTE) queries are allowed."
+msgstr ""
+
+#. translators: %s: forbidden keyword
+#: includes/class-sql-validator.php:131
+#, php-format
+msgid "Query contains forbidden keyword: %s"
+msgstr ""
+
+#. translators: %s: protected column name
+#: includes/class-sql-validator.php:153
+#, php-format
+msgid "Query references a protected column: %s"
+msgstr ""
+
+#: includes/class-sql-validator.php:167
+msgid "Multi-statement queries are not allowed."
+msgstr ""
+
+#: includes/class-sql-validator.php:180
+msgid "Query contains suspicious patterns."
+msgstr ""
+
+#. translators: %s: table name
+#: includes/class-sql-validator.php:327
+#, php-format
+msgid "Unauthorized table reference: %s"
+msgstr ""
+
+#: includes/class-woo-schema.php:512
+msgid "Simple or variable product"
+msgstr ""
+
+#: includes/class-woo-schema.php:513
+msgid "Product variation"
+msgstr ""
+
+#: includes/class-woo-schema.php:514
+msgid "Order (legacy post type)"
+msgstr ""
+
+#: includes/class-woo-schema.php:515
+msgid "Order refund"
+msgstr ""
+
+#: includes/class-woo-schema.php:516
+msgid "Coupon / discount code"
+msgstr ""
+
+#: includes/class-woo-schema.php:517
+msgid "WooCommerce subscription"
+msgstr ""
+
+#: includes/class-woo-schema.php:538
+msgid "Simple physical or digital product"
+msgstr ""
+
+#: includes/class-woo-schema.php:539
+msgid "Grouped product (collection of simples)"
+msgstr ""
+
+#: includes/class-woo-schema.php:540
+msgid "External / affiliate product"
+msgstr ""
+
+#: includes/class-woo-schema.php:541
+msgid "Variable product (has variations)"
+msgstr ""
+
+#: includes/class-woo-schema.php:557
+msgid "Current product price"
+msgstr ""
+
+#: includes/class-woo-schema.php:558
+msgid "Regular product price"
+msgstr ""
+
+#: includes/class-woo-schema.php:559
+msgid "Sale price"
+msgstr ""
+
+#: includes/class-woo-schema.php:560
+msgid "Stock keeping unit"
+msgstr ""
+
+#: includes/class-woo-schema.php:561
+msgid "Stock quantity"
+msgstr ""
+
+#: includes/class-woo-schema.php:562
+msgid "Stock status (instock/outofstock)"
+msgstr ""
+
+#: includes/class-woo-schema.php:563
+msgid "Whether stock is managed"
+msgstr ""
+
+#: includes/class-woo-schema.php:564
+msgid "Product weight"
+msgstr ""
+
+#: includes/class-woo-schema.php:565
+msgid "Product length"
+msgstr ""
+
+#: includes/class-woo-schema.php:566
+msgid "Product width"
+msgstr ""
+
+#: includes/class-woo-schema.php:567
+msgid "Product height"
+msgstr ""
+
+#: includes/class-woo-schema.php:568
+msgid "Tax status"
+msgstr ""
+
+#: includes/class-woo-schema.php:569
+msgid "Tax class"
+msgstr ""
+
+#: includes/class-woo-schema.php:570
+msgid "Featured product flag"
+msgstr ""
+
+#: includes/class-woo-schema.php:571
+msgid "Catalog visibility"
+msgstr ""
+
+#: includes/class-woo-schema.php:572
+msgid "Featured image attachment ID"
+msgstr ""
+
+#: includes/class-woo-schema.php:573
+msgid "Serialized product attributes"
+msgstr ""
+
+#: includes/class-woo-schema.php:574
+msgid "Product version"
+msgstr ""
+
+#: includes/class-woo-schema.php:575
+msgid "Virtual product flag"
+msgstr ""
+
+#: includes/class-woo-schema.php:576
+msgid "Downloadable product flag"
+msgstr ""
+
+#: includes/class-woo-schema.php:577
+msgid "Download limit"
+msgstr ""
+
+#: includes/class-woo-schema.php:578
+msgid "Download expiry days"
+msgstr ""
+
+#: includes/class-woo-schema.php:579
+msgid "Sale start date"
+msgstr ""
+
+#: includes/class-woo-schema.php:580
+msgid "Sale end date"
+msgstr ""
+
+#: includes/class-woo-schema.php:581
+msgid "Average rating"
+msgstr ""
+
+#: includes/class-woo-schema.php:582
+msgid "Rating count"
+msgstr ""
+
+#: includes/class-woo-schema.php:583
+msgid "Review count"
+msgstr ""
+
+#: includes/class-woo-schema.php:586
+msgid "Order total"
+msgstr ""
+
+#: includes/class-woo-schema.php:587
+msgid "Order tax total"
+msgstr ""
+
+#: includes/class-woo-schema.php:588
+msgid "Order shipping total"
+msgstr ""
+
+#: includes/class-woo-schema.php:589
+msgid "Order discount total"
+msgstr ""
+
+#: includes/class-woo-schema.php:590
+msgid "Order currency"
+msgstr ""
+
+#: includes/class-woo-schema.php:591
+msgid "Payment method slug"
+msgstr ""
+
+#: includes/class-woo-schema.php:592
+msgid "Payment method title"
+msgstr ""
+
+#: includes/class-woo-schema.php:593
+msgid "Customer user ID"
+msgstr ""
+
+#: includes/class-woo-schema.php:594
+msgid "Billing first name"
+msgstr ""
+
+#: includes/class-woo-schema.php:595
+msgid "Billing last name"
+msgstr ""
+
+#: includes/class-woo-schema.php:596
+msgid "Billing company"
+msgstr ""
+
+#: includes/class-woo-schema.php:597
+msgid "Billing address line 1"
+msgstr ""
+
+#: includes/class-woo-schema.php:598
+msgid "Billing address line 2"
+msgstr ""
+
+#: includes/class-woo-schema.php:599
+msgid "Billing city"
+msgstr ""
+
+#: includes/class-woo-schema.php:600
+msgid "Billing state"
+msgstr ""
+
+#: includes/class-woo-schema.php:601
+msgid "Billing postcode"
+msgstr ""
+
+#: includes/class-woo-schema.php:602
+msgid "Billing country"
+msgstr ""
+
+#: includes/class-woo-schema.php:603
+msgid "Billing email"
+msgstr ""
+
+#: includes/class-woo-schema.php:604
+msgid "Billing phone"
+msgstr ""
+
+#: includes/class-woo-schema.php:605
+msgid "Shipping first name"
+msgstr ""
+
+#: includes/class-woo-schema.php:606
+msgid "Shipping last name"
+msgstr ""
+
+#: includes/class-woo-schema.php:607
+msgid "Shipping company"
+msgstr ""
+
+#: includes/class-woo-schema.php:608
+msgid "Shipping address line 1"
+msgstr ""
+
+#: includes/class-woo-schema.php:609
+msgid "Shipping address line 2"
+msgstr ""
+
+#: includes/class-woo-schema.php:610
+msgid "Shipping city"
+msgstr ""
+
+#: includes/class-woo-schema.php:611
+msgid "Shipping state"
+msgstr ""
+
+#: includes/class-woo-schema.php:612
+msgid "Shipping postcode"
+msgstr ""
+
+#: includes/class-woo-schema.php:613
+msgid "Shipping country"
+msgstr ""
+
+#: includes/class-woo-schema.php:616
+msgid "Coupon discount type"
+msgstr ""
+
+#: includes/class-woo-schema.php:617
+msgid "Coupon amount"
+msgstr ""
+
+#: includes/class-woo-schema.php:618
+msgid "Coupon minimum spend"
+msgstr ""
+
+#: includes/class-woo-schema.php:619
+msgid "Coupon maximum spend"
+msgstr ""
+
+#: includes/class-woo-schema.php:620
+msgid "Coupon usage count"
+msgstr ""
+
+#: includes/class-woo-schema.php:621
+msgid "Individual use flag"
+msgstr ""
+
+#: includes/class-woo-schema.php:622
+msgid "Free shipping flag"
+msgstr ""
+
+#: includes/class-woo-schema.php:623
+msgid "Coupon expiry date"
+msgstr ""
+
+#: includes/class-woo-schema.php:624
+msgid "Coupon usage limit"
+msgstr ""
+
+#: includes/class-woo-schema.php:625
+msgid "Coupon usage limit per user"
+msgstr ""
+
+#: includes/class-woo-schema.php:640
+msgid "Pending payment"
+msgstr ""
+
+#: includes/class-woo-schema.php:641
+msgid "Processing"
+msgstr ""
+
+#: includes/class-woo-schema.php:642
+msgid "On hold"
+msgstr ""
+
+#: includes/class-woo-schema.php:643
+msgid "Completed"
+msgstr ""
+
+#: includes/class-woo-schema.php:644
+msgid "Cancelled"
+msgstr ""
+
+#: includes/class-woo-schema.php:645
+msgid "Refunded"
+msgstr ""
+
+#: includes/class-woo-schema.php:646
+msgid "Failed"
+msgstr ""
+
+#: includes/class-woo-schema.php:647
+msgid "Draft / abandoned"
+msgstr ""
+
+#: includes/class-woo-schema.php:662
+msgid "Product category"
+msgstr ""
+
+#: includes/class-woo-schema.php:663
+msgid "Product tag"
+msgstr ""
+
+#: includes/class-woo-schema.php:664
+msgid "Product type"
+msgstr ""
+
+#: includes/class-woo-schema.php:665
+msgid "Product visibility"
+msgstr ""
+
+#: includes/class-woo-schema.php:666
+msgid "Product brand (if WooCommerce Brands active)"
+msgstr ""
+
+#: store-insights-for-woocommerce.php:37
+msgid "Store Insights for WooCommerce requires WooCommerce to be installed and activated."
+msgstr ""
+
+#: store-insights-for-woocommerce.php:66
+msgid "Store Insights for WooCommerce requires PHP 7.4 or higher."
+msgstr ""
+
+#: store-insights-for-woocommerce.php:71
+msgid "Store Insights for WooCommerce requires WooCommerce to be installed."
+msgstr ""
+
+#: store-insights-for-woocommerce.php:82
+msgid "Dashboard"
+msgstr ""

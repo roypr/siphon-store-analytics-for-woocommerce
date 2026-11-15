@@ -119,21 +119,26 @@ class SILC_WIA_Admin {
 	 * @return array Sanitized input.
 	 */
 	public static function sanitize_settings( $input ): array {
+		$input   = is_array( $input ) ? $input : array();
 		$current = get_option( self::SETTINGS_OPTION, array() );
 		$current = is_array( $current ) ? $current : array();
 		$output  = array();
 
 		self::$api_key_cleared = false;
 
-		$output['api_url'] = ! empty( $input['api_url'] )
-			? esc_url_raw( untrailingslashit( trim( $input['api_url'] ) ) )
+		$raw_url = trim( self::scalar_string( $input['api_url'] ?? '' ) );
+
+		$output['api_url'] = '' !== $raw_url
+			? esc_url_raw( untrailingslashit( $raw_url ) )
 			: SILC_WIA_API::DEFAULT_API_URL;
 
-		$previous_url = isset( $current['api_url'] ) ? untrailingslashit( (string) $current['api_url'] ) : '';
+		$previous_url = isset( $current['api_url'] ) ? untrailingslashit( self::scalar_string( $current['api_url'] ) ) : '';
 		$url_changed  = '' !== $previous_url && $previous_url !== $output['api_url'];
 
-		if ( ! empty( $input['api_key'] ) ) {
-			$output['api_key'] = sanitize_text_field( $input['api_key'] );
+		$raw_key = self::scalar_string( $input['api_key'] ?? '' );
+
+		if ( '' !== $raw_key ) {
+			$output['api_key'] = sanitize_text_field( $raw_key );
 
 			// A pasted key usually identifies its provider ("sk-ant-…",
 			// "sk-or-…", "gsk_…"). Only the plugin's built-in default endpoint
@@ -147,7 +152,7 @@ class SILC_WIA_Admin {
 			// endpoint stays the same. A key is provider-specific, so keeping
 			// it after a provider switch would only produce a 401 (or send a
 			// credential to an endpoint it was not issued for).
-			$output['api_key'] = $current['api_key'];
+			$output['api_key'] = self::scalar_string( $current['api_key'] );
 		} else {
 			$output['api_key'] = '';
 
@@ -158,25 +163,40 @@ class SILC_WIA_Admin {
 
 		// An empty model field means "use the endpoint's default". Resolved
 		// after the endpoint, because key-based routing can change it.
-		$model = isset( $input['model'] ) ? sanitize_text_field( trim( $input['model'] ) ) : '';
+		$model = sanitize_text_field( trim( self::scalar_string( $input['model'] ?? '' ) ) );
 
 		$output['model'] = '' !== $model
 			? $model
 			: SILC_WIA_API::get_default_model_for_url( $output['api_url'] );
 
 		$output['max_tokens'] = isset( $input['max_tokens'] )
-			? max( SILC_WIA_API::MIN_MAX_TOKENS, min( 8192, intval( $input['max_tokens'] ) ) )
+			? max( SILC_WIA_API::MIN_MAX_TOKENS, min( 8192, intval( self::scalar_string( $input['max_tokens'] ) ) ) )
 			: SILC_WIA_API::DEFAULT_MAX_TOKENS;
 
 		$output['temperature'] = isset( $input['temperature'] )
-			? max( 0, min( 2, floatval( $input['temperature'] ) ) )
+			? max( 0, min( 2, floatval( self::scalar_string( $input['temperature'] ) ) ) )
 			: SILC_WIA_API::DEFAULT_TEMPERATURE;
 
 		$output['cache_ttl'] = isset( $input['cache_ttl'] )
-			? max( 0, min( 604800, intval( $input['cache_ttl'] ) ) )  // 0 to 7 days in seconds.
+			? max( 0, min( 604800, intval( self::scalar_string( $input['cache_ttl'] ) ) ) )  // 0 to 7 days in seconds.
 			: SILC_WIA_API::DEFAULT_CACHE_TTL;
 
 		return $output;
+	}
+
+	/**
+	 * Narrow an arbitrary request value to a string.
+	 *
+	 * Settings arrive as JSON from the dashboard, so a hand-written request can
+	 * put an array or an object where a string is expected. String functions
+	 * throw a TypeError on those under PHP 8, so every value is narrowed here
+	 * before it reaches trim()/intval() or the settings option.
+	 *
+	 * @param mixed $value Raw value.
+	 * @return string The scalar value as a string, or an empty string.
+	 */
+	private static function scalar_string( $value ): string {
+		return is_scalar( $value ) ? (string) $value : '';
 	}
 
 	/**
@@ -233,7 +253,13 @@ class SILC_WIA_Admin {
 			return;
 		}
 
-		$input = isset( $_POST['settings'] ) ? json_decode( wp_unslash( $_POST['settings'] ), true ) : array();
+		// The dashboard posts the settings form as one JSON string, so a request
+		// that sends an array (settings[]=...) never reaches json_decode().
+		$raw_settings = isset( $_POST['settings'] ) && is_string( $_POST['settings'] )
+			? wp_unslash( $_POST['settings'] )
+			: '';
+
+		$input = '' !== $raw_settings ? json_decode( $raw_settings, true ) : null;
 
 		if ( ! is_array( $input ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid settings data.', 'store-insights-for-woocommerce' ) ) );
@@ -242,7 +268,9 @@ class SILC_WIA_Admin {
 
 		// The API key and the prompt travel with every request, so plain HTTP
 		// is refused unless the endpoint is local.
-		if ( ! empty( $input['api_url'] ) && ! SILC_WIA_API::is_allowed_api_url( (string) $input['api_url'] ) ) {
+		$input_api_url = self::scalar_string( $input['api_url'] ?? '' );
+
+		if ( '' !== $input_api_url && ! SILC_WIA_API::is_allowed_api_url( $input_api_url ) ) {
 			wp_send_json_error(
 				array(
 					'message' => __( 'The API URL must use HTTPS. Plain HTTP is only allowed for local endpoints such as http://localhost:11434/v1.', 'store-insights-for-woocommerce' ),

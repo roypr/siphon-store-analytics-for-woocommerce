@@ -222,27 +222,35 @@ class SILC_WIA_Insights {
 	 * @return array
 	 */
 	private static function render_by_type( array $data, array $insight_data, string $type, string $question ): array {
+		// The insight config comes from the AI response or from a stored result
+		// posted by the dashboard, so a key can hold any JSON type. The
+		// renderers take typed arrays, so narrow before handing it over.
 		$response = array(
 			'success' => true,
 			'type'    => $type,
-			'title'   => $insight_data['title'] ?? '',
+			'title'   => is_scalar( $insight_data['title'] ?? null ) ? (string) $insight_data['title'] : '',
 		);
 
 		switch ( $type ) {
 			case 'chart':
-				$chart_config        = $insight_data['chart_config'] ?? array();
+				$chart_config             = is_array( $insight_data['chart_config'] ?? null ) ? $insight_data['chart_config'] : array();
 				$response['chart_config'] = SILC_WIA_Insight_Renderer::prepare_chart_data( $data, $chart_config );
 				$response['list_data']    = null;
 				$response['answer_text']  = null;
 				break;
 
 			case 'list':
-				$list_config = $insight_data['list_config'] ?? array();
-				$link_map    = $list_config['link_columns'] ?? array();
-				$response['list_data']    = SILC_WIA_Insight_Renderer::prepare_list_data( $data, $link_map );
-				$response['list_config']  = array(
-					'title_column'    => $list_config['title_column'] ?? ( ! empty( $data[0] ) ? array_keys( $data[0] )[0] : '' ),
-					'display_columns' => $list_config['display_columns'] ?? ( ! empty( $data[0] ) ? array_keys( $data[0] ) : array() ),
+				$list_config = is_array( $insight_data['list_config'] ?? null ) ? $insight_data['list_config'] : array();
+				$link_map    = is_array( $list_config['link_columns'] ?? null ) ? $list_config['link_columns'] : array();
+
+				$response['list_data']   = SILC_WIA_Insight_Renderer::prepare_list_data( $data, $link_map );
+				$response['list_config'] = array(
+					'title_column'    => is_scalar( $list_config['title_column'] ?? null )
+						? (string) $list_config['title_column']
+						: ( ! empty( $data[0] ) ? array_keys( $data[0] )[0] : '' ),
+					'display_columns' => is_array( $list_config['display_columns'] ?? null )
+						? $list_config['display_columns']
+						: ( ! empty( $data[0] ) ? array_keys( $data[0] ) : array() ),
 				);
 				$response['chart_config'] = null;
 				$response['answer_text']  = null;
@@ -250,8 +258,8 @@ class SILC_WIA_Insights {
 
 			case 'answer':
 			default:
-				$answer_text           = $insight_data['answer_text'] ?? '';
-				$answer_data           = SILC_WIA_Insight_Renderer::prepare_answer_data( $data, $question );
+				$answer_text             = is_scalar( $insight_data['answer_text'] ?? null ) ? (string) $insight_data['answer_text'] : '';
+				$answer_data             = SILC_WIA_Insight_Renderer::prepare_answer_data( $data, $question );
 				$response['answer_text'] = $answer_text ?: $answer_data['formatted'];
 				$response['answer_value'] = $answer_data['value'];
 				$response['answer_label'] = $answer_data['label'];
@@ -412,17 +420,21 @@ class SILC_WIA_Insights {
 		// Support being called with a single array (full stored result).
 		if ( is_array( $sql_or_stored ) ) {
 			$stored_result = $sql_or_stored;
-			$sql           = $stored_result['sql'] ?? '';
-			$type          = $stored_result['type'] ?? 'answer';
+			$sql           = is_scalar( $stored_result['sql'] ?? null ) ? (string) $stored_result['sql'] : '';
+			$type          = is_string( $stored_result['type'] ?? null ) ? $stored_result['type'] : 'answer';
 			$insight_data  = array(
-				'chart_config' => $stored_result['chart_config'] ?? null,
-				'list_config'  => $stored_result['list_config'] ?? null,
-				'answer_text'  => $stored_result['answer_text'] ?? null,
-				'title'        => $stored_result['title'] ?? '',
+				'chart_config' => is_array( $stored_result['chart_config'] ?? null ) ? $stored_result['chart_config'] : null,
+				'list_config'  => is_array( $stored_result['list_config'] ?? null ) ? $stored_result['list_config'] : null,
+				'answer_text'  => is_scalar( $stored_result['answer_text'] ?? null ) ? (string) $stored_result['answer_text'] : null,
+				'title'        => is_scalar( $stored_result['title'] ?? null ) ? (string) $stored_result['title'] : '',
 			);
 		} else {
-			$sql = $sql_or_stored;
+			// Callers pass a string, but the parameter is mixed: anything else
+			// must not reach validate( string $sql ).
+			$sql = is_scalar( $sql_or_stored ) ? (string) $sql_or_stored : '';
 		}
+
+		$type = in_array( $type, array( 'chart', 'list', 'answer' ), true ) ? $type : 'answer';
 
 		// Validate SQL.
 		$validation = SILC_WIA_SQL_Validator::validate( $sql );

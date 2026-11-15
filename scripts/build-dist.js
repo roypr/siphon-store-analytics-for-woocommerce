@@ -21,6 +21,7 @@ const INCLUDE = [
 	'readme.txt',
 	'LICENSE',
 	'includes',
+	'languages',
 	'assets/css',
 	'assets/img',
 	'assets/js/chart-renderer.js',

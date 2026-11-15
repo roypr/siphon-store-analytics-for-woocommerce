@@ -148,14 +148,21 @@ class SILC_WIA_Ajax {
 	 * @return string
 	 */
 	private static function derive_title( string $question, array $insight ): string {
-		// Use chart title if available.
-		if ( ! empty( $insight['chart_config']['title'] ) ) {
-			return $insight['chart_config']['title'];
+		// Use chart title if available. The chart config comes from the AI
+		// response, so only a scalar can be used as the stored title.
+		if ( isset( $insight['chart_config']['title'] ) && is_scalar( $insight['chart_config']['title'] ) ) {
+			$chart_title = trim( (string) $insight['chart_config']['title'] );
+
+			if ( '' !== $chart_title ) {
+				return $chart_title;
+			}
 		}
 		// Use answer_text prefix (first ~50 chars) for answer type.
-		if ( ! empty( $insight['answer_text'] ) ) {
-			$short = substr( $insight['answer_text'], 0, 50 );
-			return rtrim( $short, ' .' ) . ( strlen( $insight['answer_text'] ) > 50 ? '...' : '' );
+		if ( isset( $insight['answer_text'] ) && is_scalar( $insight['answer_text'] ) && '' !== (string) $insight['answer_text'] ) {
+			$answer_text = (string) $insight['answer_text'];
+			$short       = substr( $answer_text, 0, 50 );
+
+			return rtrim( $short, ' .' ) . ( strlen( $answer_text ) > 50 ? '...' : '' );
 		}
 		// Fallback: use first 60 chars of the question.
 		return mb_substr( $question, 0, 60 ) . ( mb_strlen( $question ) > 60 ? '...' : '' );
@@ -201,9 +208,14 @@ class SILC_WIA_Ajax {
 			return;
 		}
 
-		$result_json = isset( $_POST['result_json'] ) ? wp_unslash( $_POST['result_json'] ) : '';
+		// Every value here is external input: a non-string field (result_json[],
+		// sql[], chart_config[]) must be rejected before it reaches a string
+		// function, which would throw a TypeError under PHP 8.
+		$result_json = isset( $_POST['result_json'] ) && is_string( $_POST['result_json'] )
+			? wp_unslash( $_POST['result_json'] )
+			: '';
 
-		if ( ! empty( $result_json ) ) {
+		if ( '' !== $result_json ) {
 			// New path: full stored result sent as JSON.
 			$stored_result = json_decode( $result_json, true );
 
@@ -228,8 +240,10 @@ class SILC_WIA_Ajax {
 			return;
 		}
 
-		// Legacy fallback: individual fields.
-		$sql = isset( $_POST['sql'] ) ? wp_unslash( $_POST['sql'] ) : '';
+		// Legacy fallback: individual fields. The SQL itself stays raw — it is
+		// untrusted by design and gated by SILC_WIA_SQL_Validator::validate() —
+		// but it must be a string to get that far.
+		$sql = isset( $_POST['sql'] ) && is_string( $_POST['sql'] ) ? wp_unslash( $_POST['sql'] ) : '';
 		$sql = trim( $sql );
 
 		if ( empty( $sql ) ) {
@@ -238,17 +252,26 @@ class SILC_WIA_Ajax {
 		}
 
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : 'answer';
+		$type = in_array( $type, array( 'chart', 'list', 'answer' ), true ) ? $type : 'answer';
 
 		$insight_data = array();
 
-		$chart_config = isset( $_POST['chart_config'] ) ? wp_unslash( $_POST['chart_config'] ) : '';
-		if ( ! empty( $chart_config ) ) {
-			$insight_data['chart_config'] = json_decode( $chart_config, true );
+		$chart_config = isset( $_POST['chart_config'] ) && is_string( $_POST['chart_config'] )
+			? json_decode( wp_unslash( $_POST['chart_config'] ), true )
+			: null;
+
+		// Only a decoded object is a usable chart config; a scalar or a broken
+		// JSON string falls back to the renderer's auto-detection.
+		if ( is_array( $chart_config ) ) {
+			$insight_data['chart_config'] = $chart_config;
 		}
 
-		$list_config = isset( $_POST['list_config'] ) ? wp_unslash( $_POST['list_config'] ) : '';
-		if ( ! empty( $list_config ) ) {
-			$insight_data['list_config'] = json_decode( $list_config, true );
+		$list_config = isset( $_POST['list_config'] ) && is_string( $_POST['list_config'] )
+			? json_decode( wp_unslash( $_POST['list_config'] ), true )
+			: null;
+
+		if ( is_array( $list_config ) ) {
+			$insight_data['list_config'] = $list_config;
 		}
 
 		$answer_text = isset( $_POST['answer_text'] ) ? sanitize_text_field( wp_unslash( $_POST['answer_text'] ) ) : '';

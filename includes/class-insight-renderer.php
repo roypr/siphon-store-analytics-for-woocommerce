@@ -51,7 +51,7 @@ class SILC_WIA_Insight_Renderer {
 		// If no transform is provided, fall through to auto-build from the real data.
 
 		// Priority 2: Transform config — reshape flat SQL rows into multi-dataset Chart.js format.
-		if ( ! empty( $config['transform'] ) ) {
+		if ( is_array( $config['transform'] ?? null ) ) {
 			$transformed = self::transform_chart_data( $data, $config );
 			if ( null !== $transformed ) {
 				return $transformed;
@@ -113,8 +113,15 @@ class SILC_WIA_Insight_Renderer {
 	 * @return array|null Chart.js config array, or null if transform failed.
 	 */
 	public static function transform_chart_data( array $data, array $config ): ?array {
-		$transform = $config['transform'];
-		$type      = $transform['type'] ?? '';
+		$transform = $config['transform'] ?? null;
+
+		// The transform comes from the AI response, so it can hold any JSON
+		// type; only an object is a usable definition.
+		if ( ! is_array( $transform ) ) {
+			return null;
+		}
+
+		$type = is_scalar( $transform['type'] ?? null ) ? (string) $transform['type'] : '';
 
 		if ( 'group_split' === $type ) {
 			return self::transform_group_split( $data, $config, $transform );
@@ -138,10 +145,18 @@ class SILC_WIA_Insight_Renderer {
 	 * @return array Chart.js config.
 	 */
 	private static function transform_group_split( array $data, array $config, array $transform ): array {
-		$group_by     = $transform['group_by'] ?? '';
-		$x_axis       = $transform['x_axis'] ?? '';
-		$value_column = $transform['value_column'] ?? '';
-		$x_labels     = $transform['x_labels'] ?? array();
+		// Column names and labels are used as array offsets below, and an
+		// array offset of a non-scalar is a TypeError under PHP 8.
+		$group_by     = is_scalar( $transform['group_by'] ?? null ) ? (string) $transform['group_by'] : '';
+		$x_axis       = is_scalar( $transform['x_axis'] ?? null ) ? (string) $transform['x_axis'] : '';
+		$value_column = is_scalar( $transform['value_column'] ?? null ) ? (string) $transform['value_column'] : '';
+		$x_labels     = array();
+
+		foreach ( ( is_array( $transform['x_labels'] ?? null ) ? $transform['x_labels'] : array() ) as $x_label ) {
+			if ( is_scalar( $x_label ) ) {
+				$x_labels[] = (string) $x_label;
+			}
+		}
 
 		if ( empty( $group_by ) || empty( $x_axis ) || empty( $value_column ) ) {
 			return self::auto_build_chart( $data, $config );
@@ -161,10 +176,10 @@ class SILC_WIA_Insight_Renderer {
 
 			// When x_labels are provided and the raw x_value is numeric (e.g. month number),
 			// map it to the corresponding label (1→"Jan", 2→"Feb", etc.).
-			if (! empty($x_labels) && ctype_digit($x_value)) {
-				$x_index = intval($x_value) - 1; // 1-based to 0-based
-				if (isset($x_labels[$x_index])) {
-					$x_value = $x_labels[$x_index];
+			if ( ! empty( $x_labels ) && ctype_digit( $x_value ) ) {
+				$x_index = intval( $x_value ) - 1; // 1-based to 0-based
+				if ( isset( $x_labels[ $x_index ] ) ) {
+					$x_value = $x_labels[ $x_index ];
 				}
 			}
 
@@ -248,10 +263,17 @@ class SILC_WIA_Insight_Renderer {
 	 * @return array Chart.js config.
 	 */
 	private static function transform_columns_to_datasets( array $data, array $config, array $transform ): array {
-		$label_column  = $transform['label_column'] ?? '';
-		$value_columns = $transform['value_columns'] ?? array();
+		// Both are used as array offsets below.
+		$label_column  = is_scalar( $transform['label_column'] ?? null ) ? (string) $transform['label_column'] : '';
+		$value_columns = array();
 
-		if ( empty( $label_column ) || empty( $value_columns ) ) {
+		foreach ( ( is_array( $transform['value_columns'] ?? null ) ? $transform['value_columns'] : array() ) as $column ) {
+			if ( is_scalar( $column ) && '' !== (string) $column ) {
+				$value_columns[] = (string) $column;
+			}
+		}
+
+		if ( '' === $label_column || empty( $value_columns ) ) {
 			return self::auto_build_chart( $data, $config );
 		}
 
