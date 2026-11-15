@@ -9,6 +9,7 @@ WC tested up to: 11.2
 Stable tag: 3.2.2
 License: GPL v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
+Source code: https://github.com/roypr/store-insights-for-woocommerce/tree/wp-3.2.2
 
 Ask plain-English questions about your WooCommerce store and get instant charts, lists, and answers — no SQL or coding needed.
 

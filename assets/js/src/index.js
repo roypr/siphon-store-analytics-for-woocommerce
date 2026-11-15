@@ -181,6 +181,10 @@ function WooInsightDashboard() {
 			.then(function (resp) {
 				setLoading(false);
 				if (resp.success && resp.data) {
+					// The question is now answered (and shown with the result),
+					// so empty the composer. On error the text is kept so the
+					// user can retry without retyping.
+					setQuestion('');
 					setInsightData(resp.data);
 					// Refresh history.
 					doAction('get_insight_history').then(function (hResp) {
@@ -200,6 +204,18 @@ function WooInsightDashboard() {
 			});
 	}, [question]);
 
+	// Start over: drop the current answer and return to the welcome screen the
+	// plugin shows on first load. Saved history and library are untouched —
+	// only the on-screen conversation is reset.
+	var handleNewChat = useCallback(function () {
+		if (typeof SILC_WIA_Charts !== 'undefined') {
+			SILC_WIA_Charts.destroyChart('insight-chart-canvas');
+		}
+		setQuestion('');
+		setInsightData(null);
+		setError(null);
+		setHasRun(false);
+	}, []);
 
 	var handleClearHistory = useCallback(function () {
 		doAction('clear_insight_history').then(function (resp) {
@@ -350,12 +366,11 @@ function WooInsightDashboard() {
 						}
 						return next;
 					});
-					// Reload page to reflect new config. A cleared key changes
-					// what the Authentication section reports, so it counts as
-					// a config change too.
-					if ((resp.data.has_api_key && !apiConfigured) || resp.data.api_key_cleared) {
-						setTimeout(function () { window.location.reload(); }, 1000);
-					}
+					// Always reload after a save: the bootstrap payload (settings,
+					// apiConfigured, provider registry, walkthrough state) is
+					// rendered server-side, so a partial in-place update would leave
+					// the page reporting stale config.
+					setTimeout(function () { window.location.reload(); }, 1000);
 				} else {
 					setSaveMsg({ type: 'error', text: resp.data && resp.data.message ? resp.data.message : 'Save failed' });
 				}
@@ -609,6 +624,8 @@ function WooInsightDashboard() {
 				toggleSidebar: toggleSidebar,
 				openPanel: openPanel,
 				activePanel: activePanel,
+				onNewChat: handleNewChat,
+				newChatDisabled: isLoading,
 			}),
 			renderPanel(),
 			el('div', { className: 'silc-wia-chat' },

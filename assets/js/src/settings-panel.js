@@ -253,6 +253,13 @@ export function renderSettingsPanel(props) {
 	var savedUrl = normalizeUrl((data.settings || {}).api_url);
 	var keyApplies = normalizeUrl(formSettings.api_url) === savedUrl;
 	var hasKey = !!data.hasApiKey && keyApplies;
+
+	// Test Connection hits the server, which uses the *saved* endpoint and key.
+	// While the endpoint differs from the stored one, or a new key has been
+	// typed but not saved, a result would describe a configuration that is not
+	// on screen. (Changing the provider always rewrites the endpoint, so it is
+	// covered by the URL comparison.)
+	var connectionDirty = !keyApplies || !!formSettings.api_key;
 	var keyHelp;
 
 	if (!!data.hasApiKey && !keyApplies) {
@@ -455,8 +462,15 @@ export function renderSettingsPanel(props) {
 			el(Button, {
 				isSecondary: true,
 				onClick: handleTestConnection,
-				disabled: testing,
+				disabled: testing || connectionDirty,
+				title: connectionDirty
+					? 'Save your changes first \u2014 the connection test uses the saved endpoint and key.'
+					: undefined,
 			}, testing ? (l10n.testing || 'Testing...') : (l10n.testConnection || 'Test Connection')),
+			connectionDirty
+				? el('span', { className: 'silc-wia-test-hint' },
+					'Save your changes to test this configuration.')
+				: null,
 			testResult
 				? el('span', {
 					className: 'silc-wia-test-result ' + (testResult.type === 'success' ? 'success' : 'fail'),

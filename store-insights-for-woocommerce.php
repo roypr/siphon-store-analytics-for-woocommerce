@@ -2,10 +2,10 @@
 
 /**
  * Plugin Name: Store Insights for WooCommerce
- * Plugin URI:  https://github.com/roypr/store-insights-for-woocommerce
+ * Plugin URI:  https://siphon-tech.com/store-insights-for-woocommerce
  * Description: Natural language to SQL query tool for WooCommerce. Uses your own AI provider key (OpenAI, Claude, OpenRouter, DeepSeek, Groq, Mistral, xAI, or any OpenAI-compatible endpoint) to convert plain English questions into SQL queries against WooCommerce data.
  * Version:     3.2.2
- * Author:      Roy Parthapratim
+ * Author:      Siphon Technologies
  * Author URI:  https://github.com/roypr
  * Text Domain: store-insights-for-woocommerce
  * Requires at least: 6.5
@@ -29,6 +29,29 @@ define( 'SILC_WIA_VERSION', '3.2.2' );
 define( 'SILC_WIA_PATH', plugin_dir_path( __FILE__ ) );
 define( 'SILC_WIA_URL', plugin_dir_url( __FILE__ ) );
 define( 'SILC_WIA_BASENAME', plugin_basename( __FILE__ ) );
+
+/**
+ * Declare compatibility with WooCommerce features.
+ *
+ * WooCommerce treats every "WooCommerce aware" plugin (any plugin with a
+ * `WC tested up to` header) that does not explicitly declare compatibility
+ * with High-Performance Order Storage as incompatible. Without the call below
+ * WooCommerce lists this plugin as an incompatible plugin on the
+ * WooCommerce > Settings > Advanced > Features screen and blocks switching
+ * the order data store.
+ *
+ * This plugin is read-only: it never creates, updates or deletes orders and
+ * only runs SELECT queries against discovered tables, so it is safe under
+ * both HPOS and legacy post-based order storage.
+ *
+ * `before_woocommerce_init` fires while WooCommerce is loading, which is
+ * before `plugins_loaded`, so this must be registered at file scope.
+ */
+add_action( 'before_woocommerce_init', function () {
+	if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
+		\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
+	}
+} );
 
 /**
  * Initialize the plugin after WooCommerce is loaded.
