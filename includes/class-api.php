@@ -1013,10 +1013,9 @@ class SILC_WIA_API {
 	 * Build the user prompt for insight generation.
 	 *
 	 * @param string $question       The user's question.
-	 * @param string $schema_context Database schema context.
 	 * @return string
 	 */
-	private static function build_insight_user_prompt( string $question, string $schema_context ): string {
+	private static function build_insight_user_prompt( string $question ): string {
 		return "User question: " . $question
 			. "
 
