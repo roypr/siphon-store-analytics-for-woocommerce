@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-15T14:41:26+01:00\n"
+"POT-Creation-Date: 2026-11-15T14:58:15+01:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: store-insights-for-woocommerce\n"
@@ -745,18 +745,18 @@ msgstr ""
 msgid "Product brand (if WooCommerce Brands active)"
 msgstr ""
 
-#: store-insights-for-woocommerce.php:63
+#: store-insights-for-woocommerce.php:62
 msgid "Store Insights for WooCommerce requires WooCommerce to be installed and activated."
 msgstr ""
 
-#: store-insights-for-woocommerce.php:92
+#: store-insights-for-woocommerce.php:91
 msgid "Store Insights for WooCommerce requires PHP 7.4 or higher."
 msgstr ""
 
-#: store-insights-for-woocommerce.php:97
+#: store-insights-for-woocommerce.php:96
 msgid "Store Insights for WooCommerce requires WooCommerce to be installed."
 msgstr ""
 
-#: store-insights-for-woocommerce.php:108
+#: store-insights-for-woocommerce.php:107
 msgid "Dashboard"
 msgstr ""

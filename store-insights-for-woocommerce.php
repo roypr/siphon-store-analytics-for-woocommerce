@@ -9,11 +9,10 @@
  * Author URI:  https://github.com/roypr
  * Text Domain: store-insights-for-woocommerce
  * Requires at least: 6.5
- * Tested up to: 7.1
  * Requires PHP: 7.4
  * Requires Plugins: woocommerce
  * WC requires at least: 8.0
- * WC tested up to:      11.2
+ * WC tested up to: 11.2
  * License:     GPL v2 or later
  *
  * @package SILC_WooInsight_AI
