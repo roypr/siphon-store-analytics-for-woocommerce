@@ -2,6 +2,16 @@
 
 All notable changes to Store Insights for WooCommerce will be documented in this file.
 
+## [3.2.2] — Nov 2026
+
+### Added
+- WooCommerce Analytics is now a documented data prerequisite with runtime readiness checks (`is_analytics_enabled()`, lookup-table existence, and order-stats data detection), an admin notice on the Store Insights page, and an actionable message when a query hits a missing analytics table.
+
+### Changed
+- Order-based Library items are hidden when WooCommerce Analytics is disabled or its lookup tables are missing; the five product/user/post items remain available. An empty store or an in-progress import still shows the items and may return no results.
+- The readme lists the Analytics prerequisite, explains why Library items can be missing, and now requires WordPress 6.5 to match the plugin header and `Requires Plugins`.
+- The i18n build excludes `dist/` so regenerated POT files do not index build output.
+
 ## [3.2.1] — Nov 2026
 
 ### Security

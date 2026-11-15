@@ -773,7 +773,7 @@ class SILC_WIA_API {
 		$system_prompt .= "\nHere is the WooCommerce database schema (table prefix included):";
 		$system_prompt .= "\n" . $schema_context;
 
-		$user_prompt   = self::build_insight_user_prompt( $question, $schema_context );
+		$user_prompt   = self::build_insight_user_prompt( $question );
 
 		$model = (string) $settings['model'];
 

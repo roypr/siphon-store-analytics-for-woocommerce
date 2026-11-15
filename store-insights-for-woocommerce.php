@@ -4,7 +4,7 @@
  * Plugin Name: Store Insights for WooCommerce
  * Plugin URI:  https://github.com/roypr/store-insights-for-woocommerce
  * Description: Natural language to SQL query tool for WooCommerce. Uses your own AI provider key (OpenAI, Claude, OpenRouter, DeepSeek, Groq, Mistral, xAI, or any OpenAI-compatible endpoint) to convert plain English questions into SQL queries against WooCommerce data.
- * Version:     3.2.1
+ * Version:     3.2.2
  * Author:      Roy Parthapratim
  * Author URI:  https://github.com/roypr
  * Text Domain: store-insights-for-woocommerce
@@ -25,7 +25,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin constants.
-define( 'SILC_WIA_VERSION', '3.2.1' );
+define( 'SILC_WIA_VERSION', '3.2.2' );
 define( 'SILC_WIA_PATH', plugin_dir_path( __FILE__ ) );
 define( 'SILC_WIA_URL', plugin_dir_url( __FILE__ ) );
 define( 'SILC_WIA_BASENAME', plugin_basename( __FILE__ ) );

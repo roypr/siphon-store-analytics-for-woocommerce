@@ -100,11 +100,7 @@ class SILC_WIA_Insights {
 		if ( ! $execution['success'] ) {
 			$response = array(
 				'success' => false,
-				'error'   => sprintf(
-					/* translators: %s: database error */
-					__( 'Query error: %s', 'store-insights-for-woocommerce' ),
-					$execution['error']
-				),
+				'error'   => self::format_query_error( $execution['error'] ),
 				'type' => 'error',
 				'error_code' => 'QUERY_ERROR',
 				'sql'  => $validation['sql'],
@@ -175,6 +171,27 @@ class SILC_WIA_Insights {
 			default:
 				return __( 'Unable to process this request.', 'store-insights-for-woocommerce' );
 		}
+	}
+
+	/**
+	 * Format a database execution error for the dashboard.
+	 *
+	 * A missing Analytics lookup table is a data-prerequisite issue, not a bad
+	 * query, so it gets an actionable message instead of the raw MySQL error.
+	 *
+	 * @param string $error Raw database error.
+	 * @return string
+	 */
+	private static function format_query_error( string $error ): string {
+		if ( SILC_WIA_Woo_Schema::is_analytics_error( $error ) ) {
+			return SILC_WIA_Woo_Schema::get_analytics_unavailable_message();
+		}
+
+		return sprintf(
+			/* translators: %s: database error */
+			__( 'Query error: %s', 'store-insights-for-woocommerce' ),
+			$error
+		);
 	}
 
 	/**
@@ -452,11 +469,7 @@ class SILC_WIA_Insights {
 		if ( ! $execution['success'] ) {
 			return array(
 				'success' => false,
-				'error'   => sprintf(
-					/* translators: %s: database error */
-					__( 'Query error: %s', 'store-insights-for-woocommerce' ),
-					$execution['error']
-				),
+				'error'   => self::format_query_error( $execution['error'] ),
 				'type' => 'error',
 				'sql'  => $validation['sql'],
 			);

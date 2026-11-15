@@ -10,6 +10,12 @@
  * All SQL queries use only tables and columns verified against the
  * actual WooCommerce schema. Compatible with both HPOS and legacy modes.
  *
+ * Items whose query is valid on both order-storage backends declare a single
+ * `sql` string. An item that must read the order storage itself (wc_orders vs.
+ * posts) can additionally declare `sql_hpos` and/or `sql_legacy`; get_library()
+ * resolves the active backend and returns exactly one `sql` value per item, so
+ * no inapplicable statement reaches the dashboard or the execute endpoint.
+ *
  * @package SILC_WooInsight_AI
  */
 
@@ -29,11 +35,19 @@ class SILC_WIA_Library {
 	 *   id           — unique identifier
 	 *   question     — natural language description (searchable)
 	 *   sql          — the SQL SELECT query (with {prefix} placeholder)
+	 *   sql_hpos     — (optional) overrides `sql` when HPOS is active
+	 *   sql_legacy   — (optional) overrides `sql` when legacy storage is active
+	 *   backends     — (optional) array of backends the item applies to:
+	 *                  'hpos' and/or 'legacy'. Defaults to both.
 	 *   type         — chart | list | answer
 	 *   title        — short display title
 	 *   chart_config — (chart type only) Chart.js transform config
 	 *   list_config  — (list type only) column/link config
 	 *   answer_text  — (answer type only) template with {{column}} placeholders
+	 *
+	 * `sql_hpos`, `sql_legacy` and `backends` are resolution metadata: they are
+	 * consumed here and never returned, so every caller receives a single,
+	 * backend-applicable `sql` statement per item.
 	 *
 	 * @return array
 	 */
@@ -41,6 +55,12 @@ class SILC_WIA_Library {
 		global $wpdb;
 		$p = $wpdb->prefix;
 
+		// Backend note: every statement below queries storage-agnostic tables
+		// (wc_order_stats, wc_order_product_lookup, wc_product_meta_lookup,
+		// wc_customer_lookup, posts, terms, users), which WooCommerce creates
+		// and populates in both HPOS and legacy mode. They therefore need only
+		// a single `sql` string. Add `sql_hpos` / `sql_legacy` when a query has
+		// to read the order storage itself (wc_orders vs. posts + postmeta).
 		$items = array(
 
 			// ================================================================
@@ -688,7 +708,159 @@ class SILC_WIA_Library {
 
 		);
 
-		return $items;
+		return self::resolve_backend_items( $items );
+	}
+
+	/**
+	 * Load the schema class when this class is used outside the plugin bootstrap.
+	 *
+	 * @return bool True when SILC_WIA_Woo_Schema is available.
+	 */
+	private static function load_schema(): bool {
+		if ( class_exists( 'SILC_WIA_Woo_Schema' ) ) {
+			return true;
+		}
+
+		$schema_file = defined( 'SILC_WIA_PATH' )
+			? SILC_WIA_PATH . 'includes/class-woo-schema.php'
+			: __DIR__ . '/class-woo-schema.php';
+
+		if ( file_exists( $schema_file ) ) {
+			require_once $schema_file;
+		}
+
+		return class_exists( 'SILC_WIA_Woo_Schema' );
+	}
+
+	/**
+	 * Detect whether HPOS is the active order storage backend.
+	 *
+	 * The schema class is the single source of truth for backend detection.
+	 *
+	 * @return bool
+	 */
+	private static function is_hpos_enabled(): bool {
+		return self::load_schema() && SILC_WIA_Woo_Schema::is_hpos_enabled();
+	}
+
+	/**
+	 * Detect whether WooCommerce Analytics data is available.
+	 *
+	 * The Library's order-based items read the Analytics lookup tables, so they
+	 * are withheld when the feature is disabled or the tables are missing. The
+	 * product/user-only items remain available.
+	 *
+	 * @return bool
+	 */
+	private static function is_analytics_available(): bool {
+		return self::load_schema() && SILC_WIA_Woo_Schema::is_analytics_available();
+	}
+
+	/**
+	 * Whether a resolved statement reads one of the Analytics lookup tables.
+	 *
+	 * @param string $sql Resolved SQL (real table prefix).
+	 * @return bool
+	 */
+	private static function references_analytics_tables( string $sql ): bool {
+		if ( ! self::load_schema() ) {
+			return false;
+		}
+
+		$prefix = SILC_WIA_Woo_Schema::prefix();
+
+		foreach ( SILC_WIA_Woo_Schema::get_analytics_table_names() as $table ) {
+			if ( preg_match( '/\b' . preg_quote( $prefix . $table, '/' ) . '\b/', $sql ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Whether an item declares a non-empty SQL statement under a given key.
+	 *
+	 * @param array  $item Item array.
+	 * @param string $key  Key to inspect (`sql`, `sql_hpos`, or `sql_legacy`).
+	 * @return bool
+	 */
+	private static function has_statement( array $item, string $key ): bool {
+		return array_key_exists( $key, $item ) && is_string( $item[ $key ] ) && '' !== $item[ $key ];
+	}
+
+	/**
+	 * Resolve each library item to the SQL for the active storage backend.
+	 *
+	 * Per-item resolution:
+	 *   - `sql_hpos` / `sql_legacy` override the shared `sql` statement.
+	 *   - `backends` restricts the item to one or more backends; an item that
+	 *     does not apply to the active backend is omitted entirely. When it is
+	 *     omitted, an item with a shared `sql` applies to both backends, and an
+	 *     item with only variant statements applies to the backends that have
+	 *     a variant.
+	 *   - Items whose statement reads an Analytics lookup table are omitted
+	 *     when WooCommerce Analytics is disabled or its tables are missing.
+	 *
+	 * The resolution metadata is removed from the returned item, so callers
+	 * (and the localized JS payload) only ever receive one `sql` string that
+	 * matches the active schema.
+	 *
+	 * @param array $items Library items as declared in get_library().
+	 * @return array Items applicable to the active backend.
+	 */
+	private static function resolve_backend_items( array $items ): array {
+		$backend             = self::is_hpos_enabled() ? 'hpos' : 'legacy';
+		$variant             = 'hpos' === $backend ? 'sql_hpos' : 'sql_legacy';
+		$analytics_available = self::is_analytics_available();
+		$resolved            = array();
+
+		foreach ( $items as $item ) {
+			$backends = is_array( $item['backends'] ?? null ) ? $item['backends'] : null;
+
+			if ( null === $backends ) {
+				if ( self::has_statement( $item, 'sql' ) ) {
+					// A shared statement runs on either backend.
+					$backends = array( 'hpos', 'legacy' );
+				} else {
+					// No shared statement: derive support from the variants present.
+					$backends = array();
+					if ( self::has_statement( $item, 'sql_hpos' ) ) {
+						$backends[] = 'hpos';
+					}
+					if ( self::has_statement( $item, 'sql_legacy' ) ) {
+						$backends[] = 'legacy';
+					}
+				}
+			}
+
+			if ( ! in_array( $backend, $backends, true ) ) {
+				continue;
+			}
+
+			// Prefer the active backend's variant over the shared statement.
+			$sql = self::has_statement( $item, $variant ) ? $item[ $variant ] : ( $item['sql'] ?? '' );
+
+			unset( $item['backends'], $item['sql_hpos'], $item['sql_legacy'] );
+
+			// No usable statement for the active backend means the item cannot
+			// run here, so it must not be sent downstream.
+			if ( ! is_string( $sql ) || '' === $sql ) {
+				continue;
+			}
+
+			// Order-based items need the Analytics lookup tables. Withhold them
+			// when Analytics is disabled or its tables are missing; the admin
+			// notice explains why and how to enable it.
+			if ( ! $analytics_available && self::references_analytics_tables( $sql ) ) {
+				continue;
+			}
+
+			$item['sql'] = $sql;
+			$resolved[]  = $item;
+		}
+
+		return $resolved;
 	}
 
 	/**
@@ -704,6 +876,10 @@ class SILC_WIA_Library {
 
 	/**
 	 * Get library items ready for JS consumption.
+	 *
+	 * get_library() already resolves `sql_hpos` / `sql_legacy` against the
+	 * active order storage backend, so the returned items carry exactly one
+	 * applicable `sql` statement each.
 	 *
 	 * @return array
 	 */

@@ -42,6 +42,22 @@ class SILC_WIA_Woo_Schema {
 	);
 
 	/**
+	 * WooCommerce Analytics lookup tables read by the Library and AI queries.
+	 *
+	 * They are created by WooCommerce in both HPOS and legacy storage modes,
+	 * but are only kept current while the Analytics feature is enabled and the
+	 * order import has run. The plugin treats them as a data prerequisite and
+	 * degrades gracefully when they are unavailable.
+	 */
+	const ANALYTICS_TABLES = array(
+		'wc_order_stats',
+		'wc_order_product_lookup',
+		'wc_order_tax_lookup',
+		'wc_order_coupon_lookup',
+		'wc_customer_lookup',
+	);
+
+	/**
 	 * Get the WordPress table prefix.
 	 *
 	 * @return string
@@ -98,6 +114,206 @@ class SILC_WIA_Woo_Schema {
 			return self::get_table_names();
 		}
 		return array_values( array_diff( self::get_table_names(), self::get_hpos_table_names() ) );
+	}
+
+	// ----------------------------------------------------------------------- //
+	//  ANALYTICS AVAILABILITY
+	// ----------------------------------------------------------------------- //
+
+	/**
+	 * Analytics lookup tables the plugin reads.
+	 *
+	 * @return array
+	 */
+	public static function get_analytics_table_names(): array {
+		return self::ANALYTICS_TABLES;
+	}
+
+	/**
+	 * Whether the WooCommerce Analytics feature is enabled.
+	 *
+	 * Mirrors WooCommerce's own checks: the feature flag (which already honours
+	 * the legacy `woocommerce_admin_disabled` filter) and, as a fallback, the
+	 * `woocommerce_analytics_enabled` option.
+	 *
+	 * @return bool
+	 */
+	public static function is_analytics_enabled(): bool {
+		$features_util = '\Automattic\WooCommerce\Utilities\FeaturesUtil';
+
+		if ( class_exists( $features_util ) && method_exists( $features_util, 'feature_is_enabled' ) ) {
+			return (bool) \Automattic\WooCommerce\Utilities\FeaturesUtil::feature_is_enabled( 'analytics' );
+		}
+
+		if ( apply_filters( 'woocommerce_admin_disabled', false ) ) {
+			return false;
+		}
+
+		return 'yes' === get_option( 'woocommerce_analytics_enabled', 'yes' );
+	}
+
+	/**
+	 * Whether every analytics lookup table exists in the database.
+	 *
+	 * Uses the cached column discovery, so repeated calls (admin notice, Library
+	 * build, schema endpoint) share the same lookups.
+	 *
+	 * @return bool
+	 */
+	public static function analytics_tables_exist(): bool {
+		foreach ( self::ANALYTICS_TABLES as $table ) {
+			if ( null === self::discover_columns( $table ) ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Whether WooCommerce Analytics is enabled and its tables exist.
+	 *
+	 * This is the condition used to decide whether analytics-backed Library
+	 * items can be offered. It deliberately does not require rows: an empty
+	 * store, or an import still in progress, should still show the items and
+	 * simply return no results.
+	 *
+	 * @return bool
+	 */
+	public static function is_analytics_available(): bool {
+		return self::is_analytics_enabled() && self::analytics_tables_exist();
+	}
+
+	/**
+	 * Whether the order stats table has at least one row.
+	 *
+	 * Cheap `SELECT 1 ... LIMIT 1` instead of COUNT(*) on a potentially large
+	 * table. Cached briefly so it can be called from the admin notice without
+	 * querying on every request.
+	 *
+	 * @return bool
+	 */
+	public static function analytics_has_data(): bool {
+		global $wpdb;
+
+		$cache_key = 'analytics_has_data';
+		$cached    = wp_cache_get( $cache_key, self::CACHE_GROUP );
+
+		if ( false !== $cached ) {
+			return (bool) $cached;
+		}
+
+		if ( null === self::discover_columns( 'wc_order_stats' ) ) {
+			wp_cache_set( $cache_key, 0, self::CACHE_GROUP, 300 );
+			return false;
+		}
+
+		// Table name comes from ANALYTICS_TABLES; %i quotes it as an identifier.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Cached below.
+		$has_data = (bool) $wpdb->get_var(
+			$wpdb->prepare( 'SELECT 1 FROM %i LIMIT 1', $wpdb->prefix . 'wc_order_stats' )
+		);
+
+		wp_cache_set( $cache_key, $has_data ? 1 : 0, self::CACHE_GROUP, 300 );
+
+		return $has_data;
+	}
+
+	/**
+	 * Whether the store has any orders at all.
+	 *
+	 * Used to distinguish "Analytics has not imported yet" from a brand-new
+	 * store that simply has nothing to report. Cached briefly.
+	 *
+	 * @return bool
+	 */
+	public static function store_has_orders(): bool {
+		global $wpdb;
+
+		$cache_key = 'store_has_orders';
+		$cached    = wp_cache_get( $cache_key, self::CACHE_GROUP );
+
+		if ( false !== $cached ) {
+			return (bool) $cached;
+		}
+
+		if ( self::is_hpos_enabled() ) {
+			$table = $wpdb->prefix . 'wc_orders';
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Cached below.
+			$has_orders = (bool) $wpdb->get_var(
+				$wpdb->prepare( 'SELECT 1 FROM %i WHERE type = %s LIMIT 1', $table, 'shop_order' )
+			);
+		} else {
+			$table = $wpdb->prefix . 'posts';
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Cached below.
+			$has_orders = (bool) $wpdb->get_var(
+				$wpdb->prepare( 'SELECT 1 FROM %i WHERE post_type = %s LIMIT 1', $table, 'shop_order' )
+			);
+		}
+
+		wp_cache_set( $cache_key, $has_orders ? 1 : 0, self::CACHE_GROUP, 300 );
+
+		return $has_orders;
+	}
+
+	/**
+	 * Summarise the Analytics data prerequisites.
+	 *
+	 * @return array{enabled: bool, tables_exist: bool, has_data: bool, store_has_orders: bool, available: bool, needs_import: bool}
+	 */
+	public static function get_analytics_status(): array {
+		$enabled           = self::is_analytics_enabled();
+		$tables_exist      = self::analytics_tables_exist();
+		$has_data          = $tables_exist && self::analytics_has_data();
+		$store_has_orders  = self::store_has_orders();
+
+		return array(
+			'enabled'          => $enabled,
+			'tables_exist'     => $tables_exist,
+			'has_data'         => $has_data,
+			'store_has_orders' => $store_has_orders,
+			'available'        => $enabled && $tables_exist,
+			// Orders exist but Analytics has produced no stats rows: the
+			// historical import has not run (or is still running).
+			'needs_import'     => $enabled && $tables_exist && ! $has_data && $store_has_orders,
+		);
+	}
+
+	/**
+	 * Whether a database error is caused by a missing Analytics table.
+	 *
+	 * @param string $error Raw database error.
+	 * @return bool
+	 */
+	public static function is_analytics_error( string $error ): bool {
+		if ( '' === $error ) {
+			return false;
+		}
+
+		$error_lower = strtolower( $error );
+
+		// Only missing-table errors are remapped; columns can disappear for
+		// unrelated reasons and should keep the raw message.
+		if ( false === strpos( $error_lower, 'exist' ) ) {
+			return false;
+		}
+
+		foreach ( self::ANALYTICS_TABLES as $table ) {
+			if ( false !== strpos( $error_lower, strtolower( $table ) ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * User-facing message for unavailable Analytics data.
+	 *
+	 * @return string
+	 */
+	public static function get_analytics_unavailable_message(): string {
+		return __( 'This insight needs WooCommerce Analytics data, but it is unavailable. Enable WooCommerce Analytics and run the historical import under WooCommerce > Analytics > Settings, then try again.', 'store-insights-for-woocommerce' );
 	}
 
 	/**

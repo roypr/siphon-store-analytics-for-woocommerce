@@ -43,6 +43,7 @@ class SILC_WIA_Admin {
 	 */
 	public static function init(): void {
 		add_action( 'admin_menu', array( __CLASS__, 'add_menu_pages' ) );
+		add_action( 'admin_notices', array( __CLASS__, 'render_analytics_notice' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
 		add_action( 'admin_init', array( __CLASS__, 'register_settings' ) );
 		add_action( 'admin_init', array( __CLASS__, 'add_privacy_policy_content' ) );
@@ -62,6 +63,56 @@ class SILC_WIA_Admin {
 			'store-insights-for-woocommerce',
 			array( __CLASS__, 'render_page' )
 		);
+	}
+
+	/**
+	 * Warn on the dashboard when the Analytics data prerequisite is not met.
+	 *
+	 * Order-based Library items and order questions read the WooCommerce
+	 * Analytics lookup tables, which are only kept current while the Analytics
+	 * feature is enabled and the order import has run. This notice explains how
+	 * to fix it instead of letting those features silently return nothing.
+	 */
+	public static function render_analytics_notice(): void {
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			return;
+		}
+
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+		if ( ! $screen || $screen->id !== self::$page_hook ) {
+			return;
+		}
+
+		if ( ! class_exists( 'SILC_WIA_Woo_Schema' ) ) {
+			return;
+		}
+
+		$status = SILC_WIA_Woo_Schema::get_analytics_status();
+
+		if ( ! $status['tables_exist'] ) {
+			$message = __( 'Store Insights for WooCommerce needs the WooCommerce Analytics lookup tables, but they are missing. Update or reinstall WooCommerce so its database tables are created.', 'store-insights-for-woocommerce' );
+		} elseif ( ! $status['enabled'] ) {
+			$features_url = admin_url( 'admin.php?page=wc-settings&tab=advanced&section=features' );
+
+			$message = sprintf(
+				/* translators: %s: link to the WooCommerce features settings */
+				__( 'WooCommerce Analytics is disabled, so order-based Library items are hidden and order questions may fail. Enable Analytics under %s.', 'store-insights-for-woocommerce' ),
+				'<a href="' . esc_url( $features_url ) . '">' . esc_html__( 'WooCommerce > Settings > Advanced > Features', 'store-insights-for-woocommerce' ) . '</a>'
+			);
+		} elseif ( $status['needs_import'] ) {
+			$import_url = admin_url( 'admin.php?page=wc-admin&path=%2Fanalytics%2Fsettings' );
+
+			$message = sprintf(
+				/* translators: %s: link to the WooCommerce Analytics settings */
+				__( 'WooCommerce Analytics has not imported your orders yet, so order-based insights may be empty. Run the historical import under %s.', 'store-insights-for-woocommerce' ),
+				'<a href="' . esc_url( $import_url ) . '">' . esc_html__( 'WooCommerce > Analytics > Settings', 'store-insights-for-woocommerce' ) . '</a>'
+			);
+		} else {
+			return;
+		}
+
+		printf( '<div class="notice notice-warning"><p>%s</p></div>', wp_kses_post( $message ) );
 	}
 
 	/**

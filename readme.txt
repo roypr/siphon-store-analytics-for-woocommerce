@@ -1,12 +1,12 @@
 === Store Insights for WooCommerce ===
 Contributors: siphontech
 Tags: woocommerce, analytics, reports, ai, charts
-Requires at least: 6.2
+Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 7.4
 WC requires at least: 8.0
 WC tested up to: 11.2
-Stable tag: 3.2.1
+Stable tag: 3.2.2
 License: GPL v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -73,8 +73,9 @@ Stop clicking through endless admin screens and exporting CSVs. A question produ
 
 = Requirements =
 
-* WordPress 6.2+
+* WordPress 6.5+
 * WooCommerce 8.0+
+* WooCommerce Analytics enabled for order-based insights, with its order lookup tables populated. The Library and order-level insights read `wc_order_stats`, `wc_order_product_lookup`, `wc_order_tax_lookup`, `wc_order_coupon_lookup` and `wc_customer_lookup`, which WooCommerce maintains in both HPOS and legacy order storage. If Analytics is disabled or its lookup tables are missing, order-based Library items are hidden; if the historical import has not run yet, they remain visible but may return no results.
 * PHP 7.4+
 * An API key from any supported provider (optional — the built-in Library works without one)
 
@@ -134,7 +135,11 @@ Invalid SQL is caught by the validator before execution. Empty results show a fr
 
 = Does this work with HPOS? =
 
-Yes. The plugin auto-detects whether WooCommerce High-Performance Order Storage is active and adjusts table references accordingly. Both HPOS and legacy post-based orders are fully supported.
+Yes. Order-level insights read the WooCommerce Analytics lookup tables (`wc_order_stats`, `wc_order_product_lookup`, `wc_customer_lookup`), which WooCommerce populates in both HPOS and legacy post-based order storage. The plugin also detects the active order storage backend when building the schema it sends to the AI, and can supply backend-specific SQL for any item that needs to read the order storage directly.
+
+= Why are some Library items missing? =
+
+The Library hides items that need the WooCommerce Analytics lookup tables when Analytics is disabled or when those tables are missing. Enable WooCommerce Analytics under WooCommerce > Settings > Advanced > Features. If Analytics is enabled but the tables have no order data yet, run the historical import under WooCommerce > Analytics > Settings. The dashboard shows a notice on the Store Insights page when this applies.
 
 = Can I use this on a multisite? =
 
@@ -145,6 +150,13 @@ Yes, with per-site settings.
 Results are cached (configurable TTL, default 1 hour) to avoid redundant API calls and database queries. Cache can be set to 0 to disable.
 
 == Changelog ==
+
+= 3.2.2 =
+* 🔎 WooCommerce Analytics is now a documented data prerequisite with runtime readiness checks and an admin notice
+* 🧩 Order-based Library items are hidden when Analytics is disabled or its lookup tables are missing; product/user/post items remain
+* 💬 Missing Analytics table errors now show an actionable message instead of a raw database error
+* 📝 Readme lists the Analytics requirement, explains missing Library items, and requires WordPress 6.5
+* 🔧 Translation template regenerated without build output
 
 = 3.2.1 =
 * 🔒 Insight history no longer keeps result rows — opening a past insight re-runs its query
