@@ -191,7 +191,7 @@ Checklist §10 — "development-only files included unnecessarily." See **Phase 
 |---|---|---|
 | Sanitize and validate every input | ⚠️ Partial | `class-ajax.php:94` question is sanitized correctly. `:309` (`result_json`) and `:337` (`sql`) accepted raw by design — see *Architectural Decision* |
 | Escape every dynamic output | ✅ Pass | `class-admin.php:124-126`, main file `:47,:93,:116`. React escapes all rendering; no `dangerouslySetInnerHTML` anywhere in the bundle |
-| Nonce verification for state changes | ✅ Pass | All AJAX handlers route through `SILC_WIA_Ajax::verify()` (`class-ajax.php:45-57`) |
+| Nonce verification for state changes | ✅ Pass | `check_ajax_referer()` is the first statement of every AJAX handler in `class-ajax.php` and of both settings handlers in `class-admin.php`, so the check and the `$_POST` reads it guards live in the same function body |
 | Capability checks | ⚠️ Inconsistent | Dashboard `manage_woocommerce` (`class-ajax.php:51`); settings `manage_options` (`class-admin.php:139,:163`); menu page registered with `manage_woocommerce` (`:52`). Shop managers see a dashboard whose Save button always fails |
 | Prepared SQL queries | ❌ Fails scanner | `class-sql-validator.php:316` `$wpdb->get_results( $sql )`; `class-woo-schema.php:152` `SHOW COLUMNS FROM \`{$prefixed}\`` |
 | Secure AJAX and REST endpoints | ✅ Pass | `wp_ajax_` only — no `nopriv`, no REST routes |

@@ -255,9 +255,12 @@ class SILC_WIA_Admin {
 
 		// The dashboard posts the settings form as one JSON string, so a request
 		// that sends an array (settings[]=...) never reaches json_decode().
-		$raw_settings = isset( $_POST['settings'] ) && is_string( $_POST['settings'] )
-			? wp_unslash( $_POST['settings'] )
-			: '';
+		$raw_settings = '';
+
+		if ( isset( $_POST['settings'] ) && is_string( $_POST['settings'] ) ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- A JSON payload cannot be run through a text sanitizer without corrupting it; every key it carries is sanitized in sanitize_settings() below.
+			$raw_settings = wp_unslash( $_POST['settings'] );
+		}
 
 		$input = '' !== $raw_settings ? json_decode( $raw_settings, true ) : null;
 

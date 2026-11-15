@@ -39,15 +39,18 @@ class SILC_WIA_Ajax {
 		// Execute a stored SQL query without re-invoking AI.
 		add_action( 'wp_ajax_silc_wia_execute_sql', array( __CLASS__, 'handle_execute_sql' ) );
 	}
-	/**
-	 * Verify nonce and user capabilities.
-	 */
-	private static function verify(): bool {
-		if ( ! check_ajax_referer( self::NONCE_ACTION, 'nonce', false ) ) {
-			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'store-insights-for-woocommerce' ) ) );
-			return false;
-		}
 
+	/**
+	 * Verify the current user may use the dashboard endpoints.
+	 *
+	 * Same capability as the menu page and the admin settings handlers. The
+	 * nonce is verified inline at the top of each handler instead of here,
+	 * because the security sniffs only pair a nonce check with the superglobal
+	 * reads when both live in the same function body.
+	 *
+	 * @return bool True when allowed; the JSON error is sent otherwise.
+	 */
+	private static function verify_capability(): bool {
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'store-insights-for-woocommerce' ) ) );
 			return false;
@@ -60,7 +63,12 @@ class SILC_WIA_Ajax {
 	 * Handle: Get the full database schema context for AI prompt.
 	 */
 	public static function handle_get_schema(): void {
-		if ( ! self::verify() ) {
+		if ( ! check_ajax_referer( self::NONCE_ACTION, 'nonce', false ) ) {
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'store-insights-for-woocommerce' ) ) );
+			return;
+		}
+
+		if ( ! self::verify_capability() ) {
 			return;
 		}
 
@@ -86,7 +94,12 @@ class SILC_WIA_Ajax {
 	 * Response: { success, data: { type, chart_config, list_data, answer_text, ... } }
 	 */
 	public static function handle_generate_insight(): void {
-		if ( ! self::verify() ) {
+		if ( ! check_ajax_referer( self::NONCE_ACTION, 'nonce', false ) ) {
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'store-insights-for-woocommerce' ) ) );
+			return;
+		}
+
+		if ( ! self::verify_capability() ) {
 			return;
 		}
 
@@ -172,7 +185,12 @@ class SILC_WIA_Ajax {
 	 * Handle: Get insight history.
 	 */
 	public static function handle_get_insight_history(): void {
-		if ( ! self::verify() ) {
+		if ( ! check_ajax_referer( self::NONCE_ACTION, 'nonce', false ) ) {
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'store-insights-for-woocommerce' ) ) );
+			return;
+		}
+
+		if ( ! self::verify_capability() ) {
 			return;
 		}
 
@@ -185,7 +203,12 @@ class SILC_WIA_Ajax {
 	 * Handle: Clear insight history.
 	 */
 	public static function handle_clear_insight_history(): void {
-		if ( ! self::verify() ) {
+		if ( ! check_ajax_referer( self::NONCE_ACTION, 'nonce', false ) ) {
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'store-insights-for-woocommerce' ) ) );
+			return;
+		}
+
+		if ( ! self::verify_capability() ) {
 			return;
 		}
 
@@ -204,16 +227,24 @@ class SILC_WIA_Ajax {
 	 * Response: Same structure as handle_generate_insight.
 	 */
 	public static function handle_execute_sql(): void {
-		if ( ! self::verify() ) {
+		if ( ! check_ajax_referer( self::NONCE_ACTION, 'nonce', false ) ) {
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'store-insights-for-woocommerce' ) ) );
+			return;
+		}
+
+		if ( ! self::verify_capability() ) {
 			return;
 		}
 
 		// Every value here is external input: a non-string field (result_json[],
 		// sql[], chart_config[]) must be rejected before it reaches a string
 		// function, which would throw a TypeError under PHP 8.
-		$result_json = isset( $_POST['result_json'] ) && is_string( $_POST['result_json'] )
-			? wp_unslash( $_POST['result_json'] )
-			: '';
+		$result_json = '';
+
+		if ( isset( $_POST['result_json'] ) && is_string( $_POST['result_json'] ) ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- A JSON envelope cannot be run through a text sanitizer without corrupting it; it is decoded and validated field-by-field in re_execute_sql().
+			$result_json = wp_unslash( $_POST['result_json'] );
+		}
 
 		if ( '' !== $result_json ) {
 			// New path: full stored result sent as JSON.
@@ -243,6 +274,7 @@ class SILC_WIA_Ajax {
 		// Legacy fallback: individual fields. The SQL itself stays raw — it is
 		// untrusted by design and gated by SILC_WIA_SQL_Validator::validate() —
 		// but it must be a string to get that far.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitizing the statement would corrupt it; the validator above is the gate, not a text sanitizer.
 		$sql = isset( $_POST['sql'] ) && is_string( $_POST['sql'] ) ? wp_unslash( $_POST['sql'] ) : '';
 		$sql = trim( $sql );
 
@@ -256,9 +288,12 @@ class SILC_WIA_Ajax {
 
 		$insight_data = array();
 
-		$chart_config = isset( $_POST['chart_config'] ) && is_string( $_POST['chart_config'] )
-			? json_decode( wp_unslash( $_POST['chart_config'] ), true )
-			: null;
+		$chart_config = null;
+
+		if ( isset( $_POST['chart_config'] ) && is_string( $_POST['chart_config'] ) ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- A JSON object cannot be run through a text sanitizer; it is decoded and only used as chart data, which React escapes on render.
+			$chart_config = json_decode( wp_unslash( $_POST['chart_config'] ), true );
+		}
 
 		// Only a decoded object is a usable chart config; a scalar or a broken
 		// JSON string falls back to the renderer's auto-detection.
@@ -266,9 +301,12 @@ class SILC_WIA_Ajax {
 			$insight_data['chart_config'] = $chart_config;
 		}
 
-		$list_config = isset( $_POST['list_config'] ) && is_string( $_POST['list_config'] )
-			? json_decode( wp_unslash( $_POST['list_config'] ), true )
-			: null;
+		$list_config = null;
+
+		if ( isset( $_POST['list_config'] ) && is_string( $_POST['list_config'] ) ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- A JSON object cannot be run through a text sanitizer; it is decoded and only used as list display data, which React escapes on render.
+			$list_config = json_decode( wp_unslash( $_POST['list_config'] ), true );
+		}
 
 		if ( is_array( $list_config ) ) {
 			$insight_data['list_config'] = $list_config;
