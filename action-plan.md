@@ -30,12 +30,12 @@ s → proceed.
 ## Phase 1 — Rename (display name + slug)
 
 ### 1.1 Main file
-- [ ] Rename `store-insights-for-woocommerce.php` → `siphon-store-analytics-for-woocommerce.php`.
-- [ ] Update header block:
+- [x] Rename `store-insights-for-woocommerce.php` → `siphon-store-analytics-for-woocommerce.php`.
+- [x] Update header block:
   - `Plugin Name: Siphon Store Analytics for WooCommerce`
   - `Text Domain: siphon-store-analytics-for-woocommerce`
   - `Plugin URI: https://siphon-tech.com/siphon-store-analytics-for-woocommerce` (or just your root domain)
-- [ ] Update the WooCommerce-missing notice text if it still says "Store Insights for WooCommerce".
+- [x] Update the WooCommerce-missing notice text if it still says "Store Insights for WooCommerce".
 
 ### 1.2 Text domain (all `__()` / `esc_html__()` / `_e()` calls)
 Replace `'store-insights-for-woocommerce'` → `'siphon-store-analytics-for-woocommerce'` in:
@@ -54,21 +54,21 @@ Replace `'store-insights-for-woocommerce'` → `'siphon-store-analytics-for-wooc
 A careful `sed`/find-replace on `'store-insights-for-woocommerce'` is safe here — it's a literal string used only as the text domain.
 
 ### 1.3 Internal page slug
-- [ ] `includes/class-admin.php` — change the menu page slug in `add_submenu_page()` from `store-insights-for-woocommerce` to `siphon-store-analytics-for-woocommerce`, and
+- [x] `includes/class-admin.php` — change the menu page slug in `add_submenu_page()` from `store-insights-for-woocommerce` to `siphon-store-analytics-for-woocommerce`, and
 update the menu title to `Store Analytics`.
-- [ ] `store-insights-for-woocommerce.php` — update `plugin_action_links` URL to `admin.php?page=siphon-store-analytics-for-woocommerce`.
+- [x] `store-insights-for-woocommerce.php` — update `plugin_action_links` URL to `admin.php?page=siphon-store-analytics-for-woocommerce`.
 
 ### 1.4 Translations / POT
-- [ ] Rename `languages/store-insights-for-woocommerce.pot` → `languages/siphon-store-analytics-for-woocommerce.pot`.
-- [ ] Regenerate with the new text domain (see Phase 6 for the exact command).
+- [x] Rename `languages/store-insights-for-woocommerce.pot` → `languages/siphon-store-analytics-for-woocommerce.pot`.
+- [x] Regenerate with the new text domain (see Phase 6 for the exact command).
 
 ### 1.5 Build & metadata
-- [ ] `package.json`: update `name`, `version` (bump to `3.3.0`), and the `i18n` script (new domain, POT path, `Project-Id-Version`).
-- [ ] `package-lock.json`: update `name` (top of file).
-- [ ] `scripts/build-dist.js`: update `SLUG` and the main-file entry in `INCLUDE`.
-- [ ] `readme.txt`: title, `Stable tag`, any path references in Installation, and the `Source code:` URL (update or remove).
-- [ ] `README.md`: update name references.
-- [ ] `.distignore` (if present): update slug/main-file if referenced.
+- [x] `package.json`: update `name`, `version` (bump to `3.3.0`), and the `i18n` script (new domain, POT path, `Project-Id-Version`).
+- [x] `package-lock.json`: update `name` (top of file).
+- [x] `scripts/build-dist.js`: update `SLUG` and the main-file entry in `INCLUDE`.
+- [x] `readme.txt`: title, `Stable tag`, any path references in Installation, and the `Source code:` URL (update or remove).
+- [x] `README.md`: update name references.
+- [x] `.distignore` (if present): update slug/main-file if referenced.
 
 ### 1.6 Keep as-is (do not rename)
 - `SILC_WIA_*` constants, `SILC_WIA_*` classes, `silc_wia_*` option/transient names.
@@ -125,38 +125,42 @@ API`.
 
 ## Phase 3 — Chart.js upgrade
 
-- [ ] Download the latest stable **Chart.js 4.x** (4.6.1 is current per cdnjs as of Nov 2026; confirm on `github.com/chartjs/Chart.js/releases`).
-- [ ] Replace `assets/lib/chart.min.js`.
-- [ ] Update the hardcoded version `'4.4.7'` in `includes/class-admin.php` (`wp_enqueue_script`).
-- [ ] Test every chart type the plugin produces: `bar`, `line`, `pie`, `doughnut`, `horizontalBar`, `radar`, `polarArea`.
-- [ ] Check `assets/js/chart-renderer.js` for deprecated Chart.js 4 API usage (e.g. `Chart.defaults`, scale config). Minor 4.x bumps are usually safe, but verify the horizo
+- [x] Download the latest stable **Chart.js 4.x** (4.6.1 is current per cdnjs as of Nov 2026; confirm on `github.com/chartjs/Chart.js/releases`).
+- [x] Replace `assets/lib/chart.min.js`. (4.6.1 UMD build; checksum matched against the npm/unpkg copy.)
+- [x] Update the hardcoded version `'4.4.7'` in `includes/class-admin.php` (`wp_enqueue_script`) → `'4.6.1'`.
+- [x] Test every chart type the plugin produces: `bar`, `line`, `pie`, `doughnut`, `horizontalBar`, `radar`, `polarArea`. (All render with no console errors; `line` also verified end-to-end in the admin dashboard.)
+- [x] Check `assets/js/chart-renderer.js` for deprecated Chart.js 4 API usage (e.g. `Chart.defaults`, scale config). Minor 4.x bumps are usually safe, but verify the horizo
 ntalBar mapping.
+  - `grid.drawBorder` (removed in v4) replaced with `border: { display: false }` on both scales.
+  - `horizontalBar` mapping fixed: it was rendered as a vertical bar because Chart.js 3+ needs `indexAxis: 'y'`; `beginAtZero` moved to the value axis.
+  - `radar` / `polarArea` no longer get stray `x`/`y` axes; they use a single styled `r` scale.
 
 ---
 
 ## Phase 4 — External services documentation (hard requirement)
 
 ### 4.1 readme.txt
-- [ ] Add `== External services ==` section (and mirror in `README.md`).
-- [ ] Document, for **each** service, what it is, what data is sent, when, and ToS + privacy links.
+- [x] Add `== External services ==` section (and mirror in `README.md`).
+- [x] Document, for **each** service, what it is, what data is sent, when, and ToS + privacy links.
 
-Content to cover:
+Content covered (BYOK path only — the WordPress AI Client path arrives with Phase 2, and
+must be added to this section at the same time):
 
 | Service | Used for | Data sent |
 |---|---|---|
-| WordPress AI Client (core path) | Routes insight prompts to the site's configured provider | Question text + DB schema metadata (tables/columns); no row-level data |
-| OpenAI / Anthropic / Google (via core Connectors) | AI generation | Same as above |
-| OpenAI / Anthropic / OpenRouter / DeepSeek / Groq / Mistral / xAI (BYOK) | AI generation | Question + schema metadata + API key as auth header |
+| WordPress AI Client (core path) | **Not implemented yet — Phase 2** | n/a |
+| OpenAI / Anthropic / Google (via core Connectors) | **Not implemented yet — Phase 2** | n/a |
+| OpenAI / Anthropic / OpenRouter / DeepSeek / Groq / Mistral / xAI (BYOK) | AI generation | Question + schema metadata + model settings + API key as auth header |
 | Self-hosted (Ollama/LocalAI/vLLM) | Local AI generation | Question + schema metadata to the local endpoint only |
 
-- [ ] Add ToS + privacy links for each hosted provider. Verify each URL at implementation time (these change):
-  - OpenAI: `openai.com/policies/terms-of-use`, `openai.com/policies/privacy-policy`
-  - Anthropic: `anthropic.com/legal/consumer-terms`, `anthropic.com/legal/privacy`
-  - Google Gemini: `ai.google.dev/gemini-api/terms`, `policies.google.com/privacy`
-  - OpenRouter, DeepSeek, Groq, Mistral, xAI: their respective terms/privacy pages.
+- [x] Add ToS + privacy links for each hosted provider. Verify each URL at implementation time (these change):
+  - OpenAI: `openai.com/policies/terms-of-use`, `openai.com/policies/privacy-policy` — both 200
+  - Anthropic: `anthropic.com/legal/consumer-terms`, `anthropic.com/legal/privacy` — both 200
+  - Google Gemini: `ai.google.dev/gemini-api/terms`, `policies.google.com/privacy` — not listed (no Google endpoint in the provider registry yet)
+  - OpenRouter, DeepSeek, Groq, Mistral, xAI: their respective terms/privacy pages — all verified 200
 
 ### 4.2 Privacy policy content
-- [ ] Update `SILC_WIA_Admin::add_privacy_policy_content()` to describe both the core-AI and BYOK data flows.
+- [x] Update `SILC_WIA_Admin::add_privacy_policy_content()` to describe the data flow (connection test, model settings, provider list; the core-AI branch must be added with Phase 2).
 
 ---
 
@@ -168,9 +172,9 @@ Current state is already mostly fine:
 - The WooCommerce-missing notice is the only global `admin_notices` one.
 
 Actions:
-- [ ] Make the WooCommerce-missing notice either dismissible or scope it to the Plugins screen (dependency notices are generally acceptable, but scoping is safer).
-- [ ] **Do not add** a "Pro"/upgrade notice or promotional widget — your own audit notes ship without it for the cleanest first review.
-- [ ] Grep for `admin_notices`, `notice`, `upsell`, `pro` and confirm the only notices are the two legitimate ones above.
+- [x] Make the WooCommerce-missing notice either dismissible or scope it to the Plugins screen (dependency notices are generally acceptable, but scoping is safer). → scoped to `plugins.php`.
+- [x] **Do not add** a "Pro"/upgrade notice or promotional widget — your own audit notes ship without it for the cleanest first review.
+- [x] Grep for `admin_notices`, `notice`, `upsell`, `pro` and confirm the only notices are the two legitimate ones above.
 
 ---
 
@@ -224,10 +228,12 @@ Run all of these before packaging:
 
 These come from your own prior audit and could surface next round:
 
-- [ ] Decide on `wp_users` / `wp_usermeta`: currently credential columns are blocked but the tables remain whitelisted. A reviewer may still flag this — consider restricting them further. **decision** not taking any action yet
+- [ ] Decide on `wp_users` / `wp_usermeta`: currently credential columns are blocked but the tables remain whitelisted. A reviewer may still flag this — consider restricting them further. 
+**decision** not taking any action yet
 
 - [ ] JS string localization: several hardcoded English strings remain in `assets/js/src/*`. Your audit treated the PHP-side `l10n` mechanism as acceptable; keep that in mind if raised.
-- [ ] Remove/update stale `Source code:` GitHub URL in `readme.txt`.
+- [x] Remove/update stale `Source code:` GitHub URL in `readme.txt`. → now points at `github.com/roypr/siphon-store-analytics-for-woocommerce` (the old `/tree/wp-3.3.0` URL returned 404).
+- [x] Also fixed for consistency: Installation folder/menu names in `readme.txt`, the FAQ notice reference, and the `README.md` GitHub link (`WordPress 6.2+` → `6.5+`).
 
 ---
 

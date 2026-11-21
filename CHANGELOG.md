@@ -6,6 +6,21 @@ All notable changes to Siphon Store Analytics for WooCommerce will be documented
 
 - **Identity change** — Plugin identity changed from Store Insights for WooCommerce to Siphon Store Analytics for WooCommerce
 
+### Changed
+- Chart.js upgraded from 4.4.7 to 4.6.1 (`assets/lib/chart.min.js`), and the enqueue version with it. Every chart type the plugin produces was re-tested against the new build: bar, line, pie, doughnut, horizontalBar, radar and polarArea.
+
+### Fixed
+- Horizontal bar charts render horizontally again. Chart.js 3 removed the `horizontalBar` type, so it is now a `bar` chart with `indexAxis: 'y'`, the value axis starts at zero, and the axis titles follow the orientation. This affected the built-in "Top 5 products by quantity sold" Library item and any AI-generated horizontal chart.
+- Radar and polar area charts no longer draw two stray cartesian x/y axes behind the chart. They use a single radial (`r`) scale, styled like the rest of the dashboard.
+
+### Docs
+- New **External services** section in `readme.txt` and `README.md`: what is sent on each AI request (question text, table and column names, model settings, API key), when it is sent, the default endpoint per provider, and terms-of-service and privacy-policy links for OpenAI, Anthropic, OpenRouter, DeepSeek, Groq, Mistral and xAI — plus the self-hosted/custom endpoint case, where the data stays in your own infrastructure.
+- Suggested privacy-policy text now covers the connection test, the model settings that are sent, the provider list, and that query results are never transmitted.
+- Installation steps, the FAQ reference to the admin notice and the "Source code" URL now use the new folder name, menu name and repository.
+
+### Admin notices (Guideline 11)
+- The "WooCommerce is required" notice is now scoped to the Plugins screen instead of appearing on every admin page. The plugin ships no promotional, upgrade or dashboard-wide notices.
+
 ## [3.2.2] — Nov 2026
 
 ### Added

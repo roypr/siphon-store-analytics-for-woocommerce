@@ -211,8 +211,34 @@ var SILC_WIA_Charts = ( function () {
 			},
 		};
 
+		// Radar and polar area charts use one radial scale. Defining x/y for
+		// them would make Chart.js draw two stray cartesian axes behind the
+		// chart, so they get an 'r' scale instead.
+		var isRadialChart = chartType === 'radar' || chartType === 'polarArea';
+
 		// Add scales for non-pie charts.
-		if ( ! isPieOrDoughnut ) {
+		if ( ! isPieOrDoughnut && isRadialChart ) {
+			chartOptions.scales = {
+				r: {
+					beginAtZero: true,
+					grid: {
+						color: 'rgba(0,0,0,0.08)',
+					},
+					angleLines: {
+						color: 'rgba(0,0,0,0.08)',
+					},
+					pointLabels: {
+						font: { size: 11 },
+						color: '#787c82',
+					},
+					ticks: {
+						color: '#787c82',
+						font: { size: 11 },
+						backdropColor: 'transparent',
+					},
+				},
+			};
+		} else if ( ! isPieOrDoughnut ) {
 			chartOptions.scales = {
 				x: {
 					title: {
@@ -221,10 +247,13 @@ var SILC_WIA_Charts = ( function () {
 						font: { size: 12, weight: '500' },
 						color: '#787c82',
 					},
+					// Chart.js 4 draws the axis line with the scale border, not with grid.drawBorder.
+					border: {
+						display: false,
+					},
 					grid: {
 						display: true,
 						color: 'rgba(0,0,0,0.06)',
-						drawBorder: false,
 						lineWidth: 1,
 					},
 					ticks: {
@@ -241,9 +270,12 @@ var SILC_WIA_Charts = ( function () {
 						color: '#787c82',
 					},
 					beginAtZero: true,
+					// Chart.js 4 draws the axis line with the scale border, not with grid.drawBorder.
+					border: {
+						display: false,
+					},
 					grid: {
 						color: 'rgba(0,0,0,0.05)',
-						drawBorder: false,
 						lineWidth: 1,
 					},
 					ticks: {
@@ -258,6 +290,11 @@ var SILC_WIA_Charts = ( function () {
 				var tempTitle = chartOptions.scales.x.title;
 				chartOptions.scales.x.title = chartOptions.scales.y.title;
 				chartOptions.scales.y.title = tempTitle;
+
+				// The categories move to the y axis, so the value axis (x) is
+				// the one that has to start at zero.
+				chartOptions.scales.y.beginAtZero = false;
+				chartOptions.scales.x.beginAtZero = true;
 			}
 		}
 
@@ -282,13 +319,17 @@ var SILC_WIA_Charts = ( function () {
 		}
 
 		// Store the chart instance.
+		// Chart.js 3+ dropped the 'horizontalBar' type: a horizontal bar chart is
+		// a regular bar chart with the category axis flipped to the y axis.
 		charts[ canvasId ] = new Chart( ctx, {
 			type: chartType === 'horizontalBar' ? 'bar' : chartType,
 			data: {
 				labels: config.labels || [],
 				datasets: datasets,
 			},
-			options: chartOptions,
+			options: isHorizontalBar
+				? Object.assign( {}, chartOptions, { indexAxis: 'y' } )
+				: chartOptions,
 		} );
 
 		// Apply gradient fills for bar charts post-creation.

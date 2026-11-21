@@ -9,7 +9,7 @@ WC tested up to: 11.2
 Stable tag: 3.3.0
 License: GPL v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
-Source code: https://github.com/roypr/store-insights-for-woocommerce/tree/wp-3.3.0
+Source code: https://github.com/roypr/siphon-store-analytics-for-woocommerce
 
 Ask plain-English questions about your WooCommerce store and get instant charts, lists, and answers — no SQL or coding needed.
 
@@ -72,7 +72,42 @@ Stop clicking through endless admin screens and exporting CSVs. A question produ
 * Generated insights keep the question, the SQL and the display settings so they can be re-run — the result rows are not stored. The rendered answer is cached for the duration set under Cache Duration
 * Uninstalling removes the settings, the history, the cached results and the legacy options this plugin created
 
-= Requirements =
+== External services ==
+
+This plugin does not send anything to the plugin author and does not use a service run by the plugin author. To turn a plain-English question into a SQL query it needs a large language model, so it contacts **the AI provider you configure yourself** under WooCommerce → Siphon Store Analytics → Settings. Nothing is transmitted until you either ask a question or press **Test connection**, and if you never add an API key no external request is made at all (the built-in Library runs entirely on your own server).
+
+= What is sent, and when =
+
+On each AI request (that is, once per question you ask):
+
+* **Your question**, as plain text.
+* **Database schema metadata only** — the names of your WooCommerce and WordPress tables and their column names. Password hashes, activation keys and session-token meta are removed from the schema before it is sent. No customer, order, product or payment records are included.
+* **The model name, temperature and token limit** you selected in Settings.
+* **Your API key**, as a request header, so the provider can authenticate the call and bill your own account.
+
+Query results never leave your site: every generated query is executed against your own database and only the rendered chart, list or number is shown in your admin.
+
+Pressing **Test connection** in Settings sends one short fixed prompt — `Say "ok" and nothing else.` — to the same endpoint, so the credentials can be checked before you rely on them.
+
+= Providers you can choose =
+
+The plugin ships with the default endpoints below. Each one is contacted only if you select that provider and save your own API key for it.
+
+* **OpenAI** — `api.openai.com`. Terms of use: https://openai.com/policies/terms-of-use — Privacy policy: https://openai.com/policies/privacy-policy
+* **Claude / Anthropic** — `api.anthropic.com` (native Messages API). Terms of service: https://www.anthropic.com/legal/consumer-terms — Privacy policy: https://www.anthropic.com/legal/privacy
+* **OpenRouter** — `openrouter.ai`. Terms of service: https://openrouter.ai/terms — Privacy policy: https://openrouter.ai/privacy
+* **DeepSeek** — `api.deepseek.com`. Terms of use: https://cdn.deepseek.com/policies/en-US/deepseek-terms-of-use.html — Privacy policy: https://cdn.deepseek.com/policies/en-US/deepseek-privacy-policy.html
+* **Groq** — `api.groq.com`. Terms of use: https://groq.com/terms-of-use/ — Privacy policy: https://groq.com/privacy-policy/
+* **Mistral** — `api.mistral.ai`. Terms of service: https://mistral.ai/terms — Privacy policy: https://legal.mistral.ai/terms/privacy-policy
+* **xAI (Grok)** — `api.x.ai`. Terms of service: https://x.ai/legal/terms-of-service — Privacy policy: https://x.ai/legal/privacy-policy
+
+The data each of these providers receives is exactly the list above, and their own terms and privacy policies govern what they do with it.
+
+= Self-hosted and custom endpoints =
+
+You can also choose **Custom** and enter the URL of any OpenAI-compatible endpoint — Azure OpenAI, Ollama, LocalAI, vLLM, LM Studio, a gateway or your own proxy. In that case the question and the schema metadata go to that endpoint and nowhere else. If the endpoint runs on your own machine or network (for example `http://localhost:11434/v1`), the data does not leave your infrastructure. Plain HTTP is accepted only for such local endpoints; every other endpoint must use HTTPS.
+
+== Requirements ==
 
 * WordPress 6.5+
 * WooCommerce 8.0+
@@ -109,9 +144,9 @@ Categories include:
 
 == Installation ==
 
-1. Upload the `store-insights-for-woocommerce` folder to `/wp-content/plugins/` or install via the WordPress plugin directory.
+1. Upload the `siphon-store-analytics-for-woocommerce` folder to `/wp-content/plugins/` or install via the WordPress plugin directory.
 2. Activate the plugin through the 'Plugins' menu.
-3. Navigate to **WooCommerce → Store Insights**.
+3. Navigate to **WooCommerce → Siphon Store Analytics**.
 4. Open the ⚙️ **Settings** panel in the sidebar.
 5. Enter your API URL and API Key (or skip — the built-in Library works without an API).
 6. Start asking questions or browse the Library.
@@ -140,7 +175,7 @@ Yes. Order-level insights read the WooCommerce Analytics lookup tables (`wc_orde
 
 = Why are some Library items missing? =
 
-The Library hides items that need the WooCommerce Analytics lookup tables when Analytics is disabled or when those tables are missing. Enable WooCommerce Analytics under WooCommerce > Settings > Advanced > Features. If Analytics is enabled but the tables have no order data yet, run the historical import under WooCommerce > Analytics > Settings. The dashboard shows a notice on the Store Insights page when this applies.
+The Library hides items that need the WooCommerce Analytics lookup tables when Analytics is disabled or when those tables are missing. Enable WooCommerce Analytics under WooCommerce > Settings > Advanced > Features. If Analytics is enabled but the tables have no order data yet, run the historical import under WooCommerce > Analytics > Settings. The dashboard shows a notice on the Siphon Store Analytics page when this applies.
 
 = Can I use this on a multisite? =
 
@@ -154,6 +189,13 @@ Results are cached (configurable TTL, default 1 hour) to avoid redundant API cal
 
 = 3.3.0 =
 * Identity change — Plugin identity changed from Store Insights for WooCommerce to Siphon Store Analytics for WooCommerce
+* 📊 Chart.js upgraded to 4.6.1; every chart type re-tested (bar, line, pie, doughnut, horizontalBar, radar, polarArea)
+* 🐛 Horizontal bar charts render horizontally again — Chart.js 3+ draws them as a bar chart with the category axis flipped, so the "Top 5 products by quantity sold" Library item was showing vertical bars
+* 🐛 Radar and polar area charts no longer draw two stray cartesian axes behind the chart
+* 🔌 New "External services" section — what is sent to your AI provider, when it is sent, and the terms of service and privacy policy for every supported provider
+* 📝 Suggested privacy policy text now describes the connection test, the settings that are sent, and the provider list
+* 📝 Installation steps, FAQ menu name and the source code link updated for the new name
+* 🧹 The "WooCommerce is required" notice now only appears on the Plugins screen, not on every admin page
 
 = 3.2.2 =
 * 🔎 WooCommerce Analytics is now a documented data prerequisite with runtime readiness checks and an admin notice

@@ -59,6 +59,19 @@ add_action( 'plugins_loaded', function () {
 	// Ensure WooCommerce is active.
 	if ( ! class_exists( 'WooCommerce' ) ) {
 		add_action( 'admin_notices', function () {
+			/*
+			 * Only show this on the Plugins screen, where the user can act on it.
+			 * A dependency notice that follows the user around every admin page
+			 * is exactly the kind of global notice the plugin guidelines warn
+			 * about, and WordPress itself already blocks activation through the
+			 * `Requires Plugins` header.
+			 */
+			$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+			if ( ! $screen || 'plugins' !== $screen->id ) {
+				return;
+			}
+
 			$message = __( 'Siphon Store Analytics for WooCommerce requires WooCommerce to be installed and activated.', 'siphon-store-analytics-for-woocommerce' );
 			printf( '<div class="notice notice-warning"><p>%s</p></div>', esc_html( $message ) );
 		} );

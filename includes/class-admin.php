@@ -149,13 +149,16 @@ class SILC_WIA_Admin {
 		}
 
 		$content = '<p class="privacy-policy-tutorial">'
-			. esc_html__( 'Suggested text: When you ask a question, the following is sent over HTTPS to the AI provider you configured under WooCommerce &rarr; Siphon Store Analytics &rarr; Settings:', 'siphon-store-analytics-for-woocommerce' )
+			. esc_html__( 'Suggested text: The only external request this plugin makes is to the AI provider configured under WooCommerce &rarr; Siphon Store Analytics &rarr; Settings. Nothing is sent until an administrator asks a question or uses the connection test. When a question is asked, the following is sent over HTTPS to that provider:', 'siphon-store-analytics-for-woocommerce' )
 			. '</p><ul>'
 			. '<li>' . esc_html__( 'Your question, in plain text.', 'siphon-store-analytics-for-woocommerce' ) . '</li>'
 			. '<li>' . esc_html__( 'Database schema metadata only: table names and column names.', 'siphon-store-analytics-for-woocommerce' ) . '</li>'
+			. '<li>' . esc_html__( 'The model, temperature and token limit selected in Settings.', 'siphon-store-analytics-for-woocommerce' ) . '</li>'
 			. '<li>' . esc_html__( 'Your API key, sent as an authorization header so the provider can bill your account.', 'siphon-store-analytics-for-woocommerce' ) . '</li>'
 			. '</ul><p class="privacy-policy-tutorial">'
-			. esc_html__( 'No customer, order, product, or payment records are transmitted. Generated queries run against this site\'s own database.', 'siphon-store-analytics-for-woocommerce' )
+			. esc_html__( 'No customer, order, product, or payment records are transmitted. Generated queries run against this site\'s own database and their results are never sent to the provider.', 'siphon-store-analytics-for-woocommerce' )
+			. '</p><p class="privacy-policy-tutorial">'
+			. esc_html__( 'The connection test in Settings sends only a short fixed prompt (Say "ok" and nothing else.) together with the API key. The external service that receives this data depends on the endpoint entered in Settings: by default OpenAI, Claude (Anthropic), OpenRouter, DeepSeek, Groq, Mistral or xAI. A self-hosted endpoint such as Ollama, LocalAI or vLLM keeps the data inside your own infrastructure. Terms of service and privacy policy links for each provider are listed in the plugin readme.', 'siphon-store-analytics-for-woocommerce' )
 			. '</p><p class="privacy-policy-tutorial">'
 			. esc_html__( 'Locally, the plugin keeps the question, the generated query and its display settings so past insights can be re-run; it does not keep the result rows. A generated answer is cached for the duration configured under Cache Duration so the same question does not call the AI twice. All of this data is removed when the plugin is deleted. Password hashes, activation keys and session tokens are never included in the schema sent to the provider and cannot be queried.', 'siphon-store-analytics-for-woocommerce' )
 			. '</p>';
@@ -380,7 +383,7 @@ class SILC_WIA_Admin {
 				'silc-wia-chartjs',
 				SILC_WIA_URL . 'assets/lib/chart.min.js',
 				array(),
-				'4.4.7',
+				'4.6.1',
 				true
 			);
 		}

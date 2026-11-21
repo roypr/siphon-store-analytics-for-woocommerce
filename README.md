@@ -41,7 +41,7 @@ Stop digging through admin panels and exporting CSVs. Each insight renders in on
 ## 🚀 Quick Start
 
 1. Install the plugin
-2. Go to **WooCommerce → Store Insights**
+2. Go to **WooCommerce → Siphon Store Analytics**
 3. (Optional) Add your API key in the ⚙️ Settings panel
 4. Start asking questions — or browse the built-in Library
 
@@ -143,11 +143,42 @@ Dynamically discovers your active WooCommerce order storage backend. Adjusts tab
 
 ---
 
+## 🔌 External Services
+
+This plugin sends nothing to the plugin author and does not use a service run by the plugin author. To turn a plain-English question into a SQL query it needs a large language model, so it calls **the AI provider you configure yourself** under WooCommerce → Siphon Store Analytics → Settings. Nothing is transmitted until you ask a question or press **Test connection**, and with no API key saved no external request is ever made — the built-in Library runs entirely on your own server.
+
+**Sent on every AI request:**
+
+| Sent | Detail |
+|------|--------|
+| Your question | Plain text, exactly as typed |
+| Schema metadata | Table names and column names only (credentials stripped) |
+| Model settings | Model id, temperature, token limit |
+| Your API key | Request header, so the provider bills your own account |
+
+**Never sent:** customer, order, product or payment rows — and no query result ever leaves the site. Pressing **Test connection** sends a single fixed prompt (`Say "ok" and nothing else.`) to the same endpoint.
+
+The default endpoint per provider, and each provider's own terms:
+
+| Provider | Endpoint | Terms | Privacy |
+|----------|----------|-------|---------|
+| OpenAI | `api.openai.com` | [Terms](https://openai.com/policies/terms-of-use) | [Privacy](https://openai.com/policies/privacy-policy) |
+| Claude / Anthropic | `api.anthropic.com` (Messages API) | [Terms](https://www.anthropic.com/legal/consumer-terms) | [Privacy](https://www.anthropic.com/legal/privacy) |
+| OpenRouter | `openrouter.ai` | [Terms](https://openrouter.ai/terms) | [Privacy](https://openrouter.ai/privacy) |
+| DeepSeek | `api.deepseek.com` | [Terms](https://cdn.deepseek.com/policies/en-US/deepseek-terms-of-use.html) | [Privacy](https://cdn.deepseek.com/policies/en-US/deepseek-privacy-policy.html) |
+| Groq | `api.groq.com` | [Terms](https://groq.com/terms-of-use/) | [Privacy](https://groq.com/privacy-policy/) |
+| Mistral | `api.mistral.ai` | [Terms](https://mistral.ai/terms) | [Privacy](https://legal.mistral.ai/terms/privacy-policy) |
+| xAI (Grok) | `api.x.ai` | [Terms](https://x.ai/legal/terms-of-service) | [Privacy](https://x.ai/legal/privacy-policy) |
+
+Choosing **Custom** points the plugin at any OpenAI-compatible endpoint — Azure OpenAI, Ollama, LocalAI, vLLM, LM Studio, a gateway or your own proxy. The question and schema metadata then go to that endpoint and nowhere else; with a local endpoint the data stays inside your own infrastructure. Plain HTTP is accepted only for local endpoints, everything else must use HTTPS.
+
+---
+
 ## 📦 Requirements
 
 | Component | Minimum |
 |-----------|---------|
-| WordPress | 6.2+ |
+| WordPress | 6.5+ |
 | WooCommerce | 8.0+ |
 | PHP | 7.4+ |
 | API Key | Optional (Library works without) |
@@ -190,5 +221,5 @@ GPL v2 or later. See [LICENSE](./LICENSE) for full text.
 
 ## 🔗 Links
 
-- **Plugin URI**: [GitHub](https://github.com/roypr/store-insights-for-woocommerce)
+- **Plugin URI**: [GitHub](https://github.com/roypr/siphon-store-analytics-for-woocommerce)
 - **Chart.js**: [chartjs.org](https://www.chartjs.org/) (MIT)
