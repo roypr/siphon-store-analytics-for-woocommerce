@@ -1,5 +1,5 @@
 /**
- * Store Insights for WooCommerce — Sidebar component
+ * Siphon Store Analytics for WooCommerce — Sidebar component
  *
  * @package SILC_WooInsight_AI
  */

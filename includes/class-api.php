@@ -627,7 +627,7 @@ class SILC_WIA_API {
 			return array(
 				'success' => false,
 				'data'    => null,
-				'error'   => __( 'API key is not configured. Please go to Settings and add your API key.', 'store-insights-for-woocommerce' ),
+				'error'   => __( 'API key is not configured. Please go to Settings and add your API key.', 'siphon-store-analytics-for-woocommerce' ),
 			);
 		}
 
@@ -667,7 +667,7 @@ class SILC_WIA_API {
 			return array(
 				'success' => false,
 				'data'    => null,
-				'error'   => __( 'The API URL must use HTTPS. Plain HTTP is only allowed for local endpoints such as http://localhost:11434/v1.', 'store-insights-for-woocommerce' ),
+				'error'   => __( 'The API URL must use HTTPS. Plain HTTP is only allowed for local endpoints such as http://localhost:11434/v1.', 'siphon-store-analytics-for-woocommerce' ),
 			);
 		}
 
@@ -704,7 +704,7 @@ class SILC_WIA_API {
 				'data'    => null,
 				'error'   => sprintf(
 					/* translators: %s: error message */
-					__( 'API request failed: %s', 'store-insights-for-woocommerce' ),
+					__( 'API request failed: %s', 'siphon-store-analytics-for-woocommerce' ),
 					$response->get_error_message()
 				),
 			);
@@ -720,7 +720,7 @@ class SILC_WIA_API {
 		if ( $status_code !== 200 ) {
 			$error_msg = isset( $data['error']['message'] ) ? $data['error']['message'] : sprintf(
 				/* translators: %d: HTTP status code */
-				__( 'API returned HTTP %d', 'store-insights-for-woocommerce' ),
+				__( 'API returned HTTP %d', 'siphon-store-analytics-for-woocommerce' ),
 				$status_code
 			);
 			return array(
@@ -764,7 +764,7 @@ class SILC_WIA_API {
 			return array(
 				'success' => false,
 				'insight' => null,
-				'error'   => __( 'API key is not configured. Please go to Settings and add your API key.', 'store-insights-for-woocommerce' ),
+				'error'   => __( 'API key is not configured. Please go to Settings and add your API key.', 'siphon-store-analytics-for-woocommerce' ),
 			);
 		}
 
@@ -819,7 +819,7 @@ class SILC_WIA_API {
 			return array(
 				'success' => false,
 				'insight' => null,
-				'error'   => __( 'API returned an empty response.', 'store-insights-for-woocommerce' ),
+				'error'   => __( 'API returned an empty response.', 'siphon-store-analytics-for-woocommerce' ),
 			);
 		}
 
@@ -858,7 +858,7 @@ class SILC_WIA_API {
 			return array(
 				'success' => false,
 				'insight' => null,
-				'error'   => __( 'Could not parse insight JSON from the API response.', 'store-insights-for-woocommerce' ),
+				'error'   => __( 'Could not parse insight JSON from the API response.', 'siphon-store-analytics-for-woocommerce' ),
 			);
 		}
 
@@ -1114,7 +1114,7 @@ Otherwise, return ONLY valid JSON with the SQL query, output type, and configura
 		if ( empty( $settings['api_key'] ) ) {
 			return array(
 				'success' => false,
-				'message' => __( 'No API key configured.', 'store-insights-for-woocommerce' ),
+				'message' => __( 'No API key configured.', 'siphon-store-analytics-for-woocommerce' ),
 			);
 		}
 
@@ -1147,13 +1147,13 @@ Otherwise, return ONLY valid JSON with the SQL query, output type, and configura
 			return array(
 				'success' => false,
 				/* translators: 1: provider name, 2: API error message */
-				'message' => sprintf( __( '%1$s: %2$s', 'store-insights-for-woocommerce' ), (string) $spec['label'], (string) $result['error'] ),
+				'message' => sprintf( __( '%1$s: %2$s', 'siphon-store-analytics-for-woocommerce' ), (string) $spec['label'], (string) $result['error'] ),
 			);
 		}
 
 		return array(
 			'success' => true,
-			'message' => __( 'Connection successful!', 'store-insights-for-woocommerce' ),
+			'message' => __( 'Connection successful!', 'siphon-store-analytics-for-woocommerce' ),
 		);
 	}
 }

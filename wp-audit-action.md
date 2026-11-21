@@ -1,3 +1,5 @@
+### Plugin name changed: Siphon Store Analytics for WooCommerce
+
 All changes are in and verified. Summary:
 
 ### Remaining

@@ -1,5 +1,5 @@
 /**
- * Store Insights for WooCommerce — Main Entry Point
+ * Siphon Store Analytics for WooCommerce — Main Entry Point
  *
  * @package SILC_WooInsight_AI
  */
@@ -606,9 +606,9 @@ function WooInsightDashboard() {
 				el('img', {
 					className: 'silc-wia-logo-icon',
 					src: pluginUrl + 'assets/img/chart.svg',
-					alt: 'Store Insights for WooCommerce',
+					alt: 'Siphon Store Analytics for WooCommerce',
 				}),
-				'Store Insights for WooCommerce'
+				'Siphon Store Analytics for WooCommerce'
 			),
 			el('span', { className: 'silc-wia-topbar-model' }, settings.model || defaults.model),
 			el('div', { className: 'silc-wia-topbar-spacer' }),

@@ -313,7 +313,7 @@ class SILC_WIA_Woo_Schema {
 	 * @return string
 	 */
 	public static function get_analytics_unavailable_message(): string {
-		return __( 'This insight needs WooCommerce Analytics data, but it is unavailable. Enable WooCommerce Analytics and run the historical import under WooCommerce > Analytics > Settings, then try again.', 'store-insights-for-woocommerce' );
+		return __( 'This insight needs WooCommerce Analytics data, but it is unavailable. Enable WooCommerce Analytics and run the historical import under WooCommerce > Analytics > Settings, then try again.', 'siphon-store-analytics-for-woocommerce' );
 	}
 
 	/**
@@ -725,12 +725,12 @@ class SILC_WIA_Woo_Schema {
 	 */
 	public static function get_post_types( bool $active_only = false ): array {
 		$types = array(
-			'product'          => __( 'Simple or variable product', 'store-insights-for-woocommerce' ),
-			'product_variation' => __( 'Product variation', 'store-insights-for-woocommerce' ),
-			'shop_order'       => __( 'Order (legacy post type)', 'store-insights-for-woocommerce' ),
-			'shop_order_refund' => __( 'Order refund', 'store-insights-for-woocommerce' ),
-			'shop_coupon'      => __( 'Coupon / discount code', 'store-insights-for-woocommerce' ),
-			'shop_subscription' => __( 'WooCommerce subscription', 'store-insights-for-woocommerce' ),
+			'product'          => __( 'Simple or variable product', 'siphon-store-analytics-for-woocommerce' ),
+			'product_variation' => __( 'Product variation', 'siphon-store-analytics-for-woocommerce' ),
+			'shop_order'       => __( 'Order (legacy post type)', 'siphon-store-analytics-for-woocommerce' ),
+			'shop_order_refund' => __( 'Order refund', 'siphon-store-analytics-for-woocommerce' ),
+			'shop_coupon'      => __( 'Coupon / discount code', 'siphon-store-analytics-for-woocommerce' ),
+			'shop_subscription' => __( 'WooCommerce subscription', 'siphon-store-analytics-for-woocommerce' ),
 		);
 
 		if ( $active_only && self::is_hpos_enabled() ) {
@@ -751,10 +751,10 @@ class SILC_WIA_Woo_Schema {
 	 */
 	public static function get_product_types(): array {
 		return array(
-			'simple'   => __( 'Simple physical or digital product', 'store-insights-for-woocommerce' ),
-			'grouped'  => __( 'Grouped product (collection of simples)', 'store-insights-for-woocommerce' ),
-			'external' => __( 'External / affiliate product', 'store-insights-for-woocommerce' ),
-			'variable' => __( 'Variable product (has variations)', 'store-insights-for-woocommerce' ),
+			'simple'   => __( 'Simple physical or digital product', 'siphon-store-analytics-for-woocommerce' ),
+			'grouped'  => __( 'Grouped product (collection of simples)', 'siphon-store-analytics-for-woocommerce' ),
+			'external' => __( 'External / affiliate product', 'siphon-store-analytics-for-woocommerce' ),
+			'variable' => __( 'Variable product (has variations)', 'siphon-store-analytics-for-woocommerce' ),
 		);
 	}
 
@@ -770,75 +770,75 @@ class SILC_WIA_Woo_Schema {
 	public static function get_meta_keys(): array {
 		return array(
 			// Product meta.
-			'_price'              => __( 'Current product price', 'store-insights-for-woocommerce' ),
-			'_regular_price'      => __( 'Regular product price', 'store-insights-for-woocommerce' ),
-			'_sale_price'         => __( 'Sale price', 'store-insights-for-woocommerce' ),
-			'_sku'                => __( 'Stock keeping unit', 'store-insights-for-woocommerce' ),
-			'_stock'              => __( 'Stock quantity', 'store-insights-for-woocommerce' ),
-			'_stock_status'       => __( 'Stock status (instock/outofstock)', 'store-insights-for-woocommerce' ),
-			'_manage_stock'       => __( 'Whether stock is managed', 'store-insights-for-woocommerce' ),
-			'_weight'             => __( 'Product weight', 'store-insights-for-woocommerce' ),
-			'_length'             => __( 'Product length', 'store-insights-for-woocommerce' ),
-			'_width'              => __( 'Product width', 'store-insights-for-woocommerce' ),
-			'_height'             => __( 'Product height', 'store-insights-for-woocommerce' ),
-			'_tax_status'         => __( 'Tax status', 'store-insights-for-woocommerce' ),
-			'_tax_class'          => __( 'Tax class', 'store-insights-for-woocommerce' ),
-			'_featured'           => __( 'Featured product flag', 'store-insights-for-woocommerce' ),
-			'_visibility'         => __( 'Catalog visibility', 'store-insights-for-woocommerce' ),
-			'_thumbnail_id'       => __( 'Featured image attachment ID', 'store-insights-for-woocommerce' ),
-			'_product_attributes' => __( 'Serialized product attributes', 'store-insights-for-woocommerce' ),
-			'_product_version'    => __( 'Product version', 'store-insights-for-woocommerce' ),
-			'_virtual'            => __( 'Virtual product flag', 'store-insights-for-woocommerce' ),
-			'_downloadable'       => __( 'Downloadable product flag', 'store-insights-for-woocommerce' ),
-			'_download_limit'     => __( 'Download limit', 'store-insights-for-woocommerce' ),
-			'_download_expiry'    => __( 'Download expiry days', 'store-insights-for-woocommerce' ),
-			'_sale_price_dates_from' => __( 'Sale start date', 'store-insights-for-woocommerce' ),
-			'_sale_price_dates_to'   => __( 'Sale end date', 'store-insights-for-woocommerce' ),
-			'_wc_average_rating'  => __( 'Average rating', 'store-insights-for-woocommerce' ),
-			'_wc_rating_count'    => __( 'Rating count', 'store-insights-for-woocommerce' ),
-			'_wc_review_count'    => __( 'Review count', 'store-insights-for-woocommerce' ),
+			'_price'              => __( 'Current product price', 'siphon-store-analytics-for-woocommerce' ),
+			'_regular_price'      => __( 'Regular product price', 'siphon-store-analytics-for-woocommerce' ),
+			'_sale_price'         => __( 'Sale price', 'siphon-store-analytics-for-woocommerce' ),
+			'_sku'                => __( 'Stock keeping unit', 'siphon-store-analytics-for-woocommerce' ),
+			'_stock'              => __( 'Stock quantity', 'siphon-store-analytics-for-woocommerce' ),
+			'_stock_status'       => __( 'Stock status (instock/outofstock)', 'siphon-store-analytics-for-woocommerce' ),
+			'_manage_stock'       => __( 'Whether stock is managed', 'siphon-store-analytics-for-woocommerce' ),
+			'_weight'             => __( 'Product weight', 'siphon-store-analytics-for-woocommerce' ),
+			'_length'             => __( 'Product length', 'siphon-store-analytics-for-woocommerce' ),
+			'_width'              => __( 'Product width', 'siphon-store-analytics-for-woocommerce' ),
+			'_height'             => __( 'Product height', 'siphon-store-analytics-for-woocommerce' ),
+			'_tax_status'         => __( 'Tax status', 'siphon-store-analytics-for-woocommerce' ),
+			'_tax_class'          => __( 'Tax class', 'siphon-store-analytics-for-woocommerce' ),
+			'_featured'           => __( 'Featured product flag', 'siphon-store-analytics-for-woocommerce' ),
+			'_visibility'         => __( 'Catalog visibility', 'siphon-store-analytics-for-woocommerce' ),
+			'_thumbnail_id'       => __( 'Featured image attachment ID', 'siphon-store-analytics-for-woocommerce' ),
+			'_product_attributes' => __( 'Serialized product attributes', 'siphon-store-analytics-for-woocommerce' ),
+			'_product_version'    => __( 'Product version', 'siphon-store-analytics-for-woocommerce' ),
+			'_virtual'            => __( 'Virtual product flag', 'siphon-store-analytics-for-woocommerce' ),
+			'_downloadable'       => __( 'Downloadable product flag', 'siphon-store-analytics-for-woocommerce' ),
+			'_download_limit'     => __( 'Download limit', 'siphon-store-analytics-for-woocommerce' ),
+			'_download_expiry'    => __( 'Download expiry days', 'siphon-store-analytics-for-woocommerce' ),
+			'_sale_price_dates_from' => __( 'Sale start date', 'siphon-store-analytics-for-woocommerce' ),
+			'_sale_price_dates_to'   => __( 'Sale end date', 'siphon-store-analytics-for-woocommerce' ),
+			'_wc_average_rating'  => __( 'Average rating', 'siphon-store-analytics-for-woocommerce' ),
+			'_wc_rating_count'    => __( 'Rating count', 'siphon-store-analytics-for-woocommerce' ),
+			'_wc_review_count'    => __( 'Review count', 'siphon-store-analytics-for-woocommerce' ),
 
 			// Order meta.
-			'_order_total'        => __( 'Order total', 'store-insights-for-woocommerce' ),
-			'_order_tax'          => __( 'Order tax total', 'store-insights-for-woocommerce' ),
-			'_order_shipping'     => __( 'Order shipping total', 'store-insights-for-woocommerce' ),
-			'_order_discount'     => __( 'Order discount total', 'store-insights-for-woocommerce' ),
-			'_order_currency'     => __( 'Order currency', 'store-insights-for-woocommerce' ),
-			'_payment_method'     => __( 'Payment method slug', 'store-insights-for-woocommerce' ),
-			'_payment_method_title' => __( 'Payment method title', 'store-insights-for-woocommerce' ),
-			'_customer_user'      => __( 'Customer user ID', 'store-insights-for-woocommerce' ),
-			'_billing_first_name' => __( 'Billing first name', 'store-insights-for-woocommerce' ),
-			'_billing_last_name'  => __( 'Billing last name', 'store-insights-for-woocommerce' ),
-			'_billing_company'    => __( 'Billing company', 'store-insights-for-woocommerce' ),
-			'_billing_address_1'  => __( 'Billing address line 1', 'store-insights-for-woocommerce' ),
-			'_billing_address_2'  => __( 'Billing address line 2', 'store-insights-for-woocommerce' ),
-			'_billing_city'       => __( 'Billing city', 'store-insights-for-woocommerce' ),
-			'_billing_state'      => __( 'Billing state', 'store-insights-for-woocommerce' ),
-			'_billing_postcode'   => __( 'Billing postcode', 'store-insights-for-woocommerce' ),
-			'_billing_country'    => __( 'Billing country', 'store-insights-for-woocommerce' ),
-			'_billing_email'      => __( 'Billing email', 'store-insights-for-woocommerce' ),
-			'_billing_phone'      => __( 'Billing phone', 'store-insights-for-woocommerce' ),
-			'_shipping_first_name' => __( 'Shipping first name', 'store-insights-for-woocommerce' ),
-			'_shipping_last_name'  => __( 'Shipping last name', 'store-insights-for-woocommerce' ),
-			'_shipping_company'    => __( 'Shipping company', 'store-insights-for-woocommerce' ),
-			'_shipping_address_1'  => __( 'Shipping address line 1', 'store-insights-for-woocommerce' ),
-			'_shipping_address_2'  => __( 'Shipping address line 2', 'store-insights-for-woocommerce' ),
-			'_shipping_city'       => __( 'Shipping city', 'store-insights-for-woocommerce' ),
-			'_shipping_state'      => __( 'Shipping state', 'store-insights-for-woocommerce' ),
-			'_shipping_postcode'   => __( 'Shipping postcode', 'store-insights-for-woocommerce' ),
-			'_shipping_country'    => __( 'Shipping country', 'store-insights-for-woocommerce' ),
+			'_order_total'        => __( 'Order total', 'siphon-store-analytics-for-woocommerce' ),
+			'_order_tax'          => __( 'Order tax total', 'siphon-store-analytics-for-woocommerce' ),
+			'_order_shipping'     => __( 'Order shipping total', 'siphon-store-analytics-for-woocommerce' ),
+			'_order_discount'     => __( 'Order discount total', 'siphon-store-analytics-for-woocommerce' ),
+			'_order_currency'     => __( 'Order currency', 'siphon-store-analytics-for-woocommerce' ),
+			'_payment_method'     => __( 'Payment method slug', 'siphon-store-analytics-for-woocommerce' ),
+			'_payment_method_title' => __( 'Payment method title', 'siphon-store-analytics-for-woocommerce' ),
+			'_customer_user'      => __( 'Customer user ID', 'siphon-store-analytics-for-woocommerce' ),
+			'_billing_first_name' => __( 'Billing first name', 'siphon-store-analytics-for-woocommerce' ),
+			'_billing_last_name'  => __( 'Billing last name', 'siphon-store-analytics-for-woocommerce' ),
+			'_billing_company'    => __( 'Billing company', 'siphon-store-analytics-for-woocommerce' ),
+			'_billing_address_1'  => __( 'Billing address line 1', 'siphon-store-analytics-for-woocommerce' ),
+			'_billing_address_2'  => __( 'Billing address line 2', 'siphon-store-analytics-for-woocommerce' ),
+			'_billing_city'       => __( 'Billing city', 'siphon-store-analytics-for-woocommerce' ),
+			'_billing_state'      => __( 'Billing state', 'siphon-store-analytics-for-woocommerce' ),
+			'_billing_postcode'   => __( 'Billing postcode', 'siphon-store-analytics-for-woocommerce' ),
+			'_billing_country'    => __( 'Billing country', 'siphon-store-analytics-for-woocommerce' ),
+			'_billing_email'      => __( 'Billing email', 'siphon-store-analytics-for-woocommerce' ),
+			'_billing_phone'      => __( 'Billing phone', 'siphon-store-analytics-for-woocommerce' ),
+			'_shipping_first_name' => __( 'Shipping first name', 'siphon-store-analytics-for-woocommerce' ),
+			'_shipping_last_name'  => __( 'Shipping last name', 'siphon-store-analytics-for-woocommerce' ),
+			'_shipping_company'    => __( 'Shipping company', 'siphon-store-analytics-for-woocommerce' ),
+			'_shipping_address_1'  => __( 'Shipping address line 1', 'siphon-store-analytics-for-woocommerce' ),
+			'_shipping_address_2'  => __( 'Shipping address line 2', 'siphon-store-analytics-for-woocommerce' ),
+			'_shipping_city'       => __( 'Shipping city', 'siphon-store-analytics-for-woocommerce' ),
+			'_shipping_state'      => __( 'Shipping state', 'siphon-store-analytics-for-woocommerce' ),
+			'_shipping_postcode'   => __( 'Shipping postcode', 'siphon-store-analytics-for-woocommerce' ),
+			'_shipping_country'    => __( 'Shipping country', 'siphon-store-analytics-for-woocommerce' ),
 
 			// Coupon meta.
-			'discount_type'       => __( 'Coupon discount type', 'store-insights-for-woocommerce' ),
-			'coupon_amount'       => __( 'Coupon amount', 'store-insights-for-woocommerce' ),
-			'minimum_amount'      => __( 'Coupon minimum spend', 'store-insights-for-woocommerce' ),
-			'maximum_amount'      => __( 'Coupon maximum spend', 'store-insights-for-woocommerce' ),
-			'usage_count'         => __( 'Coupon usage count', 'store-insights-for-woocommerce' ),
-			'individual_use'      => __( 'Individual use flag', 'store-insights-for-woocommerce' ),
-			'free_shipping'       => __( 'Free shipping flag', 'store-insights-for-woocommerce' ),
-			'expiry_date'         => __( 'Coupon expiry date', 'store-insights-for-woocommerce' ),
-			'usage_limit'         => __( 'Coupon usage limit', 'store-insights-for-woocommerce' ),
-			'usage_limit_per_user' => __( 'Coupon usage limit per user', 'store-insights-for-woocommerce' ),
+			'discount_type'       => __( 'Coupon discount type', 'siphon-store-analytics-for-woocommerce' ),
+			'coupon_amount'       => __( 'Coupon amount', 'siphon-store-analytics-for-woocommerce' ),
+			'minimum_amount'      => __( 'Coupon minimum spend', 'siphon-store-analytics-for-woocommerce' ),
+			'maximum_amount'      => __( 'Coupon maximum spend', 'siphon-store-analytics-for-woocommerce' ),
+			'usage_count'         => __( 'Coupon usage count', 'siphon-store-analytics-for-woocommerce' ),
+			'individual_use'      => __( 'Individual use flag', 'siphon-store-analytics-for-woocommerce' ),
+			'free_shipping'       => __( 'Free shipping flag', 'siphon-store-analytics-for-woocommerce' ),
+			'expiry_date'         => __( 'Coupon expiry date', 'siphon-store-analytics-for-woocommerce' ),
+			'usage_limit'         => __( 'Coupon usage limit', 'siphon-store-analytics-for-woocommerce' ),
+			'usage_limit_per_user' => __( 'Coupon usage limit per user', 'siphon-store-analytics-for-woocommerce' ),
 		);
 	}
 
@@ -853,14 +853,14 @@ class SILC_WIA_Woo_Schema {
 	 */
 	public static function get_order_statuses(): array {
 		return array(
-			'wc-pending'    => __( 'Pending payment', 'store-insights-for-woocommerce' ),
-			'wc-processing' => __( 'Processing', 'store-insights-for-woocommerce' ),
-			'wc-on-hold'    => __( 'On hold', 'store-insights-for-woocommerce' ),
-			'wc-completed'  => __( 'Completed', 'store-insights-for-woocommerce' ),
-			'wc-cancelled'  => __( 'Cancelled', 'store-insights-for-woocommerce' ),
-			'wc-refunded'   => __( 'Refunded', 'store-insights-for-woocommerce' ),
-			'wc-failed'     => __( 'Failed', 'store-insights-for-woocommerce' ),
-			'wc-checkout-draft' => __( 'Draft / abandoned', 'store-insights-for-woocommerce' ),
+			'wc-pending'    => __( 'Pending payment', 'siphon-store-analytics-for-woocommerce' ),
+			'wc-processing' => __( 'Processing', 'siphon-store-analytics-for-woocommerce' ),
+			'wc-on-hold'    => __( 'On hold', 'siphon-store-analytics-for-woocommerce' ),
+			'wc-completed'  => __( 'Completed', 'siphon-store-analytics-for-woocommerce' ),
+			'wc-cancelled'  => __( 'Cancelled', 'siphon-store-analytics-for-woocommerce' ),
+			'wc-refunded'   => __( 'Refunded', 'siphon-store-analytics-for-woocommerce' ),
+			'wc-failed'     => __( 'Failed', 'siphon-store-analytics-for-woocommerce' ),
+			'wc-checkout-draft' => __( 'Draft / abandoned', 'siphon-store-analytics-for-woocommerce' ),
 		);
 	}
 
@@ -875,11 +875,11 @@ class SILC_WIA_Woo_Schema {
 	 */
 	public static function get_taxonomies(): array {
 		return array(
-			'product_cat' => __( 'Product category', 'store-insights-for-woocommerce' ),
-			'product_tag' => __( 'Product tag', 'store-insights-for-woocommerce' ),
-			'product_type' => __( 'Product type', 'store-insights-for-woocommerce' ),
-			'product_visibility' => __( 'Product visibility', 'store-insights-for-woocommerce' ),
-			'product_brand' => __( 'Product brand (if WooCommerce Brands active)', 'store-insights-for-woocommerce' ),
+			'product_cat' => __( 'Product category', 'siphon-store-analytics-for-woocommerce' ),
+			'product_tag' => __( 'Product tag', 'siphon-store-analytics-for-woocommerce' ),
+			'product_type' => __( 'Product type', 'siphon-store-analytics-for-woocommerce' ),
+			'product_visibility' => __( 'Product visibility', 'siphon-store-analytics-for-woocommerce' ),
+			'product_brand' => __( 'Product brand (if WooCommerce Brands active)', 'siphon-store-analytics-for-woocommerce' ),
 		);
 	}
 

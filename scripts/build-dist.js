@@ -11,12 +11,12 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
-const SLUG = 'store-insights-for-woocommerce';
+const SLUG = 'siphon-store-analytics-for-woocommerce';
 const OUT = path.join(ROOT, 'dist', SLUG);
 
 // Everything not listed here is development-only and must not ship.
 const INCLUDE = [
-	'store-insights-for-woocommerce.php',
+	'siphon-store-analytics-for-woocommerce.php',
 	'uninstall.php',
 	'readme.txt',
 	'LICENSE',

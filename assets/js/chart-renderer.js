@@ -1,5 +1,5 @@
 /**
- * Store Insights for WooCommerce - Chart.js Renderer
+ * Siphon Store Analytics for WooCommerce - Chart.js Renderer
  *
  * Vanilla JS wrapper around Chart.js with proper lifecycle management
  * and rich visual styling.

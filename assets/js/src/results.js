@@ -1,5 +1,5 @@
 /**
- * Store Insights for WooCommerce — Result renderers (chart, list, answer)
+ * Siphon Store Analytics for WooCommerce — Result renderers (chart, list, answer)
  *
  * @package SILC_WooInsight_AI
  */

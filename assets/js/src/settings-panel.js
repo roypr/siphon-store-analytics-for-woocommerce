@@ -1,5 +1,5 @@
 /**
- * Store Insights for WooCommerce — Settings panel renderer
+ * Siphon Store Analytics for WooCommerce — Settings panel renderer
  *
  * @package SILC_WooInsight_AI
  */

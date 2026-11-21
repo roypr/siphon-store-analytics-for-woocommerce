@@ -1,4 +1,4 @@
-# Store Insights for WooCommerce
+# Siphon Store Analytics for WooCommerce
 
 **Natural language to data visualization for WooCommerce.**
 
@@ -6,7 +6,7 @@ Ask plain-English questions — _"What were my best selling products last month?
 
 ---
 
-## ✨ Why Store Insights for WooCommerce?
+## ✨ Why Siphon Store Analytics for WooCommerce?
 
 ### 🗣️ Natural Language → Data Visualization
 

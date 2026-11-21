@@ -1,6 +1,10 @@
 # Changelog
 
-All notable changes to Store Insights for WooCommerce will be documented in this file.
+All notable changes to Siphon Store Analytics for WooCommerce will be documented in this file.
+
+## [3.3.0] — Nov 2026
+
+- **Identity change** — Plugin identity changed from Store Insights for WooCommerce to Siphon Store Analytics for WooCommerce
 
 ## [3.2.2] — Nov 2026
 
@@ -49,6 +53,8 @@ All notable changes to Store Insights for WooCommerce will be documented in this
 
 ## [3.1.0] — Nov 2026
 
+- **Identity change** — Plugin identity changed from Store Insights with AI Lite to Store Insights for WooCommerce. Change made to comply with woocommerce and wp branding guideline.
+
 ### Security
 - Removed the bundled `plugin-update-checker` library, the Composer autoloader, and the GitHub update-check hook. Updates now come from WordPress.org only, and the plugin makes no request to `api.github.com`.
 - The API key is no longer passed to the browser through `wp_localize_script`. Only a `hasApiKey` boolean is exposed.
@@ -70,9 +76,6 @@ All notable changes to Store Insights for WooCommerce will be documented in this
 
 ### Added
 - `.distignore` and `npm run dist` for building the WordPress.org distribution folder.
-
-## [3.1.0] - Nov 2026
-- **Identity change** — Plugin identity changed from Store Insights with AI Lite to Store Insights for WooCommerce. Change made to comply with woocommerce and wp branding guideline.
 
 ## [3.0.0] — Nov 2026
 - **Identity change** — Plugin identity changed from WooInsight AI to Store Insights with AI Lite. Change made to comply with woocommerce branding guideline.

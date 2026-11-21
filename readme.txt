@@ -1,4 +1,4 @@
-=== Store Insights for WooCommerce ===
+=== Siphon Store Analytics for WooCommerce ===
 Contributors: siphontech
 Tags: woocommerce, analytics, reports, ai, charts
 Requires at least: 6.5
@@ -6,16 +6,16 @@ Tested up to: 7.1
 Requires PHP: 7.4
 WC requires at least: 8.0
 WC tested up to: 11.2
-Stable tag: 3.2.2
+Stable tag: 3.3.0
 License: GPL v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
-Source code: https://github.com/roypr/store-insights-for-woocommerce/tree/wp-3.2.2
+Source code: https://github.com/roypr/store-insights-for-woocommerce/tree/wp-3.3.0
 
 Ask plain-English questions about your WooCommerce store and get instant charts, lists, and answers — no SQL or coding needed.
 
 == Description ==
 
-**Store Insights for WooCommerce** turns natural language into data visualizations. Type a question like _"What were my best selling products last month?"_ or _"Show me pending orders"_ and get back beautiful charts, sortable lists, and precise answers — all pulled directly from your WooCommerce database.
+**Siphon Store Analytics for WooCommerce** turns natural language into data visualizations. Type a question like _"What were my best selling products last month?"_ or _"Show me pending orders"_ and get back beautiful charts, sortable lists, and precise answers — all pulled directly from your WooCommerce database.
 
 = Three Pillars That Set It Apart =
 
@@ -152,6 +152,9 @@ Results are cached (configurable TTL, default 1 hour) to avoid redundant API cal
 
 == Changelog ==
 
+= 3.3.0 =
+* Identity change — Plugin identity changed from Store Insights for WooCommerce to Siphon Store Analytics for WooCommerce
+
 = 3.2.2 =
 * 🔎 WooCommerce Analytics is now a documented data prerequisite with runtime readiness checks and an admin notice
 * 🧩 Order-based Library items are hidden when Analytics is disabled or its lookup tables are missing; product/user/post items remain
@@ -178,6 +181,7 @@ Results are cached (configurable TTL, default 1 hour) to avoid redundant API cal
 * 📝 Provider list and privacy wording updated
 
 = 3.1.0 =
+* Identity change — Plugin identity changed from Store Insights with AI Lite to Store Insights for WooCommerce. Change made to comply with woocommerce and wp branding guideline.
 * 🔒 Removed the bundled GitHub-based update checker — updates are delivered through WordPress.org only
 * 🔒 The API key is no longer printed into the dashboard page source
 * 🔒 Added `uninstall.php`; deactivating the plugin no longer deletes your settings or insight history
@@ -188,9 +192,6 @@ Results are cached (configurable TTL, default 1 hour) to avoid redundant API cal
 * 🧹 Removed debug logging that wrote prompts and full API responses to the PHP error log
 * 🧹 Removed dead code and aligned capability checks with the dashboard menu
 * 📝 Readme wording now describes the data flow factually
-
-= 3.1.0 =
-* Identity change — Plugin identity changed from Store Insights with AI Lite to Store Insights for WooCommerce. Change made to comply with woocommerce and wp branding guideline.
 
 = 3.0.0 =
 * Identity change — Plugin identity changed from WooInsight AI to Store Insights with AI Lite. Change made to comply with woocommerce branding guideline.
@@ -203,6 +204,10 @@ Results are cached (configurable TTL, default 1 hour) to avoid redundant API cal
 * 🧩 Improved WooCommerce legacy (non-HPOS) compatibility
 * 🧠 Better AI decision making for more accurate queries and visualizations
 * ✅ Tested with WordPress 7.0.2 and WooCommerce 10.9.4
+
+= 2.4.0 =
+* ✨ Plus/minus buttons on the number fields in Settings (Max Tokens, Temperature, Cache Duration)
+* 🐛 WordPress admin notices on the plugin screen are now visible — a screen-reader heading gives them an anchor point
 
 = 2.3.1 =
 * 🐛 Bug fixes across chart rendering, SQL execution display, and responsive layout

@@ -1,5 +1,5 @@
 /**
- * Store Insights for WooCommerce — Utility functions and constants
+ * Siphon Store Analytics for WooCommerce — Utility functions and constants
  *
  * @package SILC_WooInsight_AI
  */

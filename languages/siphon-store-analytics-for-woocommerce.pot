@@ -2,51 +2,51 @@
 # This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Store Insights for WooCommerce 3.2.2\n"
+"Project-Id-Version: Siphon Store Analytics for WooCommerce 3.3.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/store-insights-for-woocommerce\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-15T14:58:15+01:00\n"
+"POT-Creation-Date: 2026-11-21T07:51:57+01:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
-"X-Domain: store-insights-for-woocommerce\n"
+"X-Domain: siphon-store-analytics-for-woocommerce\n"
 
 #. Plugin Name of the plugin
-#: store-insights-for-woocommerce.php
+#: siphon-store-analytics-for-woocommerce.php
 #: includes/class-admin.php:60
 #: includes/class-admin.php:259
-msgid "Store Insights for WooCommerce"
+msgid "Siphon Store Analytics for WooCommerce"
 msgstr ""
 
 #. Plugin URI of the plugin
-#: store-insights-for-woocommerce.php
-msgid "https://siphon-tech.com/store-insights-for-woocommerce"
+#: siphon-store-analytics-for-woocommerce.php
+msgid "https://siphon-tech.com/siphon-store-analytics-for-woocommerce"
 msgstr ""
 
 #. Description of the plugin
-#: store-insights-for-woocommerce.php
+#: siphon-store-analytics-for-woocommerce.php
 msgid "Natural language to SQL query tool for WooCommerce. Uses your own AI provider key (OpenAI, Claude, OpenRouter, DeepSeek, Groq, Mistral, xAI, or any OpenAI-compatible endpoint) to convert plain English questions into SQL queries against WooCommerce data."
 msgstr ""
 
 #. Author of the plugin
-#: store-insights-for-woocommerce.php
+#: siphon-store-analytics-for-woocommerce.php
 msgid "Siphon Technologies"
 msgstr ""
 
 #. Author URI of the plugin
-#: store-insights-for-woocommerce.php
+#: siphon-store-analytics-for-woocommerce.php
 msgid "https://github.com/roypr"
 msgstr ""
 
 #: includes/class-admin.php:61
-msgid "Store Insights"
+msgid "Siphon Store Analytics"
 msgstr ""
 
 #: includes/class-admin.php:94
-msgid "Store Insights for WooCommerce needs the WooCommerce Analytics lookup tables, but they are missing. Update or reinstall WooCommerce so its database tables are created."
+msgid "Siphon Store Analytics for WooCommerce needs the WooCommerce Analytics lookup tables, but they are missing. Update or reinstall WooCommerce so its database tables are created."
 msgstr ""
 
 #. translators: %s: link to the WooCommerce features settings
@@ -70,7 +70,7 @@ msgid "WooCommerce > Analytics > Settings"
 msgstr ""
 
 #: includes/class-admin.php:152
-msgid "Suggested text: When you ask a question, the following is sent over HTTPS to the AI provider you configured under WooCommerce &rarr; Store Insights &rarr; Settings:"
+msgid "Suggested text: When you ask a question, the following is sent over HTTPS to the AI provider you configured under WooCommerce &rarr; Siphon Store Analytics &rarr; Settings:"
 msgstr ""
 
 #: includes/class-admin.php:154
@@ -745,18 +745,18 @@ msgstr ""
 msgid "Product brand (if WooCommerce Brands active)"
 msgstr ""
 
-#: store-insights-for-woocommerce.php:62
-msgid "Store Insights for WooCommerce requires WooCommerce to be installed and activated."
+#: siphon-store-analytics-for-woocommerce.php:62
+msgid "Siphon Store Analytics for WooCommerce requires WooCommerce to be installed and activated."
 msgstr ""
 
-#: store-insights-for-woocommerce.php:91
-msgid "Store Insights for WooCommerce requires PHP 7.4 or higher."
+#: siphon-store-analytics-for-woocommerce.php:91
+msgid "Siphon Store Analytics for WooCommerce requires PHP 7.4 or higher."
 msgstr ""
 
-#: store-insights-for-woocommerce.php:96
-msgid "Store Insights for WooCommerce requires WooCommerce to be installed."
+#: siphon-store-analytics-for-woocommerce.php:96
+msgid "Siphon Store Analytics for WooCommerce requires WooCommerce to be installed."
 msgstr ""
 
-#: store-insights-for-woocommerce.php:107
+#: siphon-store-analytics-for-woocommerce.php:107
 msgid "Dashboard"
 msgstr ""

@@ -1,5 +1,5 @@
 /**
- * Store Insights for WooCommerce — Side panel renderers (SQL, History, Library, Suggested)
+ * Siphon Store Analytics for WooCommerce — Side panel renderers (SQL, History, Library, Suggested)
  *
  * @package SILC_WooInsight_AI
  */

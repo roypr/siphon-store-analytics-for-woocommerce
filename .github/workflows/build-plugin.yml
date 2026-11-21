@@ -31,7 +31,7 @@ jobs:
       - name: Set build vars
         id: vars
         run: |
-          SLUG="store-insights-for-woocommerce"
+          SLUG="siphon-store-analytics-for-woocommerce"
           VERSION="${GITHUB_REF_NAME:-dev}"
           echo "slug=$SLUG"             >> $GITHUB_OUTPUT
           echo "version=$VERSION"       >> $GITHUB_OUTPUT

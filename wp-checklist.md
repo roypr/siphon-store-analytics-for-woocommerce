@@ -1,3 +1,5 @@
+### Plugin name changed: Siphon Store Analytics for WooCommerce
+
 # **Why a free plugin can be rejected by the WordPress.org Plugin Directory**
 
 WordPress.org does not automatically accept every free, functional WordPress plugin. A plugin must satisfy its security, coding, licensing, privacy, business-model, presentation and directory policies.

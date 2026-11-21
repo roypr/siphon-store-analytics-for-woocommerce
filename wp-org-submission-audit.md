@@ -1,3 +1,4 @@
+### Plugin name changed: Siphon Store Analytics for WooCommerce
 # WordPress.org Submission Audit — Store Insights for WooCommerce
 
 My wordpress.org user id: siphontech

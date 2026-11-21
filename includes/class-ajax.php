@@ -52,7 +52,7 @@ class SILC_WIA_Ajax {
 	 */
 	private static function verify_capability(): bool {
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'store-insights-for-woocommerce' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'siphon-store-analytics-for-woocommerce' ) ) );
 			return false;
 		}
 
@@ -64,7 +64,7 @@ class SILC_WIA_Ajax {
 	 */
 	public static function handle_get_schema(): void {
 		if ( ! check_ajax_referer( self::NONCE_ACTION, 'nonce', false ) ) {
-			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'store-insights-for-woocommerce' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'siphon-store-analytics-for-woocommerce' ) ) );
 			return;
 		}
 
@@ -95,7 +95,7 @@ class SILC_WIA_Ajax {
 	 */
 	public static function handle_generate_insight(): void {
 		if ( ! check_ajax_referer( self::NONCE_ACTION, 'nonce', false ) ) {
-			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'store-insights-for-woocommerce' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'siphon-store-analytics-for-woocommerce' ) ) );
 			return;
 		}
 
@@ -107,7 +107,7 @@ class SILC_WIA_Ajax {
 		$question = trim( $question );
 
 		if ( empty( $question ) ) {
-			wp_send_json_error( array( 'message' => __( 'No question provided.', 'store-insights-for-woocommerce' ) ) );
+			wp_send_json_error( array( 'message' => __( 'No question provided.', 'siphon-store-analytics-for-woocommerce' ) ) );
 			return;
 		}
 
@@ -117,7 +117,7 @@ class SILC_WIA_Ajax {
 		
 		if ( ! $insight['success'] ) {
 			wp_send_json_error( array(
-				'message'    => $insight['error'] ?? __( 'Failed to generate insight.', 'store-insights-for-woocommerce' ),
+				'message'    => $insight['error'] ?? __( 'Failed to generate insight.', 'siphon-store-analytics-for-woocommerce' ),
 				'error_code' => $insight['error_code'] ?? '',
 				'question'   => $question,
 			) );
@@ -186,7 +186,7 @@ class SILC_WIA_Ajax {
 	 */
 	public static function handle_get_insight_history(): void {
 		if ( ! check_ajax_referer( self::NONCE_ACTION, 'nonce', false ) ) {
-			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'store-insights-for-woocommerce' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'siphon-store-analytics-for-woocommerce' ) ) );
 			return;
 		}
 
@@ -204,7 +204,7 @@ class SILC_WIA_Ajax {
 	 */
 	public static function handle_clear_insight_history(): void {
 		if ( ! check_ajax_referer( self::NONCE_ACTION, 'nonce', false ) ) {
-			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'store-insights-for-woocommerce' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'siphon-store-analytics-for-woocommerce' ) ) );
 			return;
 		}
 
@@ -215,7 +215,7 @@ class SILC_WIA_Ajax {
 		SILC_WIA_Storage::clear_history();
 
 		wp_send_json_success( array(
-			'message' => __( 'Insight history cleared.', 'store-insights-for-woocommerce' ),
+			'message' => __( 'Insight history cleared.', 'siphon-store-analytics-for-woocommerce' ),
 		) );
 	}
 
@@ -228,7 +228,7 @@ class SILC_WIA_Ajax {
 	 */
 	public static function handle_execute_sql(): void {
 		if ( ! check_ajax_referer( self::NONCE_ACTION, 'nonce', false ) ) {
-			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'store-insights-for-woocommerce' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'siphon-store-analytics-for-woocommerce' ) ) );
 			return;
 		}
 
@@ -251,7 +251,7 @@ class SILC_WIA_Ajax {
 			$stored_result = json_decode( $result_json, true );
 
 			if ( empty( $stored_result ) || ! is_array( $stored_result ) ) {
-				wp_send_json_error( array( 'message' => __( 'Invalid result data.', 'store-insights-for-woocommerce' ) ) );
+				wp_send_json_error( array( 'message' => __( 'Invalid result data.', 'siphon-store-analytics-for-woocommerce' ) ) );
 				return;
 			}
 
@@ -261,7 +261,7 @@ class SILC_WIA_Ajax {
 
 			if ( ! $result['success'] ) {
 				wp_send_json_error( array(
-					'message' => $result['error'] ?? __( 'Failed to execute SQL.', 'store-insights-for-woocommerce' ),
+					'message' => $result['error'] ?? __( 'Failed to execute SQL.', 'siphon-store-analytics-for-woocommerce' ),
 					'sql'     => $result['sql'] ?? '',
 				) );
 				return;
@@ -279,7 +279,7 @@ class SILC_WIA_Ajax {
 		$sql = trim( $sql );
 
 		if ( empty( $sql ) ) {
-			wp_send_json_error( array( 'message' => __( 'No SQL query provided.', 'store-insights-for-woocommerce' ) ) );
+			wp_send_json_error( array( 'message' => __( 'No SQL query provided.', 'siphon-store-analytics-for-woocommerce' ) ) );
 			return;
 		}
 
@@ -328,7 +328,7 @@ class SILC_WIA_Ajax {
 
 		if ( ! $result['success'] ) {
 			wp_send_json_error( array(
-				'message' => $result['error'] ?? __( 'Failed to execute SQL.', 'store-insights-for-woocommerce' ),
+				'message' => $result['error'] ?? __( 'Failed to execute SQL.', 'siphon-store-analytics-for-woocommerce' ),
 				'sql'     => $sql,
 			) );
 			return;
