@@ -495,15 +495,18 @@ class SILC_WIA_Provider_Adapter {
 	// ----------------------------------------------------------------------- //
 
 	/**
-	 * Repair a request body that a provider rejected over a parameter name.
+	 * Repair a request body that a provider rejected over a parameter.
 	 *
-	 * Covers the two drifts that break integrations in practice:
+	 * Covers the drifts that break integrations in practice:
 	 * - the endpoint wants the other completion-limit parameter name;
-	 * - the endpoint rejects a non-default `temperature` (reasoning models).
+	 * - the endpoint rejects a non-default `temperature` (reasoning models);
+	 * - the endpoint does not know `reasoning_effort` at all.
 	 *
 	 * Only "this parameter is not accepted" style errors are rewritten: a value
-	 * error (e.g. "max_tokens must be <= 8192") is a real problem that a retry
-	 * with another parameter name cannot fix.
+	 * error (e.g. "max_tokens must be <= 8192", or a reasoning level the model
+	 * does not offer) is a real problem that a retry with another parameter
+	 * name cannot fix. An unsupported reasoning *value* is handled by dropping
+	 * the parameter, since the default the provider then applies is valid.
 	 *
 	 * @param array  $body  Rejected OpenAI-shaped request body.
 	 * @param string $error Error message returned by the API.
@@ -529,6 +532,14 @@ class SILC_WIA_Provider_Adapter {
 
 		if ( isset( $body['temperature'] ) && false !== stripos( $error, 'temperature' ) ) {
 			unset( $body['temperature'] );
+			$changed = true;
+		}
+
+		// "Unrecognized request argument supplied: reasoning_effort" (or a
+		// model that only supports its default level). Removing it restores a
+		// working request; the setting itself is left untouched.
+		if ( isset( $body['reasoning_effort'] ) && false !== stripos( $error, 'reasoning' ) ) {
+			unset( $body['reasoning_effort'] );
 			$changed = true;
 		}
 

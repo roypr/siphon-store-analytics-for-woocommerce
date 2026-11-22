@@ -78,11 +78,11 @@ update the menu title to `Store Analytics`.
 ## Phase 2 — AI hybrid (WP AI Client default + BYOK fallback)
 
 ### 2.1 Make prompt builders reusable
-- [ ] In `includes/class-api.php`, change `build_insight_system_prompt()` and `build_insight_user_prompt()` from `private` to `public static`. (`parse_insight_json()` is al
+- [x] In `includes/class-api.php`, change `build_insight_system_prompt()` and `build_insight_user_prompt()` from `private` to `public static`. (`parse_insight_json()` is al
 ready public.)
 
 ### 2.2 New core AI service
-- [ ] Create `includes/class-ai-service-core.php` with `SILC_WIA_AI_Service_Core`:
+- [x] Create `includes/class-ai-service-core.php` with `SILC_WIA_AI_Service_Core`:
   - `is_available()` → `function_exists('wp_ai_client_prompt') && function_exists('wp_supports_ai') && wp_supports_ai()`.
   - `generate_insight( $question, $schema_context )` → builds system + user prompt, calls:
     ```php
@@ -93,33 +93,57 @@ ready public.)
     ```
     then reuses `parse_insight_json()` and the existing correction-retry (multi-turn message array), returning the same `array{success, insight, error}` shape as `SILC_WIA_
 API`.
-- [ ] Verify two SDK details while implementing:
-  - multi-turn message-array shape (`role`/`content`) — confirm against the `WP_AI_Client_Prompt_Builder` docs.
-  - whether `using_max_tokens()` exists — if yes, set a floor (e.g. 2000) so the JSON answer isn't truncated.
-- [ ] Optional: use `as_json_response( $schema )` on the first attempt for stronger JSON guarantees; keep the plain retry as fallback.
+- [x] Verify two SDK details while implementing:
+  - multi-turn message-array shape (`role`/`content`) — confirmed, but the retry is sent as a **single** corrective prompt instead: `with_history()` needs `Message` DTO objects, and the AI Client picks the provider, so replaying an assistant turn would be provider-specific.
+  - `using_max_tokens()` exists (7.0 builder) — used with a 2000-token floor.
+- [x] Optional: `as_json_response()` deliberately **not** used — a schema-less JSON mode is not available everywhere, so the prompt keeps demanding JSON and the corrective retry handles deviations (same behaviour as BYOK).
 
 ### 2.3 New router
-- [ ] Create `includes/class-ai-service.php` with `SILC_WIA_AI_Service`:
+- [x] Create `includes/class-ai-service.php` with `SILC_WIA_AI_Service`:
   - option `silc_wia_ai_backend` (`core` | `byok`).
   - default = `core` when `SILC_WIA_AI_Service_Core::is_available()`, else `byok`.
   - `generate_insight()` dispatches to core or `SILC_WIA_API`.
 
 ### 2.4 Wire into pipeline
-- [ ] `includes/class-insights.php` line ~57: replace `SILC_WIA_API::generate_insight(...)` with `SILC_WIA_AI_Service::generate_insight(...)`.
-- [ ] Update the cache key to include the active backend (core vs `api_url|model`).
+- [x] `includes/class-insights.php` line ~57: replace `SILC_WIA_API::generate_insight(...)` with `SILC_WIA_AI_Service::generate_insight(...)`.
+- [x] Update the cache key to include the active backend (core vs `api_url|model`).
 
 ### 2.5 Settings & admin
-- [ ] `includes/class-admin.php`:
+- [x] `includes/class-admin.php`:
   - register/sanitize `silc_wia_ai_backend`.
   - expose to `silcWiaData`: `aiBackend`, `coreAiAvailable`, `coreAiSupported` (`is_supported_for_text_generation()`).
   - `handle_test_api()`: branch core (tiny `generate_text()` probe) vs BYOK (`SILC_WIA_API::test_connection()`).
   - update `add_privacy_policy_content()` for both paths.
-- [ ] `assets/js/src/settings-panel.js` (and `utils.js`/`index.js`):
-  - add a "Backend" selector at the top of the AI Provider section.
+- [x] `assets/js/src/settings-panel.js` (and `utils.js`/`index.js`):
+  - add a "Backend" selector at the top of the AI Provider section (Automatic / WordPress AI Client / Your own API key; the raw choice is stored so saving an unrelated field cannot turn Automatic into an explicit choice).
   - WordPress AI = hide Provider/URL/Key/Model (and Max Tokens unless supported), show a note pointing to Settings → Connectors.
   - BYOK = existing fields.
   - Keep Temperature + Cache visible in both.
-- [ ] Rebuild `assets/js/dashboard.js` (`npm run build`).
+- [x] Rebuild `assets/js/dashboard.js` (`npm run build`).
+
+### 2.6 Follow-up: model preference + temperature/reasoning controls
+Verified against the WordPress 7.1 core SDK (`wp-includes/ai-client`, `php-ai-client`):
+`using_temperature()` adds a *requirement* to model discovery, so any temperature
+value removes every reasoning model (verified: 52 candidate models → 24).
+`using_model_preference()` accepts a plain model id and silently falls back to
+the first available model, and `ModelConfig::setCustomOption('reasoning', …)` is
+the only way to request a reasoning level (all 52 models remain eligible).
+
+- [x] **Model preference on the core path.** `SILC_WIA_AI_Service_Core::generate_text()` calls `using_model_preference()` with the stored model id. Read through the new `SILC_WIA_API::get_model_preference()` (raw option) because `get_settings()` rewrites a model that does not match the BYOK endpoint, which would drop a valid id from another connector. An empty model now stays empty for the core backend (`sanitize_settings()`), meaning "no preference"; BYOK keeps the "fill in the provider default" rule. The Model field is no longer hidden when the AI Client is selected.
+- [x] **Temperature is opt-in per backend** — new `temperature_mode` setting (`auto` | `always` | `never`).
+  - `auto` (default): BYOK keeps the existing per-model detection; the core path sends nothing (a value would exclude every reasoning model before the request is made).
+  - `always` / `never`: explicit overrides, so no model-capability map is needed.
+- [x] **Reasoning effort** — new `reasoning_effort` setting (`''` = provider default, `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`).
+  - Core: `reasoning: { effort: … }` custom option (OpenAI Responses shape).
+  - BYOK: `reasoning_effort` in the chat body; skipped for Anthropic, whose thinking budget is already handled.
+- [x] **Recovery instead of a dead end.**
+  - Core: `request_text()` retries with progressively fewer optional parameters (temperature → reasoning effort → neither) when WordPress reports `prompt_invalid_argument` or the provider returns 400/422. 401/429/5xx are never retried.
+  - BYOK: `adapt_rejected_body()` also drops a rejected `reasoning_effort`; `send_request()` retries up to twice; a 400/422 that no rename explains drops `reasoning_effort` (an unsupported *level* is reported without the word "reasoning").
+  - Errors that are configuration-related get an actionable tip pointing at Temperature, Reasoning effort and Model; the connection test names the setting it had to leave out and the model that answered.
+- [x] `SILC_WIA_AI_Service::get_cache_signature()` includes model preference, temperature mode/value and reasoning effort.
+- [x] Settings UI: "Send temperature" select + "Reasoning effort" select in Advanced (both backends); the Model field's help text explains the preference semantics per backend; the connection test now also requires unsaved sampling/model changes to be saved first.
+- [x] Fixed a pre-existing save bug: `temperature` and `cache_ttl` of `0` were replaced with the default (`value || default`), so temperature 0 and "caching off" could never be stored.
+- [x] Verified live against the OpenAI connector on this install: preference honoured (`gpt-5.4-nano`), `temperature` + reasoning (`prompt_invalid_argument`), and an unsupported level (`minimal`) all resolve through the retry ladder, and a full insight still returns SQL. BYOK verified against OpenRouter with `reasoning_effort` + temperature.
 
 ---
 
@@ -143,13 +167,12 @@ ntalBar mapping.
 - [x] Add `== External services ==` section (and mirror in `README.md`).
 - [x] Document, for **each** service, what it is, what data is sent, when, and ToS + privacy links.
 
-Content covered (BYOK path only — the WordPress AI Client path arrives with Phase 2, and
-must be added to this section at the same time):
+Content covered (both paths — done in Phase 2):
 
 | Service | Used for | Data sent |
 |---|---|---|
-| WordPress AI Client (core path) | **Not implemented yet — Phase 2** | n/a |
-| OpenAI / Anthropic / Google (via core Connectors) | **Not implemented yet — Phase 2** | n/a |
+| WordPress AI Client (core path) | AI generation | Question + schema metadata + model settings (no plugin key) |
+| OpenAI / Anthropic / Google (via core Connectors) | AI generation | Same payload, routed by WordPress; the connector's own terms apply |
 | OpenAI / Anthropic / OpenRouter / DeepSeek / Groq / Mistral / xAI (BYOK) | AI generation | Question + schema metadata + model settings + API key as auth header |
 | Self-hosted (Ollama/LocalAI/vLLM) | Local AI generation | Question + schema metadata to the local endpoint only |
 

@@ -3,7 +3,7 @@
 /**
  * Plugin Name: Siphon Store Analytics for WooCommerce
  * Plugin URI:  https://siphon-tech.com/siphon-store-analytics-for-woocommerce
- * Description: Natural language to SQL query tool for WooCommerce. Uses your own AI provider key (OpenAI, Claude, OpenRouter, DeepSeek, Groq, Mistral, xAI, or any OpenAI-compatible endpoint) to convert plain English questions into SQL queries against WooCommerce data.
+ * Description: Natural language to SQL query tool for WooCommerce. Converts plain English questions into SQL queries against WooCommerce data using the WordPress AI Client (7.0+), or your own AI provider key (OpenAI, Claude, OpenRouter, DeepSeek, Groq, Mistral, xAI, or any OpenAI-compatible endpoint).
  * Version:     3.3.0
  * Author:      Siphon Technologies
  * Author URI:  https://github.com/roypr
@@ -81,6 +81,7 @@ add_action( 'plugins_loaded', function () {
 	// Load required files.
 	require_once SILC_WIA_PATH . 'includes/class-woo-schema.php';
 	require_once SILC_WIA_PATH . 'includes/class-api.php';
+	require_once SILC_WIA_PATH . 'includes/class-ai-service.php';
 	require_once SILC_WIA_PATH . 'includes/class-storage.php';
 	require_once SILC_WIA_PATH . 'includes/class-admin.php';
 	require_once SILC_WIA_PATH . 'includes/class-ajax.php';

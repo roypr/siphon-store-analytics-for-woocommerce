@@ -43,6 +43,29 @@ export var pluginUrl = data.pluginUrl || '';
 export var pluginVersion = data.pluginVersion || '2.0.0';
 
 /**
+ * AI backend selection.
+ *
+ * 'core' = WordPress AI Client (7.0+, provider connected under Settings →
+ * Connectors); 'byok' = a key saved in this plugin. The server resolves the
+ * effective backend, so these values always describe what will actually run.
+ */
+export var aiBackend = data.aiBackend || 'byok';
+export var aiBackendSetting = typeof data.aiBackendSetting === 'string' ? data.aiBackendSetting : '';
+export var coreAiAvailable = data.coreAiAvailable || false;
+export var coreAiSupported = data.coreAiSupported || false;
+export var connectorsUrl = data.connectorsUrl || '';
+
+/**
+ * Reasoning levels offered in Settings.
+ *
+ * Server-owned (SILC_WIA_API::REASONING_EFFORTS) so the accepted values and the
+ * sanitised values cannot drift. This is the union of what the major providers
+ * document, not a per-model map: an unsupported level is rejected by the
+ * provider and the request is retried without it.
+ */
+export var reasoningEfforts = data.reasoningEfforts || ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'];
+
+/**
  * Suggested prompts that produce different result types.
  */
 export var SUGGESTED_PROMPTS = [

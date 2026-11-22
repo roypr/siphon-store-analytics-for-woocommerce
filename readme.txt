@@ -30,7 +30,7 @@ Stop clicking through endless admin screens and exporting CSVs. A question produ
 
 = How It Works =
 
-1. Install the plugin and add your API key (OpenAI, Claude, OpenRouter, DeepSeek, Groq, Mistral, xAI, or any OpenAI-compatible endpoint such as Azure, Ollama, LocalAI or vLLM)
+1. Choose how the plugin reaches an AI model: the **WordPress AI Client** (WordPress 7.0+, connect a provider under Settings → Connectors) or your own API key (OpenAI, Claude, OpenRouter, DeepSeek, Groq, Mistral, xAI, or any OpenAI-compatible endpoint such as Azure, Ollama, LocalAI or vLLM)
 2. Ask a question in plain English
 3. The AI generates a structured JSON response containing a SQL query and display configuration
 4. The SQL runs against your local WooCommerce database — securely validated and restricted to SELECT-only
@@ -39,16 +39,17 @@ Stop clicking through endless admin screens and exporting CSVs. A question produ
 = Features =
 
 * **Full AI Pipeline** — Natural language → SQL → execute → visualize, all in one click
+* **WordPress AI Client (WordPress 7.0+)** — The default backend on modern WordPress. Connect a provider once under Settings → Connectors and the plugin generates insights without storing any API key of its own
 * **30 Built-In Library Queries** — Works out of the box without an API key. Browse pre-built insights for revenue, orders, customers, inventory, and more
-* **BYOK (Bring Your Own Key)** — OpenAI, Claude (Anthropic), OpenRouter, DeepSeek, Groq, Mistral, xAI, plus Azure OpenAI, Ollama, LocalAI, vLLM and any OpenAI-compatible endpoint
-* **Reasoning Model Support** — Detects and handles reasoning models (o-series, GPT-5/6, DeepSeek, Claude extended thinking) with correct parameter mapping
+* **BYOK (Bring Your Own Key)** — Kept as the fallback and as the only path on older WordPress, for self-hosted models and when AI is disabled site-wide: OpenAI, Claude (Anthropic), OpenRouter, DeepSeek, Groq, Mistral, xAI, plus Azure OpenAI, Ollama, LocalAI, vLLM and any OpenAI-compatible endpoint
+* **Reasoning Model Support** — Detects and handles reasoning models (o-series, GPT-5/6, DeepSeek, Claude extended thinking) with correct parameter mapping; a Reasoning effort setting lets you choose how hard the model thinks
 * **Auto-Detected Schema** — Dynamically discovers your WooCommerce tables and columns, HPOS-aware
 * **Strict SQL Validation** — SELECT-only whitelist; all DML/DDL statements blocked; every table reference checked against a whitelist of known WooCommerce and WordPress tables
 * **Credential Columns Never Exposed** — Password hashes, activation keys and session token meta are removed from the schema sent to the AI and are rejected by the validator
 * **Cache Layer** — Configurable result caching reduces duplicate API calls
 * **History Panel** — Revisit past insights without regenerating
 * **Refresh Button** — Re-execute a stored query against live data without calling the AI again
-* **Settings Panel** — Pick a provider, then set key, model, max tokens, temperature, and cache TTL inline
+* **Settings Panel** — Pick a backend and provider, then set key, model (a preference on both backends), max tokens, temperature and whether it is sent at all, reasoning effort, and cache TTL inline
 * **HPOS & Legacy Compatible** — Automatically adapts table references based on active order storage backend
 * **Lightweight** — React dashboard powered by WordPress core @wordpress/element and @wordpress/components; zero third-party UI frameworks
 
@@ -67,31 +68,42 @@ Stop clicking through endless admin screens and exporting CSVs. A question produ
 * SQL queries are validated against a strict whitelist of known tables
 * Only SELECT statements are permitted — no INSERT, UPDATE, DELETE, DROP, or multi-statement queries
 * All AJAX endpoints require the `manage_woocommerce` capability and a valid nonce
-* The API key is stored in your site database (in an option that is not autoloaded) and is never printed into the dashboard page
+* The API key is stored in your site database (in an option that is not autoloaded) and is never printed into the dashboard page. When the WordPress AI Client backend is selected, the plugin stores no API key at all — the connector set up under Settings → Connectors handles it
 * Requests to the AI provider go to the API URL you enter and must use HTTPS; plain HTTP is only accepted for local endpoints such as `http://localhost:11434/v1`. No other external requests are made
 * Generated insights keep the question, the SQL and the display settings so they can be re-run — the result rows are not stored. The rendered answer is cached for the duration set under Cache Duration
 * Uninstalling removes the settings, the history, the cached results and the legacy options this plugin created
 
 == External services ==
 
-This plugin does not send anything to the plugin author and does not use a service run by the plugin author. To turn a plain-English question into a SQL query it needs a large language model, so it contacts **the AI provider you configure yourself** under WooCommerce → Siphon Store Analytics → Settings. Nothing is transmitted until you either ask a question or press **Test connection**, and if you never add an API key no external request is made at all (the built-in Library runs entirely on your own server).
+This plugin does not send anything to the plugin author and does not use a service run by the plugin author. To turn a plain-English question into a SQL query it needs a large language model. Nothing is transmitted until you either ask a question or press **Test connection**, and if no AI is configured at all no external request is made (the built-in Library runs entirely on your own server).
+
+= Which service is contacted =
+
+The **Backend** setting under WooCommerce → Siphon Store Analytics → Settings decides, and the plugin preselects the first option automatically:
+
+* **WordPress AI Client** (default on WordPress 7.0+ when a connector is set up) — WordPress itself sends the request, to whichever provider is connected under **Settings → Connectors** (OpenAI, Anthropic, Google and any other connector registered on your site). This plugin stores no API key on this path. The connector's own terms of service and privacy policy apply and are shown on that screen.
+* **Your own API key (BYOK)** — the request goes directly to the endpoint saved in Settings, using the key saved in Settings. Used on WordPress versions before 7.0, for self-hosted endpoints, and whenever you prefer it.
+
+You can switch between them at any time; the setting only affects future requests.
 
 = What is sent, and when =
 
-On each AI request (that is, once per question you ask):
+On each AI request (that is, once per question you ask), the following is sent to the AI service selected above:
 
 * **Your question**, as plain text.
 * **Database schema metadata only** — the names of your WooCommerce and WordPress tables and their column names. Password hashes, activation keys and session-token meta are removed from the schema before it is sent. No customer, order, product or payment records are included.
-* **The model name, temperature and token limit** you selected in Settings.
-* **Your API key**, as a request header, so the provider can authenticate the call and bill your own account.
+* **The model preference, temperature, reasoning effort and token limit** from Settings. Through the WordPress AI Client the model is only a preference (WordPress picks from the connected provider, and ignores an id that provider does not offer) and no temperature is sent unless you explicitly choose "Always"; reasoning effort is passed as the provider's own reasoning option. With your own key the model id, temperature (when sent) and reasoning effort are forwarded to your endpoint.
+* **Your API key**, as a request header — only on the "your own API key" path, so that provider can authenticate the call and bill your own account.
 
 Query results never leave your site: every generated query is executed against your own database and only the rendered chart, list or number is shown in your admin.
 
-Pressing **Test connection** in Settings sends one short fixed prompt — `Say "ok" and nothing else.` — to the same endpoint, so the credentials can be checked before you rely on them.
+Pressing **Test connection** in Settings sends one short fixed prompt — `Say "ok" and nothing else.` — to the same service, so the configuration can be checked before you rely on it.
 
 = Providers you can choose =
 
-The plugin ships with the default endpoints below. Each one is contacted only if you select that provider and save your own API key for it.
+On the **WordPress AI Client** path, the providers available are the ones shown under Settings → Connectors on your site (WordPress ships with OpenAI, Anthropic and Google connectors). Each connector links to its own terms of service and privacy policy on that screen, and the data sent is the list above.
+
+On the **Your own API key** path, the plugin ships with the default endpoints below. Each one is contacted only if you select that provider and save your own API key for it.
 
 * **OpenAI** — `api.openai.com`. Terms of use: https://openai.com/policies/terms-of-use — Privacy policy: https://openai.com/policies/privacy-policy
 * **Claude / Anthropic** — `api.anthropic.com` (native Messages API). Terms of service: https://www.anthropic.com/legal/consumer-terms — Privacy policy: https://www.anthropic.com/legal/privacy
@@ -113,11 +125,11 @@ You can also choose **Custom** and enter the URL of any OpenAI-compatible endpoi
 * WooCommerce 8.0+
 * WooCommerce Analytics enabled for order-based insights, with its order lookup tables populated. The Library and order-level insights read `wc_order_stats`, `wc_order_product_lookup`, `wc_order_tax_lookup`, `wc_order_coupon_lookup` and `wc_customer_lookup`, which WooCommerce maintains in both HPOS and legacy order storage. If Analytics is disabled or its lookup tables are missing, order-based Library items are hidden; if the historical import has not run yet, they remain visible but may return no results.
 * PHP 7.4+
-* An API key from any supported provider (optional — the built-in Library works without one)
+* An AI backend (optional — the built-in Library works without one): the WordPress AI Client with a connector set up (WordPress 7.0+), or an API key from any supported provider
 
 = Bring Your Own Key (BYOK) =
 
-The plugin supports the providers below, and any other OpenAI-compatible endpoint:
+Select **Your own API key** as the Backend when you want the plugin to call a provider directly. This is the only path on WordPress versions before 7.0, the only path for self-hosted models, and the fallback when AI is disabled site-wide with `WP_AI_SUPPORT` (or the `wp_supports_ai` filter). The plugin supports the providers below, and any other OpenAI-compatible endpoint:
 
 * **OpenAI** (api.openai.com)
 * **Claude / Anthropic** (api.anthropic.com) — native Messages API, not an OpenAI-compatible shim
@@ -148,14 +160,21 @@ Categories include:
 2. Activate the plugin through the 'Plugins' menu.
 3. Navigate to **WooCommerce → Siphon Store Analytics**.
 4. Open the ⚙️ **Settings** panel in the sidebar.
-5. Enter your API URL and API Key (or skip — the built-in Library works without an API).
+5. Leave the Backend on **Automatic** to use the WordPress AI Client (WordPress 7.0+ with a provider connected under Settings → Connectors), or pick **Your own API key** and enter your API URL and key. Skipping this is fine too — the built-in Library works without any AI.
 6. Start asking questions or browse the Library.
 
 == Frequently Asked Questions ==
 
 = Do I need an API key? =
 
-No. The built-in Library provides 30 pre-built insights that execute directly against your database without any AI involvement. An API key unlocks the natural-language query generator where you can ask anything in plain English.
+No. There are two ways to give the plugin an AI model, and the built-in Library provides 30 pre-built insights that need neither.
+
+* **WordPress 7.0+**: connect a provider once under **Settings → Connectors** and leave the Backend setting on Automatic. The plugin stores no API key of its own.
+* **Any WordPress version**: select **Your own API key** as the Backend and paste a key from OpenAI, Claude, OpenRouter, DeepSeek, Groq, Mistral, xAI or any OpenAI-compatible endpoint.
+
+= Why is the WordPress AI Client still greyed out or failing? =
+
+The WordPress AI Client exists only on WordPress 7.0 and later, needs at least one provider connected under **Settings → Connectors**, and is skipped when the site disables AI (`define( 'WP_AI_SUPPORT', false );` or the `wp_supports_ai` filter). In any of those cases the plugin falls back to your own API key — make sure one is saved and the Backend is set to Automatic or "Your own API key". The connection test in Settings reports which backend answered.
 
 = Which AI models work best? =
 
@@ -189,13 +208,19 @@ Results are cached (configurable TTL, default 1 hour) to avoid redundant API cal
 
 = 3.3.0 =
 * Identity change — Plugin identity changed from Store Insights for WooCommerce to Siphon Store Analytics for WooCommerce
+* 🤖 AI now uses the WordPress AI Client by default on WordPress 7.0+ — connect a provider under Settings → Connectors and no API key is stored by the plugin
+* 🔑 Bring-your-own-key is kept as a fallback, not removed: still the only path on older WordPress, for self-hosted models (Ollama, LocalAI, vLLM, LM Studio) and when AI is disabled with `WP_AI_SUPPORT`
+* 🎛️ New **Backend** selector in Settings (Automatic / WordPress AI Client / Your own API key); the connection test now probes whichever backend is active
+* 🧠 Both backends send the same prompt and reuse the same JSON parser, including the one-shot "return only JSON" correction retry
+* 🗄️ The insight cache key now includes the active backend, so switching backend, provider or model can never serve an answer generated by the old one
 * 📊 Chart.js upgraded to 4.6.1; every chart type re-tested (bar, line, pie, doughnut, horizontalBar, radar, polarArea)
 * 🐛 Horizontal bar charts render horizontally again — Chart.js 3+ draws them as a bar chart with the category axis flipped, so the "Top 5 products by quantity sold" Library item was showing vertical bars
 * 🐛 Radar and polar area charts no longer draw two stray cartesian axes behind the chart
-* 🔌 New "External services" section — what is sent to your AI provider, when it is sent, and the terms of service and privacy policy for every supported provider
-* 📝 Suggested privacy policy text now describes the connection test, the settings that are sent, and the provider list
-* 📝 Installation steps, FAQ menu name and the source code link updated for the new name
+* 🔌 "External services" section now covers both backends — the WordPress AI Client/Connectors path and the direct-provider path — with what is sent, when, and where each provider's terms and privacy policy are published
+* 📝 Suggested privacy policy text now describes the connection test, the settings that are sent, the provider list and the WordPress AI Client path
+* 📝 Installation steps, FAQ entries, backend troubleshooting, menu name and the source code link updated
 * 🧹 The "WooCommerce is required" notice now only appears on the Plugins screen, not on every admin page
+* 🧹 Uninstalling also removes the saved backend choice
 
 = 3.2.2 =
 * 🔎 WooCommerce Analytics is now a documented data prerequisite with runtime readiness checks and an admin notice

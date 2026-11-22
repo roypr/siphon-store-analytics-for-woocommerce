@@ -22,6 +22,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
  */
 function silc_wia_uninstall_site(): void {
 	delete_option( 'silc_wia_api_settings' );
+	delete_option( 'silc_wia_ai_backend' );
 	delete_option( 'silc_wia_insight_history' );
 	delete_option( 'silc_wia_insight_cache' );      // Older releases.
 	delete_option( 'silc_wia_query_history' );      // Older releases, unreferenced.

@@ -13,6 +13,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+// The settings screen, the connection test and the bootstrap payload all read
+// the active AI backend, so the router is loaded with this file.
+require_once SILC_WIA_PATH . 'includes/class-ai-service.php';
+
 /**
  * Admin class.
  */
@@ -125,13 +129,27 @@ class SILC_WIA_Admin {
 			array(
 				'sanitize_callback' => array( __CLASS__, 'sanitize_settings' ),
 				'default'           => array(
-					'api_url'     => SILC_WIA_API::DEFAULT_API_URL,
-					'api_key'     => '',
-					'model'       => SILC_WIA_API::DEFAULT_MODEL,
-					'max_tokens'  => SILC_WIA_API::DEFAULT_MAX_TOKENS,
-					'temperature' => SILC_WIA_API::DEFAULT_TEMPERATURE,
-					'cache_ttl'   => SILC_WIA_API::DEFAULT_CACHE_TTL,
+					'api_url'          => SILC_WIA_API::DEFAULT_API_URL,
+					'api_key'          => '',
+					'model'            => SILC_WIA_API::DEFAULT_MODEL,
+					'max_tokens'       => SILC_WIA_API::DEFAULT_MAX_TOKENS,
+					'temperature'      => SILC_WIA_API::DEFAULT_TEMPERATURE,
+					'temperature_mode' => SILC_WIA_API::DEFAULT_TEMPERATURE_MODE,
+					'reasoning_effort' => SILC_WIA_API::DEFAULT_REASONING_EFFORT,
+					'cache_ttl'        => SILC_WIA_API::DEFAULT_CACHE_TTL,
 				),
+			)
+		);
+
+		// The backend lives in its own option: switching between the WordPress
+		// AI Client and a plugin-stored key must not rewrite the key settings.
+		register_setting(
+			SILC_WIA_AI_Service::BACKEND_OPTION,
+			SILC_WIA_AI_Service::BACKEND_OPTION,
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => array( SILC_WIA_AI_Service::class, 'sanitize_backend' ),
+				'default'           => '',
 			)
 		);
 	}
@@ -139,9 +157,10 @@ class SILC_WIA_Admin {
 	/**
 	 * Declare what data leaves the site for the WordPress privacy policy guide.
 	 *
-	 * The only outbound request this plugin makes is the configured AI
-	 * provider call, so the suggested text describes exactly that — plus what
-	 * is kept locally, since a generated answer can contain customer data.
+	 * The only outbound requests this plugin makes are the AI provider calls,
+	 * through either backend (the WordPress AI Client or a plugin-stored key),
+	 * so the suggested text describes exactly that — plus what is kept locally,
+	 * since a generated answer can contain customer data.
 	 */
 	public static function add_privacy_policy_content(): void {
 		if ( ! function_exists( 'wp_add_privacy_policy_content' ) ) {
@@ -149,16 +168,20 @@ class SILC_WIA_Admin {
 		}
 
 		$content = '<p class="privacy-policy-tutorial">'
-			. esc_html__( 'Suggested text: The only external request this plugin makes is to the AI provider configured under WooCommerce &rarr; Siphon Store Analytics &rarr; Settings. Nothing is sent until an administrator asks a question or uses the connection test. When a question is asked, the following is sent over HTTPS to that provider:', 'siphon-store-analytics-for-woocommerce' )
+			. esc_html__( 'Suggested text: This plugin needs a large language model to turn a plain-English question into a database query. Nothing is sent until an administrator asks a question or uses the connection test. Which AI service receives the request depends on the Backend setting under WooCommerce &rarr; Siphon Store Analytics &rarr; Settings:', 'siphon-store-analytics-for-woocommerce' )
+			. '</p><ul>'
+			. '<li>' . esc_html__( 'WordPress AI Client (the default): the request is sent by WordPress itself to the provider connected under Settings &rarr; Connectors. This plugin stores no API key on this path, and the terms and privacy policy of whichever connector is active apply.', 'siphon-store-analytics-for-woocommerce' ) . '</li>'
+			. '<li>' . esc_html__( 'Your own API key: the request goes directly to the endpoint entered in Settings (OpenAI, Claude/Anthropic, OpenRouter, DeepSeek, Groq, Mistral, xAI, or a custom OpenAI-compatible endpoint), with that key sent as an authorization header so the provider can bill your account.', 'siphon-store-analytics-for-woocommerce' ) . '</li>'
+			. '</ul><p class="privacy-policy-tutorial">'
+			. esc_html__( 'On each request the following is sent over HTTPS to the AI service:', 'siphon-store-analytics-for-woocommerce' )
 			. '</p><ul>'
 			. '<li>' . esc_html__( 'Your question, in plain text.', 'siphon-store-analytics-for-woocommerce' ) . '</li>'
 			. '<li>' . esc_html__( 'Database schema metadata only: table names and column names.', 'siphon-store-analytics-for-woocommerce' ) . '</li>'
-			. '<li>' . esc_html__( 'The model, temperature and token limit selected in Settings.', 'siphon-store-analytics-for-woocommerce' ) . '</li>'
-			. '<li>' . esc_html__( 'Your API key, sent as an authorization header so the provider can bill your account.', 'siphon-store-analytics-for-woocommerce' ) . '</li>'
+			. '<li>' . esc_html__( 'The model, temperature, reasoning effort and token limit selected in Settings.', 'siphon-store-analytics-for-woocommerce' ) . '</li>'
 			. '</ul><p class="privacy-policy-tutorial">'
-			. esc_html__( 'No customer, order, product, or payment records are transmitted. Generated queries run against this site\'s own database and their results are never sent to the provider.', 'siphon-store-analytics-for-woocommerce' )
+			. esc_html__( 'No customer, order, product, or payment records are transmitted. Generated queries run against this site\'s own database and their results are never sent to the AI service.', 'siphon-store-analytics-for-woocommerce' )
 			. '</p><p class="privacy-policy-tutorial">'
-			. esc_html__( 'The connection test in Settings sends only a short fixed prompt (Say "ok" and nothing else.) together with the API key. The external service that receives this data depends on the endpoint entered in Settings: by default OpenAI, Claude (Anthropic), OpenRouter, DeepSeek, Groq, Mistral or xAI. A self-hosted endpoint such as Ollama, LocalAI or vLLM keeps the data inside your own infrastructure. Terms of service and privacy policy links for each provider are listed in the plugin readme.', 'siphon-store-analytics-for-woocommerce' )
+			. esc_html__( 'The connection test in Settings sends only a short fixed prompt (Say "ok" and nothing else.) to the same service. Through the WordPress AI Client that service is whichever provider is connected under Settings &rarr; Connectors. With your own key it depends on the endpoint entered in Settings: by default OpenAI, Claude (Anthropic), OpenRouter, DeepSeek, Groq, Mistral or xAI. A self-hosted endpoint such as Ollama, LocalAI or vLLM keeps the data inside your own infrastructure. Terms of service and privacy policy links for each provider are listed in the plugin readme.', 'siphon-store-analytics-for-woocommerce' )
 			. '</p><p class="privacy-policy-tutorial">'
 			. esc_html__( 'Locally, the plugin keeps the question, the generated query and its display settings so past insights can be re-run; it does not keep the result rows. A generated answer is cached for the duration configured under Cache Duration so the same question does not call the AI twice. All of this data is removed when the plugin is deleted. Password hashes, activation keys and session tokens are never included in the schema sent to the provider and cannot be queried.', 'siphon-store-analytics-for-woocommerce' )
 			. '</p>';
@@ -215,13 +238,26 @@ class SILC_WIA_Admin {
 			}
 		}
 
-		// An empty model field means "use the endpoint's default". Resolved
-		// after the endpoint, because key-based routing can change it.
+		// An empty model field has two different meanings:
+		// - BYOK: use the endpoint's default, resolved after the endpoint because
+		//   key-based routing can change it.
+		// - WordPress AI Client: keep it empty, meaning "no preference" — the
+		//   client picks a model itself, and filling in a BYOK default here would
+		//   pin every request to a model the connected provider may not offer.
 		$model = sanitize_text_field( trim( self::scalar_string( $input['model'] ?? '' ) ) );
 
-		$output['model'] = '' !== $model
-			? $model
-			: SILC_WIA_API::get_default_model_for_url( $output['api_url'] );
+		$stored_backend  = array_key_exists( 'ai_backend', $input )
+			? self::scalar_string( $input['ai_backend'] )
+			: SILC_WIA_AI_Service::get_stored_backend();
+		$submitted_core  = SILC_WIA_AI_Service::BACKEND_CORE === SILC_WIA_AI_Service::resolve_backend( $stored_backend );
+
+		if ( '' !== $model ) {
+			$output['model'] = $model;
+		} elseif ( $submitted_core ) {
+			$output['model'] = '';
+		} else {
+			$output['model'] = SILC_WIA_API::get_default_model_for_url( $output['api_url'] );
+		}
 
 		$output['max_tokens'] = isset( $input['max_tokens'] )
 			? max( SILC_WIA_API::MIN_MAX_TOKENS, min( 8192, intval( self::scalar_string( $input['max_tokens'] ) ) ) )
@@ -230,6 +266,23 @@ class SILC_WIA_Admin {
 		$output['temperature'] = isset( $input['temperature'] )
 			? max( 0, min( 2, floatval( self::scalar_string( $input['temperature'] ) ) ) )
 			: SILC_WIA_API::DEFAULT_TEMPERATURE;
+
+		// Whether temperature is sent at all. Any unknown value falls back to
+		// "auto", which is the only choice that cannot break a request.
+		$mode = strtolower( trim( self::scalar_string( $input['temperature_mode'] ?? '' ) ) );
+
+		$output['temperature_mode'] = in_array(
+			$mode,
+			array( SILC_WIA_API::TEMPERATURE_MODE_AUTO, SILC_WIA_API::TEMPERATURE_MODE_ALWAYS, SILC_WIA_API::TEMPERATURE_MODE_NEVER ),
+			true
+		) ? $mode : SILC_WIA_API::DEFAULT_TEMPERATURE_MODE;
+
+		// '' = send nothing, i.e. the provider's own default.
+		$effort = strtolower( trim( self::scalar_string( $input['reasoning_effort'] ?? '' ) ) );
+
+		$output['reasoning_effort'] = in_array( $effort, SILC_WIA_API::REASONING_EFFORTS, true )
+			? $effort
+			: SILC_WIA_API::DEFAULT_REASONING_EFFORT;
 
 		$output['cache_ttl'] = isset( $input['cache_ttl'] )
 			? max( 0, min( 604800, intval( self::scalar_string( $input['cache_ttl'] ) ) ) )  // 0 to 7 days in seconds.
@@ -281,8 +334,11 @@ class SILC_WIA_Admin {
 			return;
 		}
 
-		require_once SILC_WIA_PATH . 'includes/class-api.php';
-		$result = SILC_WIA_API::test_connection();
+		require_once SILC_WIA_PATH . 'includes/class-ai-service.php';
+
+		// Probes whichever backend is active: a tiny WordPress AI Client
+		// request, or the saved endpoint + key for the BYOK path.
+		$result = SILC_WIA_AI_Service::test_connection();
 
 		if ( $result['success'] ) {
 			wp_send_json_success( array( 'message' => $result['message'] ) );
@@ -342,6 +398,15 @@ class SILC_WIA_Admin {
 		// autoload (see SILC_WIA_Storage).
 		SILC_WIA_Storage::save( self::SETTINGS_OPTION, $sanitized );
 
+		// Only touch the backend when the form actually carried it, so an older
+		// cached bundle cannot silently reset an existing choice.
+		if ( array_key_exists( 'ai_backend', $input ) ) {
+			SILC_WIA_Storage::save(
+				SILC_WIA_AI_Service::BACKEND_OPTION,
+				SILC_WIA_AI_Service::sanitize_backend( $input['ai_backend'] )
+			);
+		}
+
 		$message = __( 'Settings saved.', 'siphon-store-analytics-for-woocommerce' );
 
 		if ( self::$api_key_cleared ) {
@@ -355,6 +420,7 @@ class SILC_WIA_Admin {
 			'has_api_key'     => ! empty( $sanitized['api_key'] ),
 			'api_key_cleared' => self::$api_key_cleared,
 			'is_reasoning'    => SILC_WIA_API::is_reasoning_model( $sanitized['model'] ?? '' ),
+			'ai_backend'      => SILC_WIA_AI_Service::get_backend(),
 		) );
 	}
 
@@ -417,13 +483,24 @@ class SILC_WIA_Admin {
 		);
 
 		require_once SILC_WIA_PATH . 'includes/class-api.php';
+		require_once SILC_WIA_PATH . 'includes/class-ai-service.php';
 		require_once SILC_WIA_PATH . 'includes/class-library.php';
 		$api_settings    = SILC_WIA_API::get_settings();
 		$has_api_key     = ! empty( $api_settings['api_key'] );
-		$api_configured  = $has_api_key && ! empty( $api_settings['api_url'] ) && ! empty( $api_settings['model'] );
+		$byok_configured = $has_api_key && ! empty( $api_settings['api_url'] ) && ! empty( $api_settings['model'] );
 		$is_reason_model = SILC_WIA_API::is_reasoning_model( $api_settings['model'] ?? '' );
 		$library_items   = SILC_WIA_Library::get_library_for_js();
 		$api_url         = $api_settings['api_url'] ?? SILC_WIA_API::DEFAULT_API_URL;
+		$ai_backend      = SILC_WIA_AI_Service::get_backend();
+		$core_available  = SILC_WIA_AI_Service::is_core_available();
+		$core_supported  = $core_available && SILC_WIA_AI_Service::is_core_supported();
+
+		// With the WordPress AI Client there is no plugin API key to look for:
+		// the question is answerable as soon as the client itself is available.
+		// A missing connector is reported as a warning next to the composer
+		// instead of disabling the button, so asking still returns the clear
+		// "no AI provider connected" error from the server.
+		$api_configured = SILC_WIA_AI_Service::BACKEND_CORE === $ai_backend ? $core_available : $byok_configured;
 
 		// Note: the API key itself is deliberately never passed to the browser.
 		// Only booleans describing the saved configuration are exposed.
@@ -437,24 +514,42 @@ class SILC_WIA_Admin {
 			'isReasoningModel' => $is_reason_model,
 			'pluginVersion'    => SILC_WIA_VERSION,
 			'libraryItems'     => $library_items,
+			'aiBackend'        => $ai_backend,
+			'aiBackendSetting' => SILC_WIA_AI_Service::get_stored_backend(),
+			'coreAiAvailable'  => $core_available,
+			'coreAiSupported'  => $core_supported,
+			'connectorsUrl'    => admin_url( 'options-connectors.php' ),
 			// Endpoint, default model, and key hints live on the server
 			// (SILC_WIA_Provider_Adapter) so the settings screen never carries
 			// a second copy of the provider list.
 			'providers'        => SILC_WIA_Provider_Adapter::all(),
+			// The saved model is reported as stored for the AI Client path
+			// (empty = no preference) and as resolved for BYOK.
 			'settings'         => array(
-				'api_url'     => $api_url,
-				'model'       => $api_settings['model'] ?? SILC_WIA_API::DEFAULT_MODEL,
-				'max_tokens'  => $api_settings['max_tokens'] ?? SILC_WIA_API::DEFAULT_MAX_TOKENS,
-				'temperature' => $api_settings['temperature'] ?? SILC_WIA_API::DEFAULT_TEMPERATURE,
-				'cache_ttl'   => $api_settings['cache_ttl'] ?? SILC_WIA_API::DEFAULT_CACHE_TTL,
+				'api_url'          => $api_url,
+				'model'            => SILC_WIA_AI_Service::BACKEND_CORE === $ai_backend
+					? SILC_WIA_API::get_model_preference()
+					: ( $api_settings['model'] ?? SILC_WIA_API::DEFAULT_MODEL ),
+				'max_tokens'       => $api_settings['max_tokens'] ?? SILC_WIA_API::DEFAULT_MAX_TOKENS,
+				'temperature'      => $api_settings['temperature'] ?? SILC_WIA_API::DEFAULT_TEMPERATURE,
+				'temperature_mode' => SILC_WIA_API::get_temperature_mode( $api_settings ),
+				'reasoning_effort' => SILC_WIA_API::get_reasoning_effort( $api_settings ),
+				'cache_ttl'        => $api_settings['cache_ttl'] ?? SILC_WIA_API::DEFAULT_CACHE_TTL,
 			),
 			'defaults' => array(
-				'api_url'     => SILC_WIA_API::DEFAULT_API_URL,
-				'model'       => SILC_WIA_API::DEFAULT_MODEL,
-				'max_tokens'  => SILC_WIA_API::DEFAULT_MAX_TOKENS,
-				'temperature' => SILC_WIA_API::DEFAULT_TEMPERATURE,
-				'cache_ttl'   => SILC_WIA_API::DEFAULT_CACHE_TTL,
+				'api_url'          => SILC_WIA_API::DEFAULT_API_URL,
+				'model'            => SILC_WIA_API::DEFAULT_MODEL,
+				'max_tokens'       => SILC_WIA_API::DEFAULT_MAX_TOKENS,
+				'temperature'      => SILC_WIA_API::DEFAULT_TEMPERATURE,
+				'temperature_mode' => SILC_WIA_API::DEFAULT_TEMPERATURE_MODE,
+				'reasoning_effort' => SILC_WIA_API::DEFAULT_REASONING_EFFORT,
+				'cache_ttl'        => SILC_WIA_API::DEFAULT_CACHE_TTL,
 			),
+			// Reasoning levels are offered as a fixed list rather than mapped
+			// per model: an unsupported level is rejected by the provider, the
+			// request is retried without it, and the error names the levels that
+			// do work.
+			'reasoningEfforts' => SILC_WIA_API::REASONING_EFFORTS,
 			'l10n' => array(
 				'askQuestion'        => __( 'Ask anything about your WooCommerce store...', 'siphon-store-analytics-for-woocommerce' ),
 				'getInsight'         => __( 'Get AI Insight', 'siphon-store-analytics-for-woocommerce' ),
@@ -482,6 +577,8 @@ class SILC_WIA_Admin {
 				'settingsModel'      => __( 'Model', 'siphon-store-analytics-for-woocommerce' ),
 				'settingsMaxTokens'  => __( 'Max Tokens', 'siphon-store-analytics-for-woocommerce' ),
 				'settingsTemp'       => __( 'Temperature', 'siphon-store-analytics-for-woocommerce' ),
+				'settingsTempMode'   => __( 'Send temperature', 'siphon-store-analytics-for-woocommerce' ),
+				'settingsReasoning'  => __( 'Reasoning effort', 'siphon-store-analytics-for-woocommerce' ),
 				'settingsCache'      => __( 'Cache Duration', 'siphon-store-analytics-for-woocommerce' ),
 				'sqlDetails'         => __( 'SQL & Details', 'siphon-store-analytics-for-woocommerce' ),
 				'history'            => __( 'History', 'siphon-store-analytics-for-woocommerce' ),

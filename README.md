@@ -22,7 +22,8 @@ What leaves the site on a question, and nothing else:
 |------|----------|
 | Your question, in plain text | Customer, order, product, or payment rows |
 | Table and column names | Any store values returned by a query |
-| Your API key (authorization header) | Any other site data |
+| Model, temperature and token limit | Any other site data |
+| Your API key (authorization header) — only when you use your own key | — |
 
 Every generated query runs against your own local database.
 
@@ -42,10 +43,10 @@ Stop digging through admin panels and exporting CSVs. Each insight renders in on
 
 1. Install the plugin
 2. Go to **WooCommerce → Siphon Store Analytics**
-3. (Optional) Add your API key in the ⚙️ Settings panel
+3. (Optional) Set up AI in the ⚙️ Settings panel: leave the Backend on **Automatic** to use the WordPress AI Client (WordPress 7.0+ with a provider connected under Settings → Connectors), or choose **Your own API key** and paste a key
 4. Start asking questions — or browse the built-in Library
 
-**No API key?** The Insight Library has 30 pre-built queries that work immediately with zero configuration.
+**No AI configured?** The Insight Library has 30 pre-built queries that work immediately with zero configuration.
 
 ---
 
@@ -75,8 +76,10 @@ User Question (plain English)
         │
         ▼
 ┌──────────────────────┐
-│   AI API (BYOK)      │  ← Schema-only prompt
-│   Returns JSON:       │     (table/column names)
+│   AI Backend         │  ← Schema-only prompt
+│   WordPress AI Client│     (table/column names)
+│   or BYOK key        │
+│   Returns JSON:       │
 │   { sql, type,        │
 │     chart_config... } │
 └──────────────────────┘
@@ -115,6 +118,23 @@ User Question (plain English)
 - **Secrets not autoloaded** — The settings option (API key) and the history option are excluded from the autoloaded options blob
 - **Clean uninstall** — Settings, history, cached results and legacy options are removed when the plugin is deleted
 
+### AI backends — WordPress AI Client and BYOK
+
+Two ways to reach a model, chosen by the **Backend** setting:
+
+- **WordPress AI Client** (default on WordPress 7.0+, `includes/class-ai-service-core.php`) — `wp_ai_client_prompt()` builds the same prompt, WordPress routes it to the provider connected under Settings → Connectors, and the plugin stores no API key. Guarded with `function_exists()` + `wp_supports_ai()`, so WordPress 6.5–6.x and sites with `WP_AI_SUPPORT` disabled simply fall through.
+- **Your own API key** (`includes/class-api.php`) — direct calls to a provider you configure. Kept as a first-class fallback: it is the only option before WordPress 7.0, for self-hosted models, and when AI is disabled site-wide.
+
+`includes/class-ai-service.php` routes `generate_insight()` and `test_connection()` to the active backend and adds the backend, model preference, temperature mode and reasoning effort to the cache key, so both paths share the SQL validation, execution, rendering and history code unchanged.
+
+Both backends use the same Model, Temperature and Reasoning effort settings, with one difference in meaning:
+
+- **Model** — BYOK sends it as `model`; the AI Client passes it to `using_model_preference()`. A preference, not a requirement: an id the connected provider does not offer is ignored in favour of one of its own models, and an empty value means "no preference" on that path. Read with `SILC_WIA_API::get_model_preference()` so the BYOK endpoint normalisation cannot discard a valid id from another connector.
+- **Temperature** — `temperature_mode` decides whether the value is sent at all: `Automatic` (BYOK: only to models known to accept it; AI Client: never, because requesting it excludes every reasoning model from discovery), `Always`, `Never`.
+- **Reasoning effort** — `Provider default` or one of `none / minimal / low / medium / high / xhigh / max`. Sent as `reasoning: { effort: … }` through the AI Client (OpenAI Responses shape) and as `reasoning_effort` on the BYOK path, never to Claude endpoints.
+
+Because provider support varies per model, the plugin does not attempt to map capabilities: a rejected temperature or reasoning level is dropped and the request retried (twice at most), and the connection test names the setting it had to leave out.
+
 ### BYOK — Bring Your Own Key
 
 Ships with an endpoint registry for the common providers, plus a Custom option for
@@ -135,7 +155,7 @@ retried once with the other name.
 
 ### Reasoning Model Support
 
-Auto-detects reasoning models (o-series, GPT-5/6, DeepSeek, Gemini thinking, Claude extended thinking) and adjusts parameters: omits temperature, keeps Claude's thinking budget inside the non-streaming ceiling, and allocates an appropriate token budget.
+Auto-detects reasoning models (o-series, GPT-5/6, DeepSeek, Gemini thinking, Claude extended thinking) and adjusts parameters: omits temperature, keeps Claude's thinking budget inside the non-streaming ceiling, and allocates an appropriate token budget. You can also ask for a specific **Reasoning effort** level; if the model does not offer it, the error names the levels it does and the request is retried without the parameter.
 
 ### HPOS & Legacy Compatible
 
@@ -145,7 +165,14 @@ Dynamically discovers your active WooCommerce order storage backend. Adjusts tab
 
 ## 🔌 External Services
 
-This plugin sends nothing to the plugin author and does not use a service run by the plugin author. To turn a plain-English question into a SQL query it needs a large language model, so it calls **the AI provider you configure yourself** under WooCommerce → Siphon Store Analytics → Settings. Nothing is transmitted until you ask a question or press **Test connection**, and with no API key saved no external request is ever made — the built-in Library runs entirely on your own server.
+This plugin sends nothing to the plugin author and does not use a service run by the plugin author. To turn a plain-English question into a SQL query it needs a large language model. Nothing is transmitted until you ask a question or press **Test connection**, and with no AI configured no external request is ever made — the built-in Library runs entirely on your own server.
+
+**Which service receives the request** is decided by the **Backend** setting under WooCommerce → Siphon Store Analytics → Settings:
+
+| Backend | Who sends it | Where the key lives |
+|---------|--------------|---------------------|
+| WordPress AI Client (default on WP 7.0+ when a connector exists) | WordPress core, via `wp_ai_client_prompt()` | Settings → Connectors — the plugin stores no key |
+| Your own API key (BYOK) | This plugin, direct HTTPS call | This plugin's settings (option is not autoloaded) |
 
 **Sent on every AI request:**
 
@@ -153,12 +180,12 @@ This plugin sends nothing to the plugin author and does not use a service run by
 |------|--------|
 | Your question | Plain text, exactly as typed |
 | Schema metadata | Table names and column names only (credentials stripped) |
-| Model settings | Model id, temperature, token limit |
-| Your API key | Request header, so the provider bills your own account |
+| Model settings | Model preference, temperature (only when sent), reasoning effort, token limit — through the WordPress AI Client the model is a preference and WordPress may pick a different one |
+| Your API key | Request header — BYOK path only, so the provider bills your own account |
 
-**Never sent:** customer, order, product or payment rows — and no query result ever leaves the site. Pressing **Test connection** sends a single fixed prompt (`Say "ok" and nothing else.`) to the same endpoint.
+**Never sent:** customer, order, product or payment rows — and no query result ever leaves the site. Pressing **Test connection** sends a single fixed prompt (`Say "ok" and nothing else.`) to the same service, whichever backend is active.
 
-The default endpoint per provider, and each provider's own terms:
+The default endpoint per provider (BYOK path), and each provider's own terms. On the WordPress AI Client path the providers are the connectors on your Settings → Connectors screen, which link to their own policies:
 
 | Provider | Endpoint | Terms | Privacy |
 |----------|----------|-------|---------|
@@ -181,7 +208,7 @@ Choosing **Custom** points the plugin at any OpenAI-compatible endpoint — Azur
 | WordPress | 6.5+ |
 | WooCommerce | 8.0+ |
 | PHP | 7.4+ |
-| API Key | Optional (Library works without) |
+| AI backend | Optional (Library works without). WordPress AI Client on WP 7.0+ with a connector, or your own API key |
 
 ---
 

@@ -54,6 +54,48 @@ class SILC_WIA_API {
 	const LEGACY_DEFAULT_MODEL = 'gpt-4o-mini';
 
 	/**
+	 * Whether a `temperature` value is sent, and when.
+	 *
+	 * Provider support is not uniform: OpenAI's reasoning models reject any
+	 * non-default temperature (and the WordPress AI Client filters models by
+	 * it before the request is made), while older chat models accept it.
+	 * Rather than maintaining a model-to-capability map, the site owner picks
+	 * one of these three behaviours:
+	 *
+	 * - auto   (default) — send it only when the model is known to accept it
+	 *                      (BYOK); the WordPress AI Client path never sends it.
+	 * - always           — always send the configured value.
+	 * - never            — never send it.
+	 */
+	const TEMPERATURE_MODE_AUTO   = 'auto';
+	const TEMPERATURE_MODE_ALWAYS = 'always';
+	const TEMPERATURE_MODE_NEVER  = 'never';
+	const DEFAULT_TEMPERATURE_MODE = self::TEMPERATURE_MODE_AUTO;
+
+	/**
+	 * Values accepted by the Reasoning effort setting.
+	 *
+	 * This is the union of the levels the major providers document, not a
+	 * per-model map: asking for a level a model does not support returns an
+	 * error naming the supported ones, and the request is retried without it,
+	 * so the setting can stay simple even as model names change.
+	 */
+	const REASONING_EFFORTS = array( 'none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max' );
+
+	/**
+	 * Default for the Reasoning effort setting ('' = send nothing).
+	 */
+	const DEFAULT_REASONING_EFFORT = '';
+
+	/**
+	 * Option holding the plugin's AI settings.
+	 *
+	 * Mirrors SILC_WIA_Admin::SETTINGS_OPTION; declared here as well so this
+	 * class can read the option without depending on the admin class.
+	 */
+	const SETTINGS_OPTION = 'silc_wia_api_settings';
+
+	/**
 	 * Anthropic (Claude) endpoint + required API version header.
 	 *
 	 * Claude's native Messages API differs from the OpenAI-compatible
@@ -183,15 +225,17 @@ class SILC_WIA_API {
 	 */
 	public static function get_settings(): array {
 		$defaults = array(
-			'api_url'     => self::DEFAULT_API_URL,
-			'api_key'     => '',
-			'model'       => self::DEFAULT_MODEL,
-			'max_tokens'  => self::DEFAULT_MAX_TOKENS,
-			'temperature' => self::DEFAULT_TEMPERATURE,
-			'cache_ttl'   => self::DEFAULT_CACHE_TTL,
+			'api_url'          => self::DEFAULT_API_URL,
+			'api_key'          => '',
+			'model'            => self::DEFAULT_MODEL,
+			'max_tokens'       => self::DEFAULT_MAX_TOKENS,
+			'temperature'      => self::DEFAULT_TEMPERATURE,
+			'temperature_mode' => self::DEFAULT_TEMPERATURE_MODE,
+			'reasoning_effort' => self::DEFAULT_REASONING_EFFORT,
+			'cache_ttl'        => self::DEFAULT_CACHE_TTL,
 		);
 
-		$saved = get_option( 'silc_wia_api_settings', array() );
+		$saved = get_option( self::SETTINGS_OPTION, array() );
 
 		if ( ! is_array( $saved ) ) {
 			$saved = array();
@@ -227,6 +271,84 @@ class SILC_WIA_API {
 		$model = SILC_WIA_Provider_Adapter::get_default_model( $api_url );
 
 		return '' !== $model ? $model : self::DEFAULT_MODEL;
+	}
+
+	/**
+	 * The saved model id, exactly as stored.
+	 *
+	 * get_settings() corrects a stored model id that cannot belong to the saved
+	 * BYOK endpoint, which is right for a direct request but wrong for the
+	 * WordPress AI Client: that path only stores a *preference*, and the id may
+	 * legitimately name a model from another provider's connector. Reading the
+	 * raw value keeps the preference intact.
+	 *
+	 * @return string Model id, or '' when none is stored.
+	 */
+	public static function get_model_preference(): string {
+		$saved = get_option( self::SETTINGS_OPTION, array() );
+
+		if ( ! is_array( $saved ) || ! isset( $saved['model'] ) || ! is_scalar( $saved['model'] ) ) {
+			return '';
+		}
+
+		return trim( (string) $saved['model'] );
+	}
+
+	/**
+	 * The saved Temperature behaviour: auto | always | never.
+	 *
+	 * @param array|null $settings Optional settings array, to avoid a second read.
+	 * @return string One of the TEMPERATURE_MODE_* constants.
+	 */
+	public static function get_temperature_mode( ?array $settings = null ): string {
+		$settings = null === $settings ? self::get_settings() : $settings;
+		$mode     = isset( $settings['temperature_mode'] ) ? (string) $settings['temperature_mode'] : '';
+
+		return in_array( $mode, array( self::TEMPERATURE_MODE_AUTO, self::TEMPERATURE_MODE_ALWAYS, self::TEMPERATURE_MODE_NEVER ), true )
+			? $mode
+			: self::DEFAULT_TEMPERATURE_MODE;
+	}
+
+	/**
+	 * The saved reasoning effort, or '' for "provider default".
+	 *
+	 * Shared by both backends: the WordPress AI Client sends it as the
+	 * provider-specific `reasoning` option, the BYOK path as
+	 * `reasoning_effort`. Nothing is sent when this is empty, which is the
+	 * only value that is safe on every provider.
+	 *
+	 * @param array|null $settings Optional settings array, to avoid a second read.
+	 * @return string One of REASONING_EFFORTS, or ''.
+	 */
+	public static function get_reasoning_effort( ?array $settings = null ): string {
+		$settings = null === $settings ? self::get_settings() : $settings;
+		$effort   = isset( $settings['reasoning_effort'] ) ? strtolower( trim( (string) $settings['reasoning_effort'] ) ) : '';
+
+		return in_array( $effort, self::REASONING_EFFORTS, true ) ? $effort : '';
+	}
+
+	/**
+	 * Whether a `temperature` value may be sent for this endpoint/model.
+	 *
+	 * @param string     $model   Model id.
+	 * @param string     $api_url API base URL.
+	 * @param array|null $settings Optional settings array, to avoid a second read.
+	 * @return bool
+	 */
+	public static function should_send_temperature( string $model, string $api_url, ?array $settings = null ): bool {
+		$mode = self::get_temperature_mode( $settings );
+
+		if ( self::TEMPERATURE_MODE_NEVER === $mode ) {
+			return false;
+		}
+
+		// "Always" is the escape hatch for a provider whose capability list
+		// disagrees with the built-in detection.
+		if ( self::TEMPERATURE_MODE_ALWAYS === $mode ) {
+			return true;
+		}
+
+		return SILC_WIA_Provider_Adapter::supports_temperature( $api_url, $model );
 	}
 
 	/**
@@ -387,6 +509,28 @@ class SILC_WIA_API {
 	}
 
 	/**
+	 * Output budget for one insight request, taken from the Max Tokens setting.
+	 *
+	 * The floor exists because a response cut off mid-JSON cannot be parsed,
+	 * so anything below the minimum is raised (the settings screen clamps to
+	 * the same range). Shared with the WordPress AI Client backend so both
+	 * paths ask for the same budget.
+	 *
+	 * @param array|null $settings Optional settings array, to avoid a second read.
+	 * @return int
+	 */
+	public static function get_insight_max_tokens( ?array $settings = null ): int {
+		$settings = null === $settings ? self::get_settings() : $settings;
+		$base     = (int) ( $settings['max_tokens'] ?? 0 );
+
+		if ( $base < self::MIN_MAX_TOKENS ) {
+			$base = max( self::INSIGHT_MAX_TOKENS, self::MIN_MAX_TOKENS );
+		}
+
+		return $base;
+	}
+
+	/**
 	 * Extract the assistant message content from an API response.
 	 *
 	 * Handles both shapes:
@@ -450,8 +594,8 @@ class SILC_WIA_API {
 	 *
 	 * Single place that decides:
 	 * - which completion-limit parameter to send (provider dependent);
-	 * - whether a temperature value is allowed (reasoning models reject any
-	 *   non-default value, Anthropic deprecates it).
+	 * - whether a temperature value is sent at all (Temperature setting);
+	 * - whether a reasoning effort is requested (Reasoning effort setting).
 	 *
 	 * The body is always built in the OpenAI wire format; send_request()
 	 * translates it to the Messages API when the endpoint is Anthropic.
@@ -477,8 +621,17 @@ class SILC_WIA_API {
 			$token_param => $max_tokens,
 		);
 
-		if ( null !== $temperature && SILC_WIA_Provider_Adapter::supports_temperature( $api_url, $model ) ) {
+		if ( null !== $temperature && self::should_send_temperature( $model, $api_url ) ) {
 			$body['temperature'] = $temperature;
+		}
+
+		// Reasoning effort is only sent when the site owner picked a level.
+		// Claude's Messages API has no such parameter (its extended thinking is
+		// handled in build_anthropic_request_body()), so it is skipped there.
+		$effort = self::get_reasoning_effort();
+
+		if ( '' !== $effort && ! self::is_anthropic( $api_url ) ) {
+			$body['reasoning_effort'] = $effort;
 		}
 
 		return $body;
@@ -637,13 +790,37 @@ class SILC_WIA_API {
 		$result = self::dispatch_request( $body, $api_url, (string) $settings['api_key'], $is_claude );
 
 		// Provider drift guard: the OpenAI-compatible ecosystem does not agree
-		// on the completion-limit parameter name, and a routing layer such as
-		// OpenRouter may forward to an upstream that lags its own docs.
+		// on the completion-limit parameter name, nor on optional sampling
+		// parameters, and a routing layer such as OpenRouter may forward to an
+		// upstream that lags its own docs. Each retry drops or renames one
+		// parameter the endpoint blamed, so a rejected optional setting costs a
+		// retry instead of a broken insight. Two attempts is enough for the
+		// only combination that stacks up (temperature + reasoning effort).
 		if ( ! $result['success'] && ! $is_claude ) {
-			$adapted = SILC_WIA_Provider_Adapter::adapt_rejected_body( $body, (string) $result['error'] );
+			for ( $attempt = 0; $attempt < 2; $attempt++ ) {
+				$adapted = SILC_WIA_Provider_Adapter::adapt_rejected_body( $body, (string) $result['error'] );
 
-			if ( null !== $adapted ) {
-				$result = self::dispatch_request( $adapted, $api_url, (string) $settings['api_key'], $is_claude );
+				// Safety net for a reasoning level the model does not offer: the
+				// provider names the level without ever saying "reasoning"
+				// ("Unsupported value: 'minimal' …"), so a 4xx that no rename
+				// explained is treated as a rejected effort and retried without
+				// it. Status codes are checked so an auth or rate-limit error is
+				// never retried.
+				if ( null === $adapted && isset( $body['reasoning_effort'] ) && in_array( (int) ( $result['status'] ?? 0 ), array( 400, 422 ), true ) ) {
+					$adapted = $body;
+					unset( $adapted['reasoning_effort'] );
+				}
+
+				if ( null === $adapted ) {
+					break;
+				}
+
+				$body   = $adapted;
+				$result = self::dispatch_request( $body, $api_url, (string) $settings['api_key'], $is_claude );
+
+				if ( $result['success'] ) {
+					break;
+				}
 			}
 		}
 
@@ -658,7 +835,7 @@ class SILC_WIA_API {
 	 * @param string $api_key   API key.
 	 * @param bool   $is_claude Whether the endpoint is Anthropic's.
 	 * @param int    $timeout   Request timeout in seconds.
-	 * @return array{success: bool, data: array|null, error: string}
+	 * @return array{success: bool, data: array|null, error: string, status: int}
 	 */
 	private static function dispatch_request( array $body, string $api_url, string $api_key, bool $is_claude, int $timeout = 90 ): array {
 		// Last line of defence: a plain-HTTP URL that was stored before this
@@ -668,6 +845,7 @@ class SILC_WIA_API {
 				'success' => false,
 				'data'    => null,
 				'error'   => __( 'The API URL must use HTTPS. Plain HTTP is only allowed for local endpoints such as http://localhost:11434/v1.', 'siphon-store-analytics-for-woocommerce' ),
+				'status'  => 0,
 			);
 		}
 
@@ -707,6 +885,7 @@ class SILC_WIA_API {
 					__( 'API request failed: %s', 'siphon-store-analytics-for-woocommerce' ),
 					$response->get_error_message()
 				),
+				'status'  => 0,
 			);
 		}
 
@@ -727,6 +906,7 @@ class SILC_WIA_API {
 				'success' => false,
 				'data'    => null,
 				'error'   => $error_msg,
+				'status'  => (int) $status_code,
 			);
 		}
 
@@ -738,6 +918,7 @@ class SILC_WIA_API {
 			'success' => true,
 			'data'    => $data,
 			'error'   => '',
+			'status'  => (int) $status_code,
 		);
 	}
 
@@ -769,26 +950,13 @@ class SILC_WIA_API {
 		}
 
 		// Build prompts.
-		$system_prompt = self::build_insight_system_prompt();
-		$system_prompt .= "\nHere is the WooCommerce database schema (table prefix included):";
-		$system_prompt .= "\n" . $schema_context;
-
+		$system_prompt = self::build_insight_system_prompt( $schema_context );
 		$user_prompt   = self::build_insight_user_prompt( $question );
 
 		$model = (string) $settings['model'];
 
-		// The Max Tokens setting is the output budget for this call. The
-		// minimum exists because a response cut off mid-JSON cannot be parsed,
-		// so anything below it is raised (the settings screen clamps to the
-		// same range). Reasoning models still get the larger budget from
-		// get_effective_max_tokens().
-		$base_tokens = (int) ( $settings['max_tokens'] ?? 0 );
-
-		if ( $base_tokens < self::MIN_MAX_TOKENS ) {
-			$base_tokens = max( self::INSIGHT_MAX_TOKENS, self::MIN_MAX_TOKENS );
-		}
-
-		$max_tokens = self::get_effective_max_tokens( $model, $base_tokens );
+		// Reasoning models get a larger budget than the setting asks for.
+		$max_tokens = self::get_effective_max_tokens( $model, self::get_insight_max_tokens( $settings ) );
 
 		$messages = array(
 			array(
@@ -872,10 +1040,14 @@ class SILC_WIA_API {
 	/**
 	 * Build the system prompt for insight generation (structured JSON output).
 	 *
+	 * Public so the WordPress AI Client backend (SILC_WIA_AI_Service_Core)
+	 * sends exactly the same instructions as the BYOK path.
+	 *
+	 * @param string $schema_context Optional database schema context to append.
 	 * @return string
 	 */
-	private static function build_insight_system_prompt(): string {
-		return 'You are a senior WooCommerce Analytics Engineer. Your job is to translate a business question about a WooCommerce store into ONE correct, executable, read-only SELECT query, plus the presentation metadata that describes its output.'
+	public static function build_insight_system_prompt( string $schema_context = '' ): string {
+		$prompt = 'You are a senior WooCommerce Analytics Engineer. Your job is to translate a business question about a WooCommerce store into ONE correct, executable, read-only SELECT query, plus the presentation metadata that describes its output.'
 			. ' Analytical correctness is your PRIMARY responsibility. SQL is the final step of your reasoning, never the first.'
 			. "\n\n"
 			. "SCOPE & SAFETY — hard rules:"
@@ -1007,6 +1179,13 @@ class SILC_WIA_API {
 			. "\n- For list type, include link_columns mapping (order_id->order, product_id->product, customer_id/user_id->user, coupon_id->coupon)"
 			. "\n- DO NOT include markdown code fences around the JSON"
 			. "\n- For answer type, provide answer_text with {{column_name}} placeholders";
+
+		if ( '' !== $schema_context ) {
+			$prompt .= "\nHere is the WooCommerce database schema (table prefix included):";
+			$prompt .= "\n" . $schema_context;
+		}
+
+		return $prompt;
 	}
 
 	/**
@@ -1015,7 +1194,7 @@ class SILC_WIA_API {
 	 * @param string $question       The user's question.
 	 * @return string
 	 */
-	private static function build_insight_user_prompt( string $question ): string {
+	public static function build_insight_user_prompt( string $question ): string {
 		return "User question: " . $question
 			. "
 

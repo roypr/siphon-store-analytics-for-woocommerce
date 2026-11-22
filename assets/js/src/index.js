@@ -15,6 +15,10 @@ import {
 	SUGGESTED_PROMPTS,
 	LIBRARY_ITEMS,
 	apiConfigured,
+	aiBackend,
+	aiBackendSetting,
+	coreAiSupported,
+	connectorsUrl,
 	getErrorMessage,
 } from './utils.js';
 
@@ -80,14 +84,29 @@ function WooInsightDashboard() {
 	var insightHistory = _insightHistory[0];
 	var setInsightHistory = _insightHistory[1];
 
-	// Settings form state.
+	// Settings form state. Values are taken as stored rather than coerced with
+	// `||`, because 0 is a meaningful temperature (and cache duration). The
+	// temperature is rounded on the way in: wp_localize_script() can hand over a
+	// float-artifact such as 0.20000000298023224, which would then be shown in
+	// the field and saved back as-is.
+	var initialTemperature = settings.temperature === undefined ? '' : parseFloat(settings.temperature);
+
+	if (isNaN(initialTemperature)) {
+		initialTemperature = '';
+	} else {
+		initialTemperature = Math.round(initialTemperature * 100) / 100;
+	}
+
 	var _formSettings = useState({
+		ai_backend: aiBackendSetting,
 		api_url: settings.api_url || '',
 		api_key: '',
 		model: settings.model || '',
-		max_tokens: settings.max_tokens || '',
-		temperature: settings.temperature || '',
-		cache_ttl: settings.cache_ttl || defaults.cache_ttl || 3600,
+		max_tokens: settings.max_tokens === undefined ? '' : settings.max_tokens,
+		temperature: initialTemperature,
+		temperature_mode: settings.temperature_mode || defaults.temperature_mode || 'auto',
+		reasoning_effort: settings.reasoning_effort || '',
+		cache_ttl: settings.cache_ttl === undefined ? (defaults.cache_ttl || 3600) : settings.cache_ttl,
 	});
 	var formSettings = _formSettings[0];
 	var setFormSettings = _formSettings[1];
@@ -335,13 +354,24 @@ function WooInsightDashboard() {
 		setSaveMsg(null);
 		setTestResult(null);
 
+		// 0 is a valid temperature and a valid cache duration ("off"), so the
+		// fallback only applies to an empty or non-numeric field — `x || default`
+		// would silently replace both.
+		var numberOr = function (value, fallback) {
+			var parsed = typeof value === 'number' ? value : parseFloat(String(value === undefined || value === null ? '' : value).trim());
+			return isNaN(parsed) || String(value).trim() === '' ? fallback : parsed;
+		};
+
 		var postData = {
+			ai_backend: formSettings.ai_backend || '',
 			api_url: formSettings.api_url,
 			api_key: formSettings.api_key,
 			model: formSettings.model,
-			max_tokens: parseInt(formSettings.max_tokens, 10) || defaults.max_tokens,
-			temperature: parseFloat(formSettings.temperature) || defaults.temperature,
-			cache_ttl: parseInt(formSettings.cache_ttl, 10) || defaults.cache_ttl,
+			max_tokens: numberOr(formSettings.max_tokens, defaults.max_tokens),
+			temperature: numberOr(formSettings.temperature, defaults.temperature),
+			temperature_mode: formSettings.temperature_mode || 'auto',
+			reasoning_effort: formSettings.reasoning_effort || '',
+			cache_ttl: numberOr(formSettings.cache_ttl, defaults.cache_ttl),
 		};
 
 		doAction('save_settings', { settings: JSON.stringify(postData) })
@@ -478,6 +508,19 @@ function WooInsightDashboard() {
 							style: { color: '#8a6d3b', fontSize: '13px', background: '#fcf8e3', padding: '8px 16px', borderRadius: '8px', marginBottom: '20px', maxWidth: '500px' },
 						}, l10n.apiNotConfigured + '. You can still use the queries below without AI, and more are available in the Library panel.')
 						: null,
+					// WordPress AI Client selected, but no connector set up yet:
+					// saying so here is clearer than letting the first question fail.
+					aiBackend === 'core' && !coreAiSupported
+						? el('p', {
+							style: { color: '#8a6d3b', fontSize: '13px', background: '#fcf8e3', padding: '8px 16px', borderRadius: '8px', marginBottom: '20px', maxWidth: '500px' },
+						},
+							'No AI provider is connected yet. Add one under ',
+							connectorsUrl
+								? el('a', { href: connectorsUrl }, 'Settings \u2192 Connectors')
+								: 'Settings \u2192 Connectors',
+							', or switch the Backend to your own API key in Settings.'
+						)
+						: null,
 					el('div', { className: 'silc-wia-prompts' },
 						(apiConfigured ? SUGGESTED_PROMPTS : LIBRARY_ITEMS.slice(0, 6)).map(function (p, i) {
 							if (apiConfigured) {
@@ -610,7 +653,15 @@ function WooInsightDashboard() {
 				}),
 				'Siphon Store Analytics for WooCommerce'
 			),
-			el('span', { className: 'silc-wia-topbar-model' }, settings.model || defaults.model),
+			// Which engine answers the question: the model saved for BYOK, or
+			// the provider WordPress routes to on the core path. The core path
+			// does not name a model because the Model setting is only a
+			// preference there — WordPress decides which model serves it.
+			el('span', { className: 'silc-wia-topbar-model' },
+				aiBackend === 'core'
+					? 'WordPress AI Client'
+					: (settings.model || defaults.model)
+			),
 			el('div', { className: 'silc-wia-topbar-spacer' }),
 			el('span', {
 				className: 'silc-wia-topbar-status ' + (apiConfigured ? 'ready' : 'not-ready'),

@@ -6,7 +6,7 @@
 
 /* global wp */
 
-import { l10n, defaults, data } from './utils.js';
+import { l10n, defaults, data, coreAiAvailable, coreAiSupported, connectorsUrl, reasoningEfforts } from './utils.js';
 
 var el = wp.element.createElement;
 var Button = wp.components.Button;
@@ -254,12 +254,21 @@ export function renderSettingsPanel(props) {
 	var keyApplies = normalizeUrl(formSettings.api_url) === savedUrl;
 	var hasKey = !!data.hasApiKey && keyApplies;
 
-	// Test Connection hits the server, which uses the *saved* endpoint and key.
-	// While the endpoint differs from the stored one, or a new key has been
-	// typed but not saved, a result would describe a configuration that is not
-	// on screen. (Changing the provider always rewrites the endpoint, so it is
-	// covered by the URL comparison.)
-	var connectionDirty = !keyApplies || !!formSettings.api_key;
+	// Test Connection hits the server, which uses the *saved* backend and — for
+	// the BYOK path — the saved endpoint and key. While any of those differ
+	// from what is on screen, or a new key has been typed but not saved, a
+	// result would describe a configuration that is not shown here.
+	var savedSettings = data.settings || {};
+	var backendChanged = (formSettings.ai_backend || '') !== (data.aiBackendSetting || '');
+	// The connection test uses the saved model, temperature mode, temperature
+	// and reasoning effort, so any unsaved change to them makes a result
+	// describe a configuration that is not on screen.
+	var samplingChanged =
+		String(formSettings.model || '') !== String(savedSettings.model || '') ||
+		String(formSettings.temperature_mode || 'auto') !== String(savedSettings.temperature_mode || 'auto') ||
+		String(formSettings.reasoning_effort || '') !== String(savedSettings.reasoning_effort || '') ||
+		String(formSettings.temperature) !== String(savedSettings.temperature);
+	var connectionDirty = backendChanged || samplingChanged || !keyApplies || !!formSettings.api_key;
 	var keyHelp;
 
 	if (!!data.hasApiKey && !keyApplies) {
@@ -268,6 +277,60 @@ export function renderSettingsPanel(props) {
 		keyHelp = 'A key is already saved. Type a new one to replace it, or leave blank to keep the current key.';
 	} else {
 		keyHelp = 'Paste your API key here. Need one? Sign up at your AI provider and create a key from their dashboard.';
+	}
+
+	// Which backend will actually run. "Automatic" follows what the site can
+	// do: the WordPress AI Client when it is available, otherwise this plugin's
+	// own client. The server resolves the same rule, and reports the result as
+	// data.aiBackend.
+	var backendChoice = formSettings.ai_backend || '';
+	var usesCore = backendChoice === 'core' || (backendChoice === '' && data.aiBackend === 'core');
+
+	// Backend selector. "WordPress AI Client" is only offered where it exists,
+	// so the screen never promises a path the site cannot take.
+	var backendOptions = [
+		el('option', { key: 'auto', value: '' },
+			coreAiAvailable
+				? 'Automatic \u2014 use the WordPress AI Client'
+				: 'Automatic \u2014 use your own API key (WordPress AI Client needs WordPress 7.0+)'
+		),
+	];
+	if (coreAiAvailable) {
+		backendOptions.push(el('option', { key: 'core', value: 'core' }, 'WordPress AI Client'));
+	}
+	backendOptions.push(el('option', { key: 'byok', value: 'byok' }, 'Your own API key'));
+
+	// Explains what the chosen Temperature behaviour does for this backend.
+	// "Automatic" is the only option whose result depends on the backend, so
+	// the text spells out what actually happens rather than just naming it.
+	var tempMode = formSettings.temperature_mode || 'auto';
+	var tempModeHelp;
+
+	if (tempMode === 'always') {
+		tempModeHelp = usesCore
+			? 'The temperature above is always sent. Only useful for a model you know accepts it: current OpenAI reasoning models reject any value, so a rejected request is retried once without it (Test Connection tells you when that happened).'
+			: 'The temperature above is always sent, even for models the plugin does not recognise. If the provider rejects it, the request is retried once without it.';
+	} else if (tempMode === 'never') {
+		tempModeHelp = 'No temperature is ever sent and the provider\u2019s own default is used. The safe choice for reasoning models and for providers that do not document support.';
+	} else {
+		tempModeHelp = usesCore
+			? 'Not sent through the WordPress AI Client: requesting a temperature removes every model that does not advertise support for it, which includes all current reasoning models. Choose "Always" only for a model known to accept it.'
+			: 'Sent only to models known to accept it. Reasoning models (o-series, GPT-5/6, DeepSeek, Claude thinking) get the provider default instead.';
+	}
+
+	var backendHelp;
+	if (!usesCore) {
+		backendHelp = 'Sends requests straight to the provider configured below. Required before WordPress 7.0, for self-hosted endpoints such as Ollama or vLLM, and when AI is disabled with WP_AI_SUPPORT.';
+	} else if (coreAiSupported) {
+		backendHelp = 'WordPress routes each request to the provider connected under Settings \u2192 Connectors. This plugin stores no API key of its own on this path.';
+	} else {
+		backendHelp = [
+			'No AI provider is connected yet. Add one under Settings \u2192 Connectors',
+			connectorsUrl
+				? el('a', { key: 'connectors', href: connectorsUrl }, ' (open Connectors)')
+				: null,
+			' \u2014 until then, asking a question returns an error. Or switch to your own API key below.',
+		];
 	}
 
 	return el('div', { className: 'silc-wia-settings-panel' },
@@ -283,8 +346,19 @@ export function renderSettingsPanel(props) {
 				'Choose which AI service powers your insights. OpenAI-compatible providers and Claude (Anthropic) are supported.'
 			),
 
-			// Provider
+			// Backend: WordPress AI Client vs. a key saved in this plugin.
 			el(SettingsField, {
+				label: 'Backend',
+				help: backendHelp,
+			},
+				el('select', {
+					value: backendChoice,
+					onChange: function (e) { updateSetting('ai_backend', e.target.value); },
+				}, backendOptions)
+			),
+
+			// Provider
+			usesCore ? null : el(SettingsField, {
 				label: 'Provider',
 				help: 'Pick a provider to fill in its API URL and default model, or choose Custom to enter any other endpoint.',
 			},
@@ -299,7 +373,7 @@ export function renderSettingsPanel(props) {
 			),
 
 			// API URL
-			el(SettingsField, {
+			usesCore ? null : el(SettingsField, {
 				label: l10n.settingsApiUrl || 'API URL',
 				help: (providerDef.url
 					? 'Filled in from the provider you selected. Edit it only if you use a proxy or gateway.'
@@ -314,25 +388,28 @@ export function renderSettingsPanel(props) {
 				})
 			),
 
-			// Model
+			// Model. On both backends this is a preference, never a hard
+			// requirement, so it can be left empty without breaking a request.
 			el(SettingsField, {
 				label: l10n.settingsModel || 'Model',
-				help: 'The model id exactly as your provider lists it.'
-					+ (providerDef.model ? ' The default for ' + providerDef.label + ' is ' + providerDef.model + '.' : ''),
+				help: usesCore
+					? 'Preferred model id. WordPress uses it when the provider connected under Settings → Connectors offers that model, and otherwise picks one itself — so a wrong id never breaks a request. Leave it empty to always let WordPress choose.'
+					: 'The model id exactly as your provider lists it.'
+						+ (providerDef.model ? ' The default for ' + providerDef.label + ' is ' + providerDef.model + '.' : ''),
 			},
 				el('input', {
 					type: 'text',
 					value: formSettings.model,
-					placeholder: providerDef.model,
+					placeholder: usesCore ? 'Leave empty to let WordPress choose' : providerDef.model,
 					onChange: function (e) { updateSetting('model', e.target.value); },
 				})
 			),
 		),
 
 		// ---------------------------------------------------------------
-		// SECTION 2 — Authentication
+		// SECTION 2 — Authentication (own API key only)
 		// ---------------------------------------------------------------
-		el('div', { className: 'silc-wia-settings-section' },
+		usesCore ? null : el('div', { className: 'silc-wia-settings-section' },
 			el('div', { className: 'silc-wia-settings-section-title' },
 				'\uDDD1\uFE0F\u200D\uD83D\uDD12 Authentication'
 			),
@@ -389,7 +466,8 @@ export function renderSettingsPanel(props) {
 			// Max Tokens
 			el(SettingsField, {
 				label: l10n.settingsMaxTokens || 'Max Tokens',
-				help: 'Maximum length of the AI\u2019s response, in tokens. Higher values allow longer answers and chart descriptions. The minimum is 800 so the JSON reply is not cut off mid-object.',
+				help: 'Maximum length of the AI\u2019s response, in tokens. Higher values allow longer answers and chart descriptions. The minimum is 800 so the JSON reply is not cut off mid-object.'
+					+ (usesCore ? ' With the WordPress AI Client at least 2000 tokens are requested, as far as the connected provider allows.' : ''),
 			},
 				el(NumberField, {
 					value: formSettings.max_tokens,
@@ -402,7 +480,7 @@ export function renderSettingsPanel(props) {
 			// Temperature
 			el(SettingsField, {
 				label: l10n.settingsTemp || 'Temperature',
-				help: 'Controls how creative the AI is. Lower values (0.1\u20130.3) produce more consistent SQL. Higher values (0.7+) can be more creative but less reliable.',
+				help: 'Controls how creative the AI is. Lower values (0.1\u20130.3) produce more consistent SQL. Higher values (0.7+) can be more creative but less reliable. Only used when a temperature is sent (see below).',
 			},
 				el(NumberField, {
 					value: formSettings.temperature,
@@ -410,6 +488,41 @@ export function renderSettingsPanel(props) {
 					min: 0, max: 2, step: 0.1,
 					onChange: function (v) { updateSetting('temperature', v); },
 				})
+			),
+
+			// Whether a temperature is sent at all. Recent OpenAI reasoning
+			// models reject any value, so this is a choice rather than a
+			// capability map the plugin has to keep up to date.
+			el(SettingsField, {
+				label: l10n.settingsTempMode || 'Send temperature',
+				help: tempModeHelp,
+			},
+				el('select', {
+					value: formSettings.temperature_mode || 'auto',
+					onChange: function (e) { updateSetting('temperature_mode', e.target.value); },
+				},
+					el('option', { key: 'auto', value: 'auto' }, 'Automatic (recommended)'),
+					el('option', { key: 'always', value: 'always' }, 'Always'),
+					el('option', { key: 'never', value: 'never' }, 'Never')
+				)
+			),
+
+			// Reasoning effort. Sent as the provider's own reasoning option;
+			// an unsupported level is reported by the provider and the request
+			// is retried without it.
+			el(SettingsField, {
+				label: l10n.settingsReasoning || 'Reasoning effort',
+				help: 'How much the model should think before answering. "Provider default" sends nothing at all, which always works. A level your model does not offer returns an error naming the levels it does support \u2014 the plugin then retries without it, and you can pick a supported level here or leave the default.',
+			},
+				el('select', {
+					value: formSettings.reasoning_effort || '',
+					onChange: function (e) { updateSetting('reasoning_effort', e.target.value); },
+				},
+					el('option', { key: 'default', value: '' }, 'Provider default (do not send)'),
+					reasoningEfforts.map(function (effort) {
+						return el('option', { key: effort, value: effort }, effort.charAt(0).toUpperCase() + effort.slice(1));
+					})
+				)
 			),
 		),
 
@@ -431,7 +544,9 @@ export function renderSettingsPanel(props) {
 			},
 				el('div', { className: 'silc-wia-cache-row' },
 					el(NumberField, {
-						value: Math.round(parseInt(formSettings.cache_ttl, 10) / 60) || 60,
+						// 0 is a valid value ("caching off"), so it must not fall
+						// back to the default here.
+						value: Math.round((parseInt(formSettings.cache_ttl, 10) || 0) / 60),
 						min: 0, max: 10080, step: 15,
 						onChange: function (v) {
 							var minutes = parseInt(v, 10) || 0;
@@ -464,7 +579,7 @@ export function renderSettingsPanel(props) {
 				onClick: handleTestConnection,
 				disabled: testing || connectionDirty,
 				title: connectionDirty
-					? 'Save your changes first \u2014 the connection test uses the saved endpoint and key.'
+					? 'Save your changes first \u2014 the connection test uses the saved settings.'
 					: undefined,
 			}, testing ? (l10n.testing || 'Testing...') : (l10n.testConnection || 'Test Connection')),
 			connectionDirty

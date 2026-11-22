@@ -3,21 +3,21 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Siphon Store Analytics for WooCommerce 3.3.0\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/store-insights-for-woocommerce\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/siphon-store-analytics-for-woocommerce\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-21T07:51:57+01:00\n"
+"POT-Creation-Date: 2026-11-22T06:15:58+01:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: siphon-store-analytics-for-woocommerce\n"
 
 #. Plugin Name of the plugin
 #: siphon-store-analytics-for-woocommerce.php
-#: includes/class-admin.php:60
-#: includes/class-admin.php:259
+#: includes/class-admin.php:64
+#: includes/class-admin.php:315
 msgid "Siphon Store Analytics for WooCommerce"
 msgstr ""
 
@@ -28,7 +28,7 @@ msgstr ""
 
 #. Description of the plugin
 #: siphon-store-analytics-for-woocommerce.php
-msgid "Natural language to SQL query tool for WooCommerce. Uses your own AI provider key (OpenAI, Claude, OpenRouter, DeepSeek, Groq, Mistral, xAI, or any OpenAI-compatible endpoint) to convert plain English questions into SQL queries against WooCommerce data."
+msgid "Natural language to SQL query tool for WooCommerce. Converts plain English questions into SQL queries against WooCommerce data using the WordPress AI Client (7.0+), or your own AI provider key (OpenAI, Claude, OpenRouter, DeepSeek, Groq, Mistral, xAI, or any OpenAI-compatible endpoint)."
 msgstr ""
 
 #. Author of the plugin
@@ -41,60 +41,76 @@ msgstr ""
 msgid "https://github.com/roypr"
 msgstr ""
 
-#: includes/class-admin.php:61
+#: includes/class-admin.php:65
 msgid "Siphon Store Analytics"
 msgstr ""
 
-#: includes/class-admin.php:94
+#: includes/class-admin.php:98
 msgid "Siphon Store Analytics for WooCommerce needs the WooCommerce Analytics lookup tables, but they are missing. Update or reinstall WooCommerce so its database tables are created."
 msgstr ""
 
 #. translators: %s: link to the WooCommerce features settings
-#: includes/class-admin.php:100
+#: includes/class-admin.php:104
 #, php-format
 msgid "WooCommerce Analytics is disabled, so order-based Library items are hidden and order questions may fail. Enable Analytics under %s."
 msgstr ""
 
-#: includes/class-admin.php:101
+#: includes/class-admin.php:105
 msgid "WooCommerce > Settings > Advanced > Features"
 msgstr ""
 
 #. translators: %s: link to the WooCommerce Analytics settings
-#: includes/class-admin.php:108
+#: includes/class-admin.php:112
 #, php-format
 msgid "WooCommerce Analytics has not imported your orders yet, so order-based insights may be empty. Run the historical import under %s."
 msgstr ""
 
-#: includes/class-admin.php:109
+#: includes/class-admin.php:113
 msgid "WooCommerce > Analytics > Settings"
 msgstr ""
 
-#: includes/class-admin.php:152
-msgid "Suggested text: When you ask a question, the following is sent over HTTPS to the AI provider you configured under WooCommerce &rarr; Siphon Store Analytics &rarr; Settings:"
+#: includes/class-admin.php:171
+msgid "Suggested text: This plugin needs a large language model to turn a plain-English question into a database query. Nothing is sent until an administrator asks a question or uses the connection test. Which AI service receives the request depends on the Backend setting under WooCommerce &rarr; Siphon Store Analytics &rarr; Settings:"
 msgstr ""
 
-#: includes/class-admin.php:154
+#: includes/class-admin.php:173
+msgid "WordPress AI Client (the default): the request is sent by WordPress itself to the provider connected under Settings &rarr; Connectors. This plugin stores no API key on this path, and the terms and privacy policy of whichever connector is active apply."
+msgstr ""
+
+#: includes/class-admin.php:174
+msgid "Your own API key: the request goes directly to the endpoint entered in Settings (OpenAI, Claude/Anthropic, OpenRouter, DeepSeek, Groq, Mistral, xAI, or a custom OpenAI-compatible endpoint), with that key sent as an authorization header so the provider can bill your account."
+msgstr ""
+
+#: includes/class-admin.php:176
+msgid "On each request the following is sent over HTTPS to the AI service:"
+msgstr ""
+
+#: includes/class-admin.php:178
 msgid "Your question, in plain text."
 msgstr ""
 
-#: includes/class-admin.php:155
+#: includes/class-admin.php:179
 msgid "Database schema metadata only: table names and column names."
 msgstr ""
 
-#: includes/class-admin.php:156
-msgid "Your API key, sent as an authorization header so the provider can bill your account."
+#: includes/class-admin.php:180
+msgid "The model, temperature, reasoning effort and token limit selected in Settings."
 msgstr ""
 
-#: includes/class-admin.php:158
-msgid "No customer, order, product, or payment records are transmitted. Generated queries run against this site's own database."
+#: includes/class-admin.php:182
+msgid "No customer, order, product, or payment records are transmitted. Generated queries run against this site's own database and their results are never sent to the AI service."
 msgstr ""
 
-#: includes/class-admin.php:160
+#: includes/class-admin.php:184
+msgid "The connection test in Settings sends only a short fixed prompt (Say \"ok\" and nothing else.) to the same service. Through the WordPress AI Client that service is whichever provider is connected under Settings &rarr; Connectors. With your own key it depends on the endpoint entered in Settings: by default OpenAI, Claude (Anthropic), OpenRouter, DeepSeek, Groq, Mistral or xAI. A self-hosted endpoint such as Ollama, LocalAI or vLLM keeps the data inside your own infrastructure. Terms of service and privacy policy links for each provider are listed in the plugin readme."
+msgstr ""
+
+#: includes/class-admin.php:186
 msgid "Locally, the plugin keeps the question, the generated query and its display settings so past insights can be re-run; it does not keep the result rows. A generated answer is cached for the duration configured under Cache Duration so the same question does not call the AI twice. All of this data is removed when the plugin is deleted. Password hashes, activation keys and session tokens are never included in the schema sent to the provider and cannot be queried."
 msgstr ""
 
-#: includes/class-admin.php:270
-#: includes/class-admin.php:296
+#: includes/class-admin.php:326
+#: includes/class-admin.php:355
 #: includes/class-ajax.php:67
 #: includes/class-ajax.php:98
 #: includes/class-ajax.php:189
@@ -103,160 +119,223 @@ msgstr ""
 msgid "Security check failed."
 msgstr ""
 
-#: includes/class-admin.php:277
-#: includes/class-admin.php:303
+#: includes/class-admin.php:333
+#: includes/class-admin.php:362
 #: includes/class-ajax.php:55
 msgid "Insufficient permissions."
 msgstr ""
 
-#: includes/class-admin.php:319
+#: includes/class-admin.php:378
 msgid "Invalid settings data."
 msgstr ""
 
-#: includes/class-admin.php:330
-#: includes/class-api.php:670
+#: includes/class-admin.php:389
+#: includes/class-api.php:847
 msgid "The API URL must use HTTPS. Plain HTTP is only allowed for local endpoints such as http://localhost:11434/v1."
 msgstr ""
 
-#: includes/class-admin.php:342
+#: includes/class-admin.php:410
 msgid "Settings saved."
 msgstr ""
 
-#: includes/class-admin.php:345
+#: includes/class-admin.php:413
 msgid "Settings saved. The stored API key was removed because the API URL changed — enter a key for the new provider."
 msgstr ""
 
-#: includes/class-admin.php:456
+#: includes/class-admin.php:554
 msgid "Ask anything about your WooCommerce store..."
 msgstr ""
 
-#: includes/class-admin.php:457
+#: includes/class-admin.php:555
 msgid "Get AI Insight"
 msgstr ""
 
-#: includes/class-admin.php:458
+#: includes/class-admin.php:556
 msgid "Generating insight..."
 msgstr ""
 
-#: includes/class-admin.php:459
+#: includes/class-admin.php:557
 msgid "Enter your question in plain English"
 msgstr ""
 
-#: includes/class-admin.php:460
-#: includes/class-insights.php:389
+#: includes/class-admin.php:558
+#: includes/class-insights.php:392
 msgid "Results"
 msgstr ""
 
-#: includes/class-admin.php:461
+#: includes/class-admin.php:559
 #: includes/class-insight-renderer.php:642
-#: includes/class-insights.php:207
-#: includes/class-insights.php:492
+#: includes/class-insights.php:210
+#: includes/class-insights.php:495
 msgid "No results found."
 msgstr ""
 
-#: includes/class-admin.php:462
+#: includes/class-admin.php:560
 msgid "Something went wrong:"
 msgstr ""
 
-#: includes/class-admin.php:463
+#: includes/class-admin.php:561
 msgid "API not configured"
 msgstr ""
 
-#: includes/class-admin.php:464
+#: includes/class-admin.php:562
 msgid "AI Ready"
 msgstr ""
 
-#: includes/class-admin.php:465
+#: includes/class-admin.php:563
 msgid "Try asking:"
 msgstr ""
 
-#: includes/class-admin.php:466
+#: includes/class-admin.php:564
 msgid "Clear"
 msgstr ""
 
-#: includes/class-admin.php:467
+#: includes/class-admin.php:565
 msgid "No past insights yet."
 msgstr ""
 
-#: includes/class-admin.php:468
+#: includes/class-admin.php:566
 msgid "Open in new tab"
 msgstr ""
 
-#: includes/class-admin.php:469
+#: includes/class-admin.php:567
 msgid "No insight history yet."
 msgstr ""
 
-#: includes/class-admin.php:470
+#: includes/class-admin.php:568
 msgid "Save Settings"
 msgstr ""
 
-#: includes/class-admin.php:471
+#: includes/class-admin.php:569
 msgid "Saving..."
 msgstr ""
 
-#: includes/class-admin.php:472
+#: includes/class-admin.php:570
 msgid "Settings saved!"
 msgstr ""
 
-#: includes/class-admin.php:473
+#: includes/class-admin.php:571
 msgid "Test Connection"
 msgstr ""
 
-#: includes/class-admin.php:474
+#: includes/class-admin.php:572
 msgid "Testing..."
 msgstr ""
 
-#: includes/class-admin.php:475
-#: includes/class-api.php:1156
+#: includes/class-admin.php:573
+#: includes/class-api.php:1335
 msgid "Connection successful!"
 msgstr ""
 
-#: includes/class-admin.php:476
+#: includes/class-admin.php:574
 msgid "Connection failed."
 msgstr ""
 
-#: includes/class-admin.php:477
+#: includes/class-admin.php:575
 msgid "API URL"
 msgstr ""
 
-#: includes/class-admin.php:478
+#: includes/class-admin.php:576
 msgid "API Key"
 msgstr ""
 
-#: includes/class-admin.php:479
+#: includes/class-admin.php:577
 msgid "Model"
 msgstr ""
 
-#: includes/class-admin.php:480
+#: includes/class-admin.php:578
 msgid "Max Tokens"
 msgstr ""
 
-#: includes/class-admin.php:481
+#: includes/class-admin.php:579
 msgid "Temperature"
 msgstr ""
 
-#: includes/class-admin.php:482
+#: includes/class-admin.php:580
+msgid "Send temperature"
+msgstr ""
+
+#: includes/class-admin.php:581
+msgid "Reasoning effort"
+msgstr ""
+
+#: includes/class-admin.php:582
 msgid "Cache Duration"
 msgstr ""
 
-#: includes/class-admin.php:483
+#: includes/class-admin.php:583
 msgid "SQL & Details"
 msgstr ""
 
-#: includes/class-admin.php:484
+#: includes/class-admin.php:584
 msgid "History"
 msgstr ""
 
-#: includes/class-admin.php:485
+#: includes/class-admin.php:585
 msgid "Library"
 msgstr ""
 
-#: includes/class-admin.php:486
+#: includes/class-admin.php:586
 msgid "Settings"
 msgstr ""
 
-#: includes/class-admin.php:487
+#: includes/class-admin.php:587
 msgid "Refresh"
+msgstr ""
+
+#: includes/class-ai-service-core.php:135
+msgid "The WordPress AI Client is not available on this site. Switch the AI backend to your own API key in Settings."
+msgstr ""
+
+#. translators: %s: error message returned by the WordPress AI Client
+#: includes/class-ai-service-core.php:150
+#: includes/class-ai-service-core.php:234
+#, php-format
+msgid "WordPress AI Client: %s"
+msgstr ""
+
+#: includes/class-ai-service-core.php:158
+msgid "The WordPress AI Client returned an empty response."
+msgstr ""
+
+#: includes/class-ai-service-core.php:187
+msgid "Could not parse insight JSON from the AI response."
+msgstr ""
+
+#: includes/class-ai-service-core.php:213
+msgid "The WordPress AI Client is not available on this site."
+msgstr ""
+
+#: includes/class-ai-service-core.php:220
+msgid "No AI provider is connected. Add one under Settings → Connectors."
+msgstr ""
+
+#: includes/class-ai-service-core.php:242
+msgid "Connection successful! A provider is connected through the WordPress AI Client."
+msgstr ""
+
+#. translators: %s: model id chosen by the WordPress AI Client
+#: includes/class-ai-service-core.php:246
+#, php-format
+msgid "Connection successful! The WordPress AI Client used the model %s."
+msgstr ""
+
+#: includes/class-ai-service-core.php:333
+msgid "temperature"
+msgstr ""
+
+#: includes/class-ai-service-core.php:337
+msgid "reasoning effort"
+msgstr ""
+
+#. translators: %s: comma separated list of settings, e.g. "temperature, reasoning effort"
+#: includes/class-ai-service-core.php:346
+#, php-format
+msgid "Your %s setting was not accepted by this model, so it was left out — insights still work."
+msgstr ""
+
+#: includes/class-ai-service-core.php:484
+msgid "Tip: open Settings and set Temperature to \"Automatic\" and Reasoning effort to \"Provider default\". If the message names a model, enter a model id that the provider connected under Settings → Connectors offers."
 msgstr ""
 
 #: includes/class-ajax.php:110
@@ -284,48 +363,48 @@ msgstr ""
 msgid "No SQL query provided."
 msgstr ""
 
-#: includes/class-api.php:630
-#: includes/class-api.php:767
+#: includes/class-api.php:783
+#: includes/class-api.php:948
 msgid "API key is not configured. Please go to Settings and add your API key."
 msgstr ""
 
 #. translators: %s: error message
-#: includes/class-api.php:707
+#: includes/class-api.php:885
 #, php-format
 msgid "API request failed: %s"
 msgstr ""
 
 #. translators: %d: HTTP status code
-#: includes/class-api.php:723
+#: includes/class-api.php:902
 #, php-format
 msgid "API returned HTTP %d"
 msgstr ""
 
-#: includes/class-api.php:822
+#: includes/class-api.php:990
 msgid "API returned an empty response."
 msgstr ""
 
-#: includes/class-api.php:861
+#: includes/class-api.php:1029
 msgid "Could not parse insight JSON from the API response."
 msgstr ""
 
-#: includes/class-api.php:1117
+#: includes/class-api.php:1296
 msgid "No API key configured."
 msgstr ""
 
 #. translators: 1: provider name, 2: API error message
-#: includes/class-api.php:1150
+#: includes/class-api.php:1329
 #, php-format
 msgid "%1$s: %2$s"
 msgstr ""
 
 #: includes/class-insight-renderer.php:645
-#: includes/class-insights.php:210
+#: includes/class-insights.php:213
 msgid "No data found for the specified period."
 msgstr ""
 
 #: includes/class-insight-renderer.php:647
-#: includes/class-insights.php:212
+#: includes/class-insights.php:215
 msgid "No orders found with that status."
 msgstr ""
 
@@ -333,24 +412,24 @@ msgstr ""
 msgid "No data"
 msgstr ""
 
-#: includes/class-insights.php:166
+#: includes/class-insights.php:169
 msgid "This action is not allowed. I can only answer questions about your store data — I cannot modify or delete anything."
 msgstr ""
 
-#: includes/class-insights.php:168
+#: includes/class-insights.php:171
 msgid "I can only help with WooCommerce store questions. Try asking about sales, products, orders, or customers."
 msgstr ""
 
-#: includes/class-insights.php:170
+#: includes/class-insights.php:173
 msgid "I only work with WooCommerce store data. That request involves non-store content I cannot access."
 msgstr ""
 
-#: includes/class-insights.php:172
+#: includes/class-insights.php:175
 msgid "Unable to process this request."
 msgstr ""
 
 #. translators: %s: database error
-#: includes/class-insights.php:192
+#: includes/class-insights.php:195
 #, php-format
 msgid "Query error: %s"
 msgstr ""
@@ -745,18 +824,18 @@ msgstr ""
 msgid "Product brand (if WooCommerce Brands active)"
 msgstr ""
 
-#: siphon-store-analytics-for-woocommerce.php:62
+#: siphon-store-analytics-for-woocommerce.php:75
 msgid "Siphon Store Analytics for WooCommerce requires WooCommerce to be installed and activated."
 msgstr ""
 
-#: siphon-store-analytics-for-woocommerce.php:91
+#: siphon-store-analytics-for-woocommerce.php:105
 msgid "Siphon Store Analytics for WooCommerce requires PHP 7.4 or higher."
 msgstr ""
 
-#: siphon-store-analytics-for-woocommerce.php:96
+#: siphon-store-analytics-for-woocommerce.php:110
 msgid "Siphon Store Analytics for WooCommerce requires WooCommerce to be installed."
 msgstr ""
 
-#: siphon-store-analytics-for-woocommerce.php:107
+#: siphon-store-analytics-for-woocommerce.php:121
 msgid "Dashboard"
 msgstr ""
