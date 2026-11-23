@@ -606,16 +606,14 @@ class SILC_WIA_Insight_Renderer {
 		$value  = reset( $row ); // First column value.
 		$label  = $keys[0] ?? 'result';
 
-		// Detect currency columns.
-		$is_currency = self::is_currency_question( $question, $keys );
-		$is_count    = self::is_count_question( $question );
+		$format = self::detect_answer_format( $question, (string) $label );
 
-		if ( $is_currency && is_numeric( $value ) ) {
+		if ( 'currency' === $format && is_numeric( $value ) ) {
 			$currency = function_exists( 'get_woocommerce_currency_symbol' )
 				? html_entity_decode( get_woocommerce_currency_symbol(), ENT_QUOTES, 'UTF-8' )
 				: '$';
 			$formatted = $currency . number_format( (float) $value, 2 );
-		} elseif ( $is_count && is_numeric( $value ) ) {
+		} elseif ( 'count' === $format && is_numeric( $value ) ) {
 			$formatted = number_format( (int) $value );
 		} elseif ( is_numeric( $value ) && false !== strpos( (string) $value, '.' ) ) {
 			// Float value: format with exactly 2 decimal places.
@@ -761,36 +759,197 @@ class SILC_WIA_Insight_Renderer {
 	}
 
 	/**
-	 * Check if a question is asking about currency/revenue values.
+	 * Decide how a single answer value should be formatted.
+	 *
+	 * Detection is deliberately conservative: showing a price symbol on a count
+	 * ("$1,234.00 customers") is more confusing than omitting one, so a value is
+	 * only treated as money when there is an unambiguous signal. Signals are
+	 * ranked because the column name comes from the executed SQL and is far
+	 * more reliable than the phrasing of the question.
 	 *
 	 * @param string $question The user question.
-	 * @param array  $columns  The result column names.
+	 * @param string $column   The result column name (first result column).
+	 * @return string One of 'currency', 'count', 'number'.
+	 */
+	private static function detect_answer_format( string $question, string $column ): string {
+		// 1. A count column (total_customers, order_count) is never money.
+		if ( self::is_count_column( $column ) ) {
+			return 'count';
+		}
+
+		// 2. Bare plural nouns such as "sales" or "refunds" are as likely to be a
+		// COUNT(*) alias as a sum, so defer to the question for those.
+		if ( self::is_ambiguous_money_column( $column ) ) {
+			if ( self::is_count_question( $question ) ) {
+				return 'count';
+			}
+			return self::is_currency_question( $question ) ? 'currency' : 'number';
+		}
+
+		// 3. Clearly monetary column (total_revenue, order_total).
+		if ( self::is_currency_column( $column ) ) {
+			return 'currency';
+		}
+
+		// 4. Fall back to the question. Explicit count phrasing ("how many sales")
+		// is checked first so generic money words do not price a count.
+		if ( self::is_count_question( $question ) ) {
+			return 'count';
+		}
+		if ( self::is_currency_question( $question ) ) {
+			return 'currency';
+		}
+
+		return 'number';
+	}
+
+	/**
+	 * Check whether a column name is a bare plural noun that could describe
+	 * either a count or a sum of money.
+	 *
+	 * @param string $column The result column name.
 	 * @return bool
 	 */
-	private static function is_currency_question( string $question, array $columns ): bool {
-		$currency_keywords = array( 'revenue', 'sales', 'total', 'amount', 'earnings', 'income', 'value', 'price', 'cost' );
-		foreach ( $currency_keywords as $kw ) {
-			if ( stripos( $question, $kw ) !== false ) {
+	private static function is_ambiguous_money_column( string $column ): bool {
+		$ambiguous = array( 'sales', 'refunds', 'discounts', 'costs', 'fees', 'prices', 'amounts' );
+
+		return in_array( strtolower( trim( $column ) ), $ambiguous, true );
+	}
+
+	/**
+	 * Check whether a result column name denotes a count.
+	 *
+	 * @param string $column The result column name.
+	 * @return bool
+	 */
+	private static function is_count_column( string $column ): bool {
+		$column = strtolower( $column );
+		if ( '' === $column ) {
+			return false;
+		}
+
+		$count_tokens = array(
+			'count',
+			'counts',
+			'qty',
+			'quantity',
+			'quantities',
+			'customers',
+			'users',
+			'orders',
+			'products',
+			'items',
+			'reviews',
+			'views',
+			'sessions',
+			'visits',
+			'downloads',
+		);
+
+		foreach ( $count_tokens as $token ) {
+			if ( preg_match( '/(^|[^a-z])' . preg_quote( $token, '/' ) . '([^a-z]|$)/', $column ) ) {
 				return true;
 			}
 		}
-		foreach ( $columns as $col ) {
-			if ( preg_match( '/total|amount|price|revenue|sales|cost|fee|shipping|tax|discount/i', $col ) ) {
-				return true;
-			}
-		}
+
 		return false;
+	}
+
+	/**
+	 * Check whether a result column name denotes a monetary amount.
+	 *
+	 * Ambiguous names are rejected on purpose: "total" alone is as likely to be
+	 * COUNT(*) AS total as it is to be a sum of money, and "total_customers" is a
+	 * count. Only explicit money words, or a qualified total (order_total), match.
+	 *
+	 * @param string $column The result column name.
+	 * @return bool
+	 */
+	private static function is_currency_column( string $column ): bool {
+		$column = strtolower( $column );
+		if ( '' === $column ) {
+			return false;
+		}
+
+		$currency_tokens = array(
+			'revenue',
+			'revenues',
+			'sales',
+			'subtotal',
+			'amount',
+			'amounts',
+			'price',
+			'prices',
+			'cost',
+			'costs',
+			'fee',
+			'fees',
+			'shipping',
+			'tax',
+			'discount',
+			'discounts',
+			'profit',
+			'earnings',
+			'income',
+			'refund',
+			'refunds',
+			'spend',
+			'spent',
+			'turnover',
+			'gmv',
+			'aov',
+			'paid',
+		);
+
+		foreach ( $currency_tokens as $token ) {
+			if ( preg_match( '/(^|[^a-z])' . preg_quote( $token, '/' ) . '([^a-z]|$)/', $column ) ) {
+				return true;
+			}
+		}
+
+		// "total" is only money when it is qualified by another word: order_total,
+		// net_total, line_total, cart_total.
+		return (bool) preg_match( '/(order|cart|line|item|net|gross|grand)_?totals?$/', $column );
+	}
+
+	/**
+	 * Check if a question is asking about currency/revenue values.
+	 *
+	 * Only explicit money words match. Generic words such as "total" and "value"
+	 * are excluded because they are used in count questions too ("total
+	 * customers"); "order value" is matched as a phrase instead.
+	 *
+	 * @param string $question The user question.
+	 * @return bool
+	 */
+	private static function is_currency_question( string $question ): bool {
+		if ( preg_match(
+			'/\b(revenues?|sales|amounts?|earnings?|income|profits?|prices?|costs?|subtotal|spend|spent|turnover|gmv|aov|tax|shipping|discounts?|refunds?)\b/i',
+			$question
+		) ) {
+			return true;
+		}
+
+		return (bool) preg_match( '/\b(order|cart|basket|customer|lifetime|line|item|average)\s+value\b/i', $question );
 	}
 
 	/**
 	 * Check if a question is asking about counts.
 	 *
+	 * Only explicit count phrasing matches; bare entity words ("products") are
+	 * not enough because they also appear in money questions ("revenue from
+	 * products").
+	 *
 	 * @param string $question The user question.
 	 * @return bool
 	 */
 	private static function is_count_question( string $question ): bool {
+		if ( preg_match( '/\b(count|counts|how\s+many|number\s+of|qty|quantity)\b/i', $question ) ) {
+			return true;
+		}
+
 		return (bool) preg_match(
-			'/count|how\s+many|number\s+of|total\s+orders|customers|products/i',
+			'/\btotal\s+(customers?|users?|orders?|products?|items?|reviews?|subscribers?|members?)\b/i',
 			$question
 		);
 	}

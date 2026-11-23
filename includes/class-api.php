@@ -837,7 +837,7 @@ class SILC_WIA_API {
 	 * @param int    $timeout   Request timeout in seconds.
 	 * @return array{success: bool, data: array|null, error: string, status: int}
 	 */
-	private static function dispatch_request( array $body, string $api_url, string $api_key, bool $is_claude, int $timeout = 90 ): array {
+	private static function dispatch_request( array $body, string $api_url, string $api_key, bool $is_claude, int $timeout = 120 ): array {
 		// Last line of defence: a plain-HTTP URL that was stored before this
 		// rule existed must not send the API key and prompt in clear text.
 		if ( ! self::is_allowed_api_url( $api_url ) ) {

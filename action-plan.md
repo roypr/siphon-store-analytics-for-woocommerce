@@ -216,7 +216,7 @@ Run all of these before packaging:
     --headers='{"Project-Id-Version":"Siphon Store Analytics for WooCommerce 3.3.0",...}'
   ```
   (match your exact existing script flags).
-- [ ] `wp plugin check .` (install Plugins Check if needed) — fix errors/warnings.
+- [x] `wp plugin check .` (install Plugins Check if needed) — fix errors/warnings.
 - [ ] PHPCS `WordPress-Extra` — fix violations.
 - [ ] Test in **WordPress Playground** (the email explicitly asks for this).
 - [ ] Test on a **PHP 7.4** environment (your code declares 7.4; the review will check it).
