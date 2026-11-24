@@ -1,213 +1,3 @@
-
-📦 This is a review of the file store-insights-for-woocommerce-3.2.2.1.zip submitted 4 days and 7 hours ago. Test it on Playground.
-
-👋 siphontech - Let’s improve your plugin!
-
-Thank you for submitting your plugin, "Store Insights for WooCommerce".
-
-Our volunteer reviewers, tools, and/or AI aids identified issues in your plugin that require your attention.
-
-We’ve pended your submission to give you a chance to review and fix these common issues.
-
-🤖 Please note that this message was generated using a combination of humans, algorithms, and AI in varying proportions. It may not have been reviewed by a human. All AI outputs are marked with the ✨ emoji. Pay attention to it, it's quite accurate.
-
-Who are we?
-
-The WordPress.org Plugins Directory is a service that the WordPress community offers to the world: free hosting, distribution and updates for more than 65,000 plugins, available to every WordPress site at no cost. This is made possible by the WordPress Foundation, the donated infrastructure that supports WordPress.org, and the volunteers who keep it running.
-
-Being listed in the directory is not a commercial service and should not be taken for granted; it is an invitation to be part of this community, and it comes with the shared responsibility of keeping the directory safe and reliable for the millions of users who trust it.
-
-We, the Plugins Team, are a group of volunteers who help you identify common issues so that you can make your plugin more secure, compatible, reliable and compliant with the guidelines. For consistency and better communication, your review is assigned to a single volunteer who will assist you throughout the entire process.
-
-The review process
-
-An email envelope.	1. Read this email carefully from start to finish. Review every issue, including the linked documentation and the provided examples. Then search your codebase for other occurrences of the same issues, even if they are not explicitly mentioned in this review. Take the time to understand each issue so you can apply what you learn to your plugin going forward.
-A plugin author fixing the issues.	2. Address all identified issues, test your plugin thoroughly and upload a corrected version. If you have doubts about a specific issue, fix everything else and ask your questions alongside the update.
-
-Note: The Plugins Team volunteers are not your developers or QA team. They are here to help you identify and understand issues so that you can improve and maintain your plugin in the future. Finding and fixing these issues remains your responsibility.
-A volunteer reviewing the plugin.	3. Reply to this email thread (do not create a new email or reply to the submission confirmation). Your plugin will then be added to your reviewer's queue, and they will send you any remaining issues that are identified.
-A new review of the plugin.	4. Once no further issues remain, your plugin will be approved 🎉
-
-Fewer review cycles mean quicker approval, while multiple rounds can extend the process to weeks or months.
-
-Before you reply
-
-A warning.	Throughout the entire process, and before you reply, please ensure that:
-You have addressed all reported issues and thoroughly tested your plugin. Make sure your updated version does not introduce new issues, such as fatal errors during activation.
-You are replying to this email thread.
-Your reply is brief and to the point. Include only information that is relevant for the next review; there is no need to describe every change you made, and please avoid unnecessary verbosity or AI-generated filler.
-If you wish to alter your permalink (aka the plugin slug) "store-insights-for-woocommerce", you have explicitly stated your desired permalink in your reply. Changing the display name alone is not sufficient, and permalinks cannot be altered after approval.
-You are making meaningful progress between review rounds. Updates that resolve only a small portion of the reported issues delay the review process, and the plugin may be rejected out of respect for the volunteers' time and other plugin authors waiting in the queue. Plugins rejected under these circumstances will not be reviewed again.
-You treat the review as a learning opportunity and improve your knowledge of development practices and the directory guidelines accordingly.
-Each volunteer may review hundreds of plugins every week. Following these indications and submitting a well-tested update makes the review process smoother for everyone.
-
-Response times
-
-Reviews are handled by volunteers alongside their own personal and job commitments, so response times depend entirely on their availability. You may receive a reply within a few days, after a week or two, or occasionally after a longer period. We appreciate your patience and understanding.
-
-Please avoid requesting status updates unless you have been waiting an unusually long time (a month or more). Status requests do not accelerate the review; they slow it down by taking time away from the volunteers working through the queue. If you have replied to this email thread, you are in the queue. If you believe a reply went missing, check your spam folder and other inboxes first; if you have lost this email, write to us from the same address we sent it to and request that it be resent.
-
-Guidelines
-
-In addition to code quality, security and functionality, all plugins must adhere to the guidelines you accepted when submitting this plugin. Please keep them in mind when making changes: https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/.
-
-Please note that failure to follow the Plugins Directory guidelines is taken seriously and may result in the loss of your WordPress.org plugin hosting privileges.
-
-
-Have you read the guidelines and this plugin complies with them?
-
-Upon submitting your plugin, you agreed and confirmed that it complies with the WordPress.org Plugin Directory Guidelines, which apply to all plugins in the directory.
-
-Our automated tools have detected patterns that may require a closer look regarding compliance with certain guidelines. We will verify this during our manual review, but it’s best to address any potential issues beforehand. In particular, please pay attention to the following:
-Plugins should not hijack the admin dashboard. Upgrade prompts, notices, alerts, and the like must be limited in scope and used with moderation. (Guideline 11)
-
-Please check it, and if you think everything is fine, do not worry. Our tools are very thorough and may highlight different things as potential issues.
-
-Is the name of this plugin descriptive and distinctive, and does it respect the trademarks and project names of others?
-
-Choosing a name for a plugin can be challenging - it needs to be distinctive and meaningful, but also carefully chosen to avoid overlapping with existing plugins or inadvertently use someone else's trademark or project name in a way that could lead to confusion.
-
-📜 General plugin name/slug requirements
-Plugin names and slugs must not be too generic; they could briefly describe what the plugin does.
-Plugin names and slugs can be original and unique, even if they don’t describe the functionality directly — as long as they are recognizable and distinctive.
-Plugin names and slugs must be distinguishable from those of other plugins to avoid confusion.
-Plugin names and slugs must respect others' trademarks and project names. If your plugin includes a trademark or project name that you do not own, you must clearly mention it in a way that denotes that there is no affiliation.
-
-This plugin display name(s) is/are "Store Insights for WooCommerce" and the slug is "store-insights-for-woocommerce" . The AI has detected ✨ "WooCommerce" as potential trademark(s).
-
-We asked a trained AI about common issues with plugin names and it thinks there might be a problem.
- ✨ “Store Insights for WooCommerce” is a generic descriptive name and is too close to existing WooCommerce analytics plugins using “Store Insights” or “Insights for WooCommerce.”
-For example, for your plugin:
-An alternative name may be: ✨ Siphon Store Analytics for WooCommerce
-An alternative slug may be: ✨ siphon-store-analytics-for-woocommerce
-
-ℹ️ These suggestions were made by the AI. Bear in mind that a skilled human, either you or a volunteer from the Plugin Review Team, may spot issues with the new suggested name.
-
-⚠️ As with the rest of the review, you should address this issue and make any necessary changes. Simply changing the name without first checking what the issue is and how you can solve it won't help most of the time. Failure to address any of the issues raised will result in your submission being rejected for failing to demonstrate the expected level of effort in resolving the issues identified during the review process.
-
-☑️ Steps to resolve this issue
-
-Choose a display name and slug that is distinctive, describes your plugin and/or uses a unique name, while respecting others’ trademarks and project names, (check for further details below) then:
-Update the display name in both the readme file and plugin headers.
-Update the slug in your plugin files, for example in the internationalization functions.
-Reply to this email requesting a new slug reservation.
-In addition to the changes you have made to your code, we also need to reserve and allocate the new slug that you have chosen for your submission.
-Upload a new version via the "Add your plugin" page.
-If you are confident that the new name is suitable, there is no need to wait for confirmation of the new slug reservation. You may see a warning regarding the 'Text Domain', as we haven't changed the slug on our side yet. That's fine.
-
-Also, please, don't check just this names, there are other places or resources where you may not use any trademarked (or commonly recognized) terms in a manner that that is likely to cause confusion. This includes (but is not limited to):
-Your username siphontech and your display name.
-The plugin contributor's username and display name.
-siphontech - siphontech
-The URLs of this plugin.
-Graphic resources such as this plugin icons and banners.
-
-Are you the owner? If there are any issues with the trademark or project name and this is indeed an official plugin, it is likely that we have not been able to identify the current owner of the plugin as the trademark / project owner.
-Keep in mind, if you were hired as a freelance developer or a consultant specifically to create this plugin, then they must own the plugin. Being granted permission is not enough. This is for their legal protection as well as yours. They can add you as a committer to the plugin so you can manage it from your account, but the owner must be them, not a temp-employee.
-
-In order to solve this, you can do one of the following:
-Prove that you legally have the right to the original name/slug.
-Change your user email to an official one or provide us with the user account for an official owner to whom we should transfer the plugin (they can create a new account if they need to)
-
-Note: Should you have this plugin approved with the correct name and then go back to infringement of trademarks, we will close your plugin. Please don’t do this, even if you see other people ‘getting away with it.’ We have a lot of plugins and we’re contacting everyone in small batches to be manageable. They won’t get away with it forever, and they risk being banned from the directory. Which no one wants.
-
-ℹ️ Tips on choosing a suitable name (and avoiding back-and-forth in this process).
-
-Choosing a name for a plugin can be challenging - it needs to be distinctive and meaningful, but also carefully chosen to avoid overlapping with existing plugins or inadvertently use someone else's trademark or project name in a way that could lead to confusion.
-
-🔍️ Avoid Name Similarity
-
-In this context, by "similar" we mean something that goes beyond a letter-by-letter or word-by-word comparison. We also look into similar naming patterns, lookalike names or meanings.
-You must ensure that the name of your plugin is distinctive and does not cause confusion with others.
-
-How can you check this? Easy!
-Perform a search engine query for the plugin name (Google, DuckDuckGo, Bing, ChatGPT) and parts of it.
-If you find other plugins with "similar" names, change your plugin's name to something more distinctive and that won't cause confusion.
-Go back to step 1 and check again, just in case.
-
-❌ Changing the plugin name by adding a additional letter or a generic word (Advanced, Simple, etc) will probably not solve this problem at all.
-✅ Your plugin name has to clearly stand out from other's plugins. You could try adding a coined term, your personal brand or a unique identifier at the beginning of the name. We rely on your creativity!
-
-⚖️ Avoid Trademark / Project Names Confusion
-
-Identify trademarks and project names mentioned in your plugin name "Store Insights for WooCommerce"and the slug "store-insights-for-woocommerce" . The AI has detected ✨ "WooCommerce" as potential trademark(s).
-
-To avoid potential misuse:
-If a trademark or project name is used at the beginning of your plugin name/slug and you are not the owner, it could imply false affiliation.
-If the trademark appears elsewhere in the name/slug but is not part of a clear structure indicating unaffiliation, it may still be problematic.
-Do not use any altered forms of a trademark, such as blend words or portmanteaus.
-
-A safer naming pattern is to place the trademark at the end, following a phrase like "for" or "with".
-
-👀 Examples
-
-Assuming you are creating a plugin that integrates with WooCommerce and you are not WooCommerce:
-❌ "WooCommerce Prices Updater" Trademarks issue as it implies affiliation with WooCommerce.
-❌ "Prices Updater WooCommerce" Trademarks issue as it lacks a clear structure indicating no affiliation.
-❌ "Prices for WooCommerce" It is too generic.
-❌ "Prices for WooCommerce by siphontech". This plugin's distinguishing term shouldn't go at the end. It should be at the beginning.
-❌ "AB Prices for WooCommerce". The term that distinguishes this plugin should be clearly differentiating, adding a few letters is not enough.
-❌ "PricesPress for WooCommerce" This is considered portmanteau using the WordPress trademark.
-❌ "Prices Updater for WooCommerce" Regarding trademarks it avoids indicating affiliation. However, there is a similarity issue, as there are other plugins with similar names.
-❌ "Easy Prices Updater for WooCommerce" Similarity issue: Adding a generic word to avoid similarity won't make it sufficiently distinguishable.
-✅ "Priconix Sync for WooCommerce" Ok! Original, distinguishable, unique name that is also not in use by others.
-✅ "siphontech Prices Updater for WooCommerce" Ok! as it includes a unique identifier and clarifies unaffiliation (Ask ChatGPT)
-
-
-
-Are you the rightful owner of this plugin?
-
-We know this might seem like an odd question — especially coming from an algorithm — but bear with us; it’ll all make sense soon.
-
-Here's how it works: If your plugin uses a name or URL associated with a specific entity, we need to confirm that you actually represent that entity. It's that simple.
-
-So, how do we verify your identity? In most cases, we rely on the domain in your email address.
-
-This situation usually comes up if you're using a personal account to submit a plugin meant to represent a company or if you’re a third party attempting to upload a plugin on someone else’s behalf (please don’t do that).
-
-This is what we know about this plugin:
-Plugin name: "Store Insights for WooCommerce" in the readme.txt file
-Plugin name: "Store Insights for WooCommerce" in the store-insights-for-woocommerce.php file
-Slug: store-insights-for-woocommerce
-Author: Siphon Technologies
-Author URI: https://github.com/roypr
-Plugin URI: https://siphon-tech.com/store-insights-for-woocommerce
-Contributors:
-siphontech
-
-This is what we know about you:
-Username: siphontech
-Email: roypr.13@gmail.com
-🟥 Your email domain "gmail.com" does not seem to be related to any of the URLs, names, trademarks and/or or services declared in the plugin.
-🟥 A gmail.com account cannot be used as a valid form of identification towards clarifying ownership, even if it contains your or your company's name. Anyone can create any gmail.com account that is not already in use. You could be you, but you could also be anyone else.
-
-Please note that we carry out these checks to protect people like you. If someone else submitted a plugin under your name or your company's name, you would rightly be upset if we failed to confirm ownership in a demonstrably reliable way.
-
-
-☑️ You can demonstrate or clarify ownership in one of the following ways:
-🌐 Perform a DNS check on the owner's domain. Add a TXT record at the owner's domain root @ with the following value: wordpressorg-siphontech-verification
-Before replying, verify that the record is already visible at the relevant domain, for example: siphon-tech.com (DNS changes can take some time to propagate).
-Note: This will only be considered valid if that's done in the owner's domain and we can relate your account as being controlled by the owner. If you are a third party please follow other verification methods.
-
-📩 Update your WordPress.org email address to one under the domain of the entity associated with the plugin. You can change it in Your WordPress.org profile, we cannot change it for you.
-Note: We will continue the review in this email thread. Any new emails will be sent to the new email account.
-
-👤 Reply asking us to transfer this submission to the correct WordPress.org account. Please, tell us the username. If the owner does not yet have an account, they can create it using an email that is under the domain of the entity associated to the plugin.
-⚠️ Do not resubmit this plugin using the new account!. I will transfer it for you. Simply reply to this email with the new username.
-Note: Once the plugin has been approved, you can ask the owner to add you as a committer in the "Advanced" section of the plugin, so that you can commit code using your account.
-
-🛠 Change the plugin's display name and slug to make it clear that the plugin is not officially affiliated with any other entity. Upload an updated version of your plugin via the "Add your plugin" page. Ask us to change the slug.
-
-Reply to this email clarifying the situation, we know that sometimes you might be using an email account that belongs to the same entity or an entity that owns the other entity. Also, if you already have established plugins in the directory under the same account we can use that as tacit verification.
-
-Remember that, if you own other plugins, all the plugins belonging to the same entity should be under the same WordPress.org account.
-
-⚠️ Please do not resubmit this plugin using a different account. Both submissions will be rejected if you do so, and your accounts may be suspended until the situation is resolved. Instead, ask us to change the owner — we can certainly do that.
-
-Other details
-
-We've detected some other details that you may want to check.
-
 🔴️ Direct integration with a third-party AI provider detected.
 
 Your plugin appears to call a third-party AI provider directly (via its HTTP API or a PHP SDK declared in composer.json).
@@ -218,87 +8,108 @@ Credentials are managed by core, not by each plugin.
 Your plugin works out-of-the-box with whichever provider the user has set up.
 
 Please consider migrating your AI features to the WordPress AI Client.
-includes/class-provider-adapter.php:126 'url'                  => 'https://api.groq.com/openai/v1',
+assets/js/dashboard.js:1  ...nts.Button,A={openai:{label:"OpenAI",url:"https://api.openai.com/v1",model:"gpt-6-luna",keyPlaceholder:"sk-..."},anthropic:{label:"Claude (Anthropic)",url:"https://api.anthropic.com/v1",model:"claude-... 
 includes/class-provider-adapter.php:77 'hosts'                => array( 'api.openai.com' ),
+includes/class-provider-adapter.php:150 'url'                  => 'https://api.x.ai/v1',
+includes/class-provider-adapter.php:88 'url'                  => 'https://api.anthropic.com/v1',
 includes/class-provider-adapter.php:76 'url'                  => 'https://api.openai.com/v1',
 includes/class-provider-adapter.php:138 'url'                  => 'https://api.mistral.ai/v1',
-includes/class-api.php:68 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1';
-includes/class-provider-adapter.php:150 'url'                  => 'https://api.x.ai/v1',
-includes/class-provider-adapter.php:115 'url'                  => 'https://api.deepseek.com/v1',
-includes/class-provider-adapter.php:88 'url'                  => 'https://api.anthropic.com/v1',
+includes/class-api.php:110 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1';
+includes/class-provider-adapter.php:126 'url'                  => 'https://api.groq.com/openai/v1',
 ... out of a total of 10 incidences.
 
 
-🔴️ Out of Date Libraries
+🔴️ Internationalization: Text domain does not match plugin slug.
 
-At least one of the 3rd party libraries you're using is out of date. Please upgrade to the latest stable version for better support and security. We do not recommend you use beta releases.
+In order to make a string translatable in your plugin you are using a set of special functions. These functions collectively are known as "gettext".
 
-From your plugin:
-assets/lib/chart.min.js:1 🔴  Chart.js v4.4.7
-   # ↳ Possible URL: https://github.com/chartjs/Chart.js
+These functions have a parameter called "text domain", which is a unique identifier for retrieving translated strings.
+
+This "text domain" must be the same as your plugin slug so that the plugin can be translated by the community using the tools provided by the directory. As for example, if this plugin slug is "store-insights-for-woocommerce" the Internationalization functions should look like:
+esc_html__( 'Hello', 'store-insights-for-woocommerce' );
+
+From your plugin, you have set your text domain as follows:
+# This plugin is using the domain "siphon-store-analytics-for-woocommerce" for 210 element(s).
+
+However, the current plugin slug is this:
+store-insights-for-woocommerce
 
 
 
-🔴️ Undocumented use of a 3rd Party / external service
+🔴️ Data Must be Sanitized, Escaped, and Validated
 
-Plugins are permitted to require the use of third party/external services as long as they are clearly documented.
+When you include POST/GET/REQUEST/FILE calls in your plugin, it's important to sanitize, validate, and escape them. The goal here is to prevent a user from accidentally sending trash data through the system, as well as protecting them from potential security issues.
 
-When your plugin reach out to external services, you must disclose it. This is true even if you are the one providing that service.
+SANITIZE: Data that is input (either by a user or automatically) must be sanitized as soon as possible. This lessens the possibility of XSS vulnerabilities and MITM attacks where posted data is subverted.
 
-You are required to document it in a clear and plain language, so users are aware of: what data is sent, why, where and under which conditions.
+VALIDATE: All data should be validated, no matter what. Even when you sanitize, remember that you don’t want someone putting in ‘dog’ when the only valid values are numbers.
 
-To do this, you must update your readme file to clearly explain that your plugin relies on third party/external services, and include at least the following information for each third party/external service that this plugin uses:
-What the service is and what it is used for.
-What data is sent and when.
-Provide links to the service's terms of service and privacy policy.
-Remember, this is for your own legal protection. Use of services must be upfront and well documented. This allows users to ensure that any legal issues with data transmissions are covered.
+ESCAPE: Data that is output must be escaped properly when it is echo'd, so it can't hijack admin screens. There are many esc_*() functions you can use to make sure you don't show people the wrong data.
 
-Example:
-== External services ==
+To help you with this, WordPress comes with a number of sanitization and escaping functions. You can read about those here:
 
-This plugin connects to an API to obtain weather information, it's needed to show the weather information and forecasts in the included widget.
+https://developer.wordpress.org/apis/security/sanitizing/
+https://developer.wordpress.org/apis/security/escaping/
 
-It sends the user's location every time the widget is loaded (If the location isn't available and/or the user hasn't given their consent, it displays a configurable default location).
-This service is provided by "PRT Weather INC": terms of use, privacy policy.
+Remember: You must use the most appropriate functions for the context. If you’re sanitizing email, use sanitize_email(), if you’re outputting HTML, use wp_kses_post(), and so on.
 
-🔗 Please verify that the terms and privacy links exist and they have the proper content. We will check those links in the next review.
+An easy mantra here is this:
+
+Sanitize early
+Escape Late
+Always Validate
+
+Clean everything, check everything, escape everything, and never trust the users to always have input sane data. After all, users come from all walks of life.
 
 Example(s) from your plugin:
-includes/class-api.php:68 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1';
-assets/js/dashboard.js:1 ....components.Button,_={openai:{label:"OpenAI",url:"https://api.openai.com/v1",model:"gpt-6-luna",keyPlaceholder:"sk-..."},anthropic:{label:"Claude (Anthropic)",url:"https://api.anthropic.com/v1",model:...  ...-..."},anthropic:{label:"Claude (Anthropic)",url:"https://api.anthropic.com/v1",model:"claude-haiku-5-5",keyPlaceholder:"sk-ant-..."},openrouter:{label:"OpenRouter",url:"https://openrouter.ai/api/v1",...  ..."sk-ant-..."},openrouter:{label:"OpenRouter",url:"https://openrouter.ai/api/v1",model:"openai/gpt-6-luna",keyPlaceholder:"sk-or-v1-..."},deepseek:{label:"DeepSeek",url:"https://api.deepseek.com/v1",mo...  ...r:"sk-or-v1-..."},deepseek:{label:"DeepSeek",url:"https://api.deepseek.com/v1",model:"deepseek-flash",keyPlaceholder:"sk-..."},groq:{label:"Groq",url:"https://api.groq.com/openai/v1",model:"openai/gpt...  ...,keyPlaceholder:"sk-..."},groq:{label:"Groq",url:"https://api.groq.com/openai/v1",model:"openai/gpt-oss-120b",keyPlaceholder:"gsk_..."},mistral:{label:"Mistral",url:"https://api.mistral.ai/v1",model:"...
-includes/class-provider-adapter.php:126 'url'                  => 'https://api.groq.com/openai/v1',
-includes/class-api.php:41 const DEFAULT_API_URL       = 'https://api.openai.com/v1';
-includes/class-provider-adapter.php:115 'url'                  => 'https://api.deepseek.com/v1',
-includes/class-provider-adapter.php:77 'hosts'                => array( 'api.openai.com' ),
-... out of a total of 11 incidences.
+includes/class-ajax.php:278 $sql = isset( $_POST['sql'] ) && is_string( $_POST['sql'] ) ? wp_unslash( $_POST['sql'] ) : '';
+# ↳ Line 327: $result = SILC_WIA_Insights::re_execute_sql( $sql, $type, $insight_data );
+# ↳ Line 332: 'sql'     => $sql,
+# ↳ Line 325: require_once SILC_WIA_PATH . 'includes/class-insights.php';
+# ✨ The raw SQL reaches a validator that permits SELECT * on users and can miss tables in comma joins after an alias, allowing access beyond its intended restrictions.
+includes/class-ajax.php:246 $result_json = wp_unslash( $_POST['result_json'] );
+# ↳ Line 260: $result = SILC_WIA_Insights::re_execute_sql( $stored_result );
+# ↳ Line 258: require_once SILC_WIA_PATH . 'includes/class-insights.php';
+# ↳ Line 325: require_once SILC_WIA_PATH . 'includes/class-insights.php';
+# ↳ Line 258: require_once SILC_WIA_PATH . 'includes/class-insights.php';
+# ↳ Line 325: require_once SILC_WIA_PATH . 'includes/class-insights.php';
+# ✨ The decoded result can carry unsanitized titles, answer text, and presentation configuration into the AJAX response.
+includes/class-ajax.php:308 $list_config = json_decode( wp_unslash( $_POST['list_config'] ), true );
+# ↳ Line 325: require_once SILC_WIA_PATH . 'includes/class-insights.php';
+# ✨ Decoded list configuration fields are returned in the AJAX response without field-level sanitization.
+includes/class-ajax.php:295 $chart_config = json_decode( wp_unslash( $_POST['chart_config'] ), true );
+# ↳ Line 325: require_once SILC_WIA_PATH . 'includes/class-insights.php';
+# ✨ Decoded chart configuration fields are returned in the AJAX response without field-level sanitization.
 
 
 
-👉 Your next steps
+Note: While the json_decode() function in PHP is useful for decoding JSON strings, it does not sanitize the input. Sanitization refers to the process of cleaning or filtering the input data to ensure that it is safe and secure to use.
 
-This is your checklist:
-Have you read the guidelines and this plugin complies with them?
-Is the name of this plugin descriptive and distinctive, and does it respect the trademarks and project names of others?
-Are you the rightful owner of this plugin?
-Other details
+The json_decode() function simply transforms a JSON string into a PHP array or object. Any potentially malicious data or scripts may persist after json_decode().
+Example(s) from your plugin:
+includes/class-admin.php:375 $input = '' !== $raw_settings ? json_decode( $raw_settings, true ) : null;
+includes/class-ajax.php:308 $list_config = json_decode( wp_unslash( $_POST['list_config'] ), true );
+includes/class-ajax.php:251 $stored_result = json_decode( $result_json, true );
+includes/class-ajax.php:295 $chart_config = json_decode( wp_unslash( $_POST['chart_config'] ), true );
 
-If there is something that needs to be fixed, please:
-Take your time and fix it. Make sure that everything was addressed and the plugin works.
-Update your plugin files at the "Add your plugin" page, while being logged in with your account "siphontech".
-Reply to this email.
-Please keep your reply short, direct and clear. Avoid overly verbose and long AI responses. Do not list the changes made, we don't need that, we will review the entire plugin again, we won't compare the changes. However, please share any important context or clarifications that may help us during the review.
 
-If after checking the list and do the changes you feel that everything is right or need further clarification, please reply to this email and a volunteer will help you.
+✔️ You can check this using Plugin Check.
 
-If you believe there is a requirement you cannot accomplish and choose not to make changes, your plugin submission will be rejected after three months.
 
-Thanks!
+🔴️ Unsafe SQL calls
 
-By taking these steps, you're helping the Plugin Review Team work more efficiently — meaning your plugin (along with the thousands of others in the queue) can be reviewed faster. 🚀 We really appreciate your contribution!
+When making database calls, it's highly important to protect your code from SQL injection vulnerabilities. You need to update your code to use wpdb calls and prepare() with your queries to protect them.
 
-Disclaimers
+Please review the following:
+https://developer.wordpress.org/reference/classes/wpdb/#protect-queries-against-sql-injection-attacks
+https://codex.wordpress.org/Data_Validation#Database
+https://make.wordpress.org/core/2012/12/12/php-warning-missing-argument-2-for-wpdb-prepare/
+https://ottopress.com/2013/better-know-a-vulnerability-sql-injection/
+Example(s) from your plugin:
 
-If, at any time during the review process, you wish to change your permalink (aka the plugin slug) "store-insights-for-woocommerce", you must explicitly and clearly tell us what you would like it to be. Just changing it in your code and in the display name is not sufficient. Remember, permalinks cannot be altered after approval.
-This email was partially auto-generated, so please be aware that some information might not be entirely accurate. No personal data was shared with the AI during this process. If you notice any obvious errors or something seems off, feel free to reply — we’ll be happy to take a closer look and readjust this automation.
 
-Review ID: AUTOPREREVIEW ❗TRM-OWN store-insights-for-woocommerce/siphontech/19Nov26/T1 19Nov26/4.2 (P0TDX407498HGN)
+includes/class-sql-validator.php:415 $sql      = self::apply_row_limit( $sql, $max_rows );
+includes/class-sql-validator.php:420 $results = $wpdb->get_results( $sql, ARRAY_A );
+# The SQL query needs to be included in a wpdb::prepare($query, $args) function.
+# Remember that you will need to include placeholders for each variable within the query and include their calls in the second parameter of wpdb::prepare().
+# ✨ The AJAX SQL endpoint accepts caller-supplied queries, and the validator misses comma-joined tables after an alias. A shop manager can therefore query unauthorized tables such as wp_options, potentially exposing stored API keys.
