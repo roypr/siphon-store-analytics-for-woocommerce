@@ -425,6 +425,75 @@ class SILC_WIA_Insights {
 	}
 
 	/**
+	 * Sanitize the presentation config used to render an insight.
+	 *
+	 * The config arrives either from a stored history entry or from the JSON
+	 * envelope the dashboard posts, and it is echoed back in the AJAX response,
+	 * so nothing in it is trusted: only scalars are kept, strings are stripped
+	 * of markup, and unknown nested types are dropped.
+	 *
+	 * @param array $insight_data Presentation config (title, answer_text, chart_config, list_config).
+	 * @return array Sanitized presentation config.
+	 */
+	private static function sanitize_insight_data( array $insight_data ): array {
+		return array(
+			'title'        => is_scalar( $insight_data['title'] ?? null )
+				? sanitize_text_field( (string) $insight_data['title'] )
+				: '',
+			// The answer is prose, so its line breaks are meaningful and are kept.
+			'answer_text'  => is_scalar( $insight_data['answer_text'] ?? null )
+				? sanitize_textarea_field( (string) $insight_data['answer_text'] )
+				: '',
+			'chart_config' => is_array( $insight_data['chart_config'] ?? null )
+				? self::sanitize_config_value( $insight_data['chart_config'] )
+				: null,
+			'list_config'  => is_array( $insight_data['list_config'] ?? null )
+				? self::sanitize_config_value( $insight_data['list_config'] )
+				: null,
+		);
+	}
+
+	/**
+	 * Recursively sanitize a decoded JSON config tree.
+	 *
+	 * json_decode() does not sanitize anything, so a posted chart/list config can
+	 * hold markup, nested arrays or objects. Only scalars and arrays of scalars
+	 * survive; strings are passed through sanitize_text_field().
+	 *
+	 * @param mixed $value Config value.
+	 * @param int   $depth Current recursion depth.
+	 * @return mixed Sanitized value, or null when the value cannot be rendered.
+	 */
+	private static function sanitize_config_value( $value, int $depth = 0 ) {
+		if ( is_array( $value ) ) {
+			// Guard against a deeply nested payload.
+			if ( $depth >= 10 ) {
+				return null;
+			}
+
+			$clean = array();
+
+			foreach ( $value as $key => $item ) {
+				$item = self::sanitize_config_value( $item, $depth + 1 );
+
+				if ( null !== $item ) {
+					$clean[ $key ] = $item;
+				}
+			}
+
+			return $clean;
+		}
+
+		if ( is_string( $value ) ) {
+			return sanitize_text_field( $value );
+		}
+
+		// Numbers and booleans are chart settings (legends, stacking, axis
+		// limits); objects and resources cannot be produced by json_decode().
+		return is_int( $value ) || is_float( $value ) || is_bool( $value ) ? $value : null;
+	}
+
+	/**
 	 * Re-execute a stored SQL query using the original insight config.
 	 * No AI call — just re-runs the SQL and re-renders with the same formatting.
 	 *
@@ -453,6 +522,11 @@ class SILC_WIA_Insights {
 			// must not reach validate( string $sql ).
 			$sql = is_scalar( $sql_or_stored ) ? (string) $sql_or_stored : '';
 		}
+
+		// Both branches carry presentation config from an untrusted source (the
+		// dashboard's JSON payload or a stored result), so it is sanitized before
+		// it reaches the renderers or is echoed back in render_config.
+		$insight_data = self::sanitize_insight_data( $insight_data );
 
 		$type = in_array( $type, array( 'chart', 'list', 'answer' ), true ) ? $type : 'answer';
 

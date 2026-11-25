@@ -6,10 +6,12 @@
 
 /* global wp */
 
-import { l10n, LIBRARY_ITEMS, SUGGESTED_PROMPTS } from './utils.js';
+import { LIBRARY_ITEMS, SUGGESTED_PROMPTS, getTypeLabel } from './utils.js';
 
 var el = wp.element.createElement;
 var Button = wp.components.Button;
+var __ = wp.i18n.__;
+var sprintf = wp.i18n.sprintf;
 
 /**
  * Get the title for a panel key.
@@ -20,11 +22,11 @@ var Button = wp.components.Button;
 
 export function getPanelTitle(panel) {
 	var titles = {
-		sql: l10n.sqlDetails || 'SQL & Details',
-		history: l10n.history || 'History',
-		library: l10n.library || 'Library',
-		suggested: l10n.suggestedPrompts || 'Suggested Prompts',
-		settings: l10n.settings || 'Settings',
+		sql: __('SQL & Details', 'siphon-store-analytics-for-woocommerce'),
+		history: __('History', 'siphon-store-analytics-for-woocommerce'),
+		library: __('Library', 'siphon-store-analytics-for-woocommerce'),
+		suggested: __('Suggested Prompts', 'siphon-store-analytics-for-woocommerce'),
+		settings: __('Settings', 'siphon-store-analytics-for-woocommerce'),
 	};
 	return titles[panel] || panel;
 }
@@ -40,15 +42,15 @@ export function getPanelTitle(panel) {
  */
 export function renderSqlPanel(props) {
 	if (!props.hasRun) {
-		return el('p', { className: 'silc-wia-muted' }, 'Ask a question first \u2014 the generated SQL and execution details will appear here.');
+		return el('p', { className: 'silc-wia-muted' }, __('Ask a question first \u2014 the generated SQL and execution details will appear here.', 'siphon-store-analytics-for-woocommerce'));
 	}
 
 	if (props.isLoading) {
-		return el('p', { className: 'silc-wia-muted' }, 'Generating...');
+		return el('p', { className: 'silc-wia-muted' }, __('Generating\u2026', 'siphon-store-analytics-for-woocommerce'));
 	}
 
 	if (!props.insightData) {
-		return el('p', { className: 'silc-wia-muted' }, 'No SQL to show yet.');
+		return el('p', { className: 'silc-wia-muted' }, __('No SQL to show yet.', 'siphon-store-analytics-for-woocommerce'));
 	}
 
 	var parts = [];
@@ -57,7 +59,7 @@ export function renderSqlPanel(props) {
 	// SQL query.
 	if (insightData.sql) {
 		parts.push(
-			el('div', { key: 'sql-label', style: { fontSize: '12px', fontWeight: 600, color: '#787c82', marginBottom: '6px' } }, 'SQL Query'),
+			el('div', { key: 'sql-label', style: { fontSize: '12px', fontWeight: 600, color: '#787c82', marginBottom: '6px' } }, __('SQL Query', 'siphon-store-analytics-for-woocommerce')),
 			el('div', { key: 'sql', className: 'silc-wia-sql-display' }, insightData.sql)
 		);
 	}
@@ -65,13 +67,14 @@ export function renderSqlPanel(props) {
 	// Execution meta.
 	var metaItems = [];
 	if (insightData.sql_time_ms) {
-		metaItems.push({ label: 'Execution time', value: insightData.sql_time_ms + 'ms' });
+		/* translators: %s: query execution time in milliseconds. */
+		metaItems.push({ label: __('Execution time', 'siphon-store-analytics-for-woocommerce'), value: sprintf(__('%s ms', 'siphon-store-analytics-for-woocommerce'), insightData.sql_time_ms) });
 	}
 	if (typeof insightData.rows_returned !== 'undefined') {
-		metaItems.push({ label: 'Rows returned', value: insightData.rows_returned });
+		metaItems.push({ label: __('Rows returned', 'siphon-store-analytics-for-woocommerce'), value: insightData.rows_returned });
 	}
 	if (insightData.type) {
-		metaItems.push({ label: 'Output type', value: insightData.type });
+		metaItems.push({ label: __('Output type', 'siphon-store-analytics-for-woocommerce'), value: getTypeLabel(insightData.type) });
 	}
 
 	if (metaItems.length > 0) {
@@ -102,7 +105,7 @@ export function renderHistoryPanel(props) {
 	var items = [];
 
 	if (!props.insightHistory || props.insightHistory.length === 0) {
-		items.push(el('p', { key: 'empty', className: 'silc-wia-muted' }, l10n.noInsightHistory || 'No insight history yet.'));
+		items.push(el('p', { key: 'empty', className: 'silc-wia-muted' }, __('No insight history yet.', 'siphon-store-analytics-for-woocommerce')));
 	} else {
 		items.push(
 			el('div', { key: 'clear', style: { textAlign: 'right', marginBottom: '8px' } },
@@ -111,18 +114,27 @@ export function renderHistoryPanel(props) {
 					isDestructive: true,
 					variant: 'link',
 					onClick: props.handleClearHistory,
-				}, l10n.clearHistory || 'Clear')
+				}, __('Clear', 'siphon-store-analytics-for-woocommerce'))
 			)
 		);
 
 		props.insightHistory.forEach(function (item, idx) {
 			var typeIcon = '';
-			var typeLabel = item.type || '?';
-			if (typeLabel === 'chart') typeIcon = '\uD83D\uDCCA';
-			else if (typeLabel === 'list') typeIcon = '\uD83D\uDCCB';
-			else if (typeLabel === 'answer') typeIcon = '\u2139\uFE0F';
+			if (item.type === 'chart') typeIcon = '\uD83D\uDCCA';
+			else if (item.type === 'list') typeIcon = '\uD83D\uDCCB';
+			else if (item.type === 'answer') typeIcon = '\u2139\uFE0F';
 
-			var displayTitle = item.title || item.question || '(Unknown)';
+			var displayTitle = item.title || item.question || __('(Unknown)', 'siphon-store-analytics-for-woocommerce');
+
+			// The raw type is an API value; the meta line shows its label.
+			var metaText = getTypeLabel(item.type);
+			if (item.sql_time_ms) {
+				/* translators: %s: query execution time in milliseconds. */
+				metaText += ' \u00B7 ' + sprintf(__('%s ms', 'siphon-store-analytics-for-woocommerce'), item.sql_time_ms);
+			}
+			if (item.time) {
+				metaText += ' \u00B7 ' + item.time;
+			}
 
 			items.push(
 				el('div', {
@@ -134,9 +146,7 @@ export function renderHistoryPanel(props) {
 						el('span', { className: 'type-icon' }, typeIcon),
 						el('span', { className: 'title' }, displayTitle)
 					),
-					el('div', { className: 'meta' },
-						typeLabel + (item.sql_time_ms ? ' \u00B7 ' + item.sql_time_ms + 'ms' : '') + (item.time ? ' \u00B7 ' + item.time : '')
-					)
+					el('div', { className: 'meta' }, metaText)
 				)
 			);
 		});
@@ -213,7 +223,7 @@ export function renderLibraryPanel(props) {
 		el('div', { className: 'silc-wia-library-search', style: { marginBottom: '12px' } },
 			el('input', {
 				type: 'text',
-				placeholder: 'Search library...',
+				placeholder: __('Search library\u2026', 'siphon-store-analytics-for-woocommerce'),
 				value: searchQuery,
 				onChange: function (e) { setSearchQuery(e.target.value); },
 				style: { width: '100%', boxSizing: 'border-box' },
@@ -223,13 +233,16 @@ export function renderLibraryPanel(props) {
 		// Invalid regex warning.
 		!regexValid
 			? el('p', { className: 'silc-wia-muted', style: { color: '#b32d2e', fontSize: '12px', margin: '0 0 8px' } },
-				'Invalid regex pattern.'
+				__('Invalid regex pattern.', 'siphon-store-analytics-for-woocommerce')
 			)
 			: null,
 
 		// No-match message or items.
 		isSearching && regexValid && filteredItems.length === 0
-			? el('p', { className: 'silc-wia-muted' }, 'No library items match "' + searchQuery + '".')
+			? el('p', { className: 'silc-wia-muted' }, (
+				/* translators: %s: the search term typed by the user. */
+				sprintf(__('No library items match "%s".', 'siphon-store-analytics-for-woocommerce'), searchQuery)
+			))
 			: el('div', { className: 'silc-wia-library-list' }, itemElements)
 	);
 }

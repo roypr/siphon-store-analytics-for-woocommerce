@@ -8,7 +8,6 @@
 
 import {
 	doAction,
-	l10n,
 	settings,
 	defaults,
 	pluginUrl,
@@ -39,6 +38,8 @@ var el = wp.element.createElement;
 var useState = wp.element.useState;
 var useEffect = wp.element.useEffect;
 var useCallback = wp.element.useCallback;
+
+var __ = wp.i18n.__;
 
 var TextControl = wp.components.TextControl;
 var Button = wp.components.Button;
@@ -181,7 +182,7 @@ function WooInsightDashboard() {
 		var q = promptText || question;
 		if (!q.trim()) return;
 		if (!apiConfigured) {
-			setError(l10n.apiNotConfigured + '. Open the \u2699\uFE0F Settings panel to add your API key.');
+			setError(__('API not configured. Open the Settings panel to add your API key.', 'siphon-store-analytics-for-woocommerce'));
 			return;
 		}
 
@@ -213,13 +214,13 @@ function WooInsightDashboard() {
 					}).catch(function () {});
 				} else {
 					var errorCode = (resp.data && resp.data.error_code) || '';
-					var errorMsg = getErrorMessage(errorCode, resp.data && resp.data.message ? resp.data.message : (l10n.errorOccurred || 'Failed to generate insight'));
+					var errorMsg = getErrorMessage(errorCode, resp.data && resp.data.message ? resp.data.message : __('Failed to generate insight', 'siphon-store-analytics-for-woocommerce'));
 					setError(errorMsg);
 				}
 			})
 			.catch(function () {
 				setLoading(false);
-				setError('Network error. Please try again.');
+				setError(__('Network error. Please try again.', 'siphon-store-analytics-for-woocommerce'));
 			});
 	}, [question]);
 
@@ -273,12 +274,12 @@ function WooInsightDashboard() {
 				if (resp.success && resp.data) {
 					setInsightData(resp.data);
 				} else {
-					setError(resp.data && resp.data.message ? resp.data.message : (l10n.errorOccurred || 'Failed to refresh'));
+					setError(resp.data && resp.data.message ? resp.data.message : __('Failed to refresh', 'siphon-store-analytics-for-woocommerce'));
 				}
 			})
 			.catch(function () {
 				setLoading(false);
-				setError('Network error. Please try again.');
+				setError(__('Network error. Please try again.', 'siphon-store-analytics-for-woocommerce'));
 			});
 	}, []);
 
@@ -309,12 +310,12 @@ function WooInsightDashboard() {
 				if (resp.success && resp.data) {
 					setInsightData(resp.data);
 				} else {
-					setError(resp.data && resp.data.message ? resp.data.message : (l10n.errorOccurred || 'Failed to execute'));
+					setError(resp.data && resp.data.message ? resp.data.message : __('Failed to execute', 'siphon-store-analytics-for-woocommerce'));
 				}
 			})
 			.catch(function () {
 				setLoading(false);
-				setError('Network error. Please try again.');
+				setError(__('Network error. Please try again.', 'siphon-store-analytics-for-woocommerce'));
 			});
 	}, []);
 
@@ -378,7 +379,7 @@ function WooInsightDashboard() {
 			.then(function (resp) {
 				setSaving(false);
 				if (resp.success) {
-					setSaveMsg({ type: 'success', text: resp.data.message || l10n.saved });
+					setSaveMsg({ type: 'success', text: resp.data.message || __('Settings saved!', 'siphon-store-analytics-for-woocommerce') });
 					setSettingsDirty(false);
 					// Mirror what the server actually stored: the key field is
 					// cleared after a save, the endpoint loses a trailing slash,
@@ -402,12 +403,12 @@ function WooInsightDashboard() {
 					// the page reporting stale config.
 					setTimeout(function () { window.location.reload(); }, 1000);
 				} else {
-					setSaveMsg({ type: 'error', text: resp.data && resp.data.message ? resp.data.message : 'Save failed' });
+					setSaveMsg({ type: 'error', text: resp.data && resp.data.message ? resp.data.message : __('Save failed', 'siphon-store-analytics-for-woocommerce') });
 				}
 			})
 			.catch(function () {
 				setSaving(false);
-				setSaveMsg({ type: 'error', text: 'Network error' });
+				setSaveMsg({ type: 'error', text: __('Network error', 'siphon-store-analytics-for-woocommerce') });
 			});
 	}, [formSettings]);
 
@@ -418,14 +419,14 @@ function WooInsightDashboard() {
 			.then(function (resp) {
 				setTesting(false);
 				if (resp.success) {
-					setTestResult({ type: 'success', text: resp.data.message || l10n.connectionOk });
+					setTestResult({ type: 'success', text: resp.data.message || __('Connection successful!', 'siphon-store-analytics-for-woocommerce') });
 				} else {
-					setTestResult({ type: 'fail', text: resp.data && resp.data.message ? resp.data.message : l10n.connectionFail });
+					setTestResult({ type: 'fail', text: resp.data && resp.data.message ? resp.data.message : __('Connection failed.', 'siphon-store-analytics-for-woocommerce') });
 				}
 			})
 			.catch(function () {
 				setTesting(false);
-				setTestResult({ type: 'fail', text: 'Network error' });
+				setTestResult({ type: 'fail', text: __('Network error', 'siphon-store-analytics-for-woocommerce') });
 			});
 	}, []);
 
@@ -496,17 +497,17 @@ function WooInsightDashboard() {
 					el('img', {
 						className: 'silc-wia-chat-empty-icon',
 						src: pluginUrl + 'assets/img/chart.svg',
-						alt: 'Chart icon',
+						alt: __('Chart icon', 'siphon-store-analytics-for-woocommerce'),
 					}),
-					el('h2', null, 'Ask anything about your WooCommerce store'),
+					el('h2', null, __('Ask anything about your WooCommerce store', 'siphon-store-analytics-for-woocommerce')),
 					el('p', null,
-						'Get instant charts, lists, and answers about your sales, products, customers, and more. Just type a question or try one below.'
+						__('Get instant charts, lists, and answers about your sales, products, customers, and more. Just type a question or try one below.', 'siphon-store-analytics-for-woocommerce')
 					),
 					el('div', {className: 'silc-wia-spacer'}),
 					!apiConfigured
 						? el('p', {
 							style: { color: '#8a6d3b', fontSize: '13px', background: '#fcf8e3', padding: '8px 16px', borderRadius: '8px', marginBottom: '20px', maxWidth: '500px' },
-						}, l10n.apiNotConfigured + '. You can still use the queries below without AI, and more are available in the Library panel.')
+						}, __('API not configured. You can still use the queries below without AI, and more are available in the Library panel.', 'siphon-store-analytics-for-woocommerce'))
 						: null,
 					// WordPress AI Client selected, but no connector set up yet:
 					// saying so here is clearer than letting the first question fail.
@@ -514,11 +515,11 @@ function WooInsightDashboard() {
 						? el('p', {
 							style: { color: '#8a6d3b', fontSize: '13px', background: '#fcf8e3', padding: '8px 16px', borderRadius: '8px', marginBottom: '20px', maxWidth: '500px' },
 						},
-							'No AI provider is connected yet. Add one under ',
+							__('No AI provider is connected yet. Add one under', 'siphon-store-analytics-for-woocommerce'),
 							connectorsUrl
-								? el('a', { href: connectorsUrl }, 'Settings \u2192 Connectors')
-								: 'Settings \u2192 Connectors',
-							', or switch the Backend to your own API key in Settings.'
+								? el('a', { href: connectorsUrl }, __('Settings \u2192 Connectors', 'siphon-store-analytics-for-woocommerce'))
+								: __('Settings \u2192 Connectors', 'siphon-store-analytics-for-woocommerce'),
+							__('\u2014 or switch the Backend to your own API key in Settings.', 'siphon-store-analytics-for-woocommerce'),
 						)
 						: null,
 					el('div', { className: 'silc-wia-prompts' },
@@ -550,7 +551,7 @@ function WooInsightDashboard() {
 				),
 				el('div', { className: 'silc-wia-chat-input-row' },
 					el(TextControl, {
-						placeholder: l10n.askQuestion || 'Ask anything...',
+						placeholder: __('Ask anything about your WooCommerce store…', 'siphon-store-analytics-for-woocommerce'),
 						value: question,
 						onChange: setQuestion,
 						onKeyDown: function (e) {
@@ -569,13 +570,13 @@ function WooInsightDashboard() {
 						? el(Spinner, {})
 						: el('span', { className: 'silc-wia-btn-content' },
 							el('span', { className: 'dashicons dashicons-visibility' }),
-							el('span', { className: 'silc-wia-btn-label' }, l10n.getInsight || 'Get AI Insight')
+							el('span', { className: 'silc-wia-btn-label' }, __('Get AI Insight', 'siphon-store-analytics-for-woocommerce'))
 						)
 					)
 				),
 				el('p', {
 					style: { fontSize: '11px', color: '#a7aaad', marginBottom: '20px', maxWidth: 'unset', marginTop: '12px' },
-				}, '\u26A0\uFE0F AI can make mistakes. Always verify important insights before making business decisions.')
+				}, '\u26A0\uFE0F ' + __('AI can make mistakes. Always verify important insights before making business decisions.', 'siphon-store-analytics-for-woocommerce'))
 			);
 		}
 
@@ -586,7 +587,7 @@ function WooInsightDashboard() {
 				// Loading indicator.
 				isLoading
 					? el('div', { className: 'silc-wia-loading' },
-						el('span', null, l10n.generatingInsight || 'Generating insight'),
+						el('span', null, __('Generating insight', 'siphon-store-analytics-for-woocommerce')),
 						el('span', { className: 'silc-wia-loading-dots' },
 							el('span'), el('span'), el('span')
 						)
@@ -609,7 +610,7 @@ function WooInsightDashboard() {
 			el('div', { className: 'silc-wia-chat-input-area' },
 				el('div', { className: 'silc-wia-chat-input-row' },
 					el(TextControl, {
-						placeholder: l10n.askQuestion || 'Ask anything...',
+						placeholder: __('Ask anything about your WooCommerce store…', 'siphon-store-analytics-for-woocommerce'),
 						value: question,
 						onChange: setQuestion,
 						onKeyDown: function (e) {
@@ -628,13 +629,13 @@ function WooInsightDashboard() {
 						? el(Spinner, {})
 						: el('span', { className: 'silc-wia-btn-content' },
 							el('span', { className: 'dashicons dashicons-visibility' }),
-							el('span', { className: 'silc-wia-btn-label' }, l10n.getInsight || 'Get AI Insight')
+							el('span', { className: 'silc-wia-btn-label' }, __('Get AI Insight', 'siphon-store-analytics-for-woocommerce'))
 						)
 					)
 				)
 			),
-			el('p', { className: 'silc-wia-permanent-warning'}, 
-				'\u26A0\uFE0F AI can make mistakes. Always verify important insights before making business decisions.'
+			el('p', { className: 'silc-wia-permanent-warning'},
+				'\u26A0\uFE0F ' + __('AI can make mistakes. Always verify important insights before making business decisions.', 'siphon-store-analytics-for-woocommerce')
 			),
 		);
 	}
@@ -659,13 +660,13 @@ function WooInsightDashboard() {
 			// preference there — WordPress decides which model serves it.
 			el('span', { className: 'silc-wia-topbar-model' },
 				aiBackend === 'core'
-					? 'WordPress AI Client'
+					? __('WordPress AI Client', 'siphon-store-analytics-for-woocommerce')
 					: (settings.model || defaults.model)
 			),
 			el('div', { className: 'silc-wia-topbar-spacer' }),
 			el('span', {
 				className: 'silc-wia-topbar-status ' + (apiConfigured ? 'ready' : 'not-ready'),
-			}, apiConfigured ? (l10n.apiReady || 'AI Ready') : (l10n.apiNotConfigured || 'API not configured')),
+			}, apiConfigured ? __('AI Ready', 'siphon-store-analytics-for-woocommerce') : __('API not configured', 'siphon-store-analytics-for-woocommerce')),
 		),
 
 		// Body: sidebar + panel + chat.

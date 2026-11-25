@@ -6,11 +6,12 @@
 
 /* global wp */
 
-import { l10n } from './utils.js';
-
 var el = wp.element.createElement;
 var Button = wp.components.Button;
 var Spinner = wp.components.Spinner;
+var __ = wp.i18n.__;
+var _n = wp.i18n._n;
+var sprintf = wp.i18n.sprintf;
 
 /**
  * Render a chart result.
@@ -21,7 +22,7 @@ var Spinner = wp.components.Spinner;
 export function renderChartResult(insightData) {
 	var config = insightData.chart_config;
 	if (!config || !config.labels || config.labels.length === 0) {
-		return el('p', { key: 'chart-empty', className: 'silc-wia-muted' }, 'No chart data available.');
+		return el('p', { key: 'chart-empty', className: 'silc-wia-muted' }, __('No chart data available.', 'siphon-store-analytics-for-woocommerce'));
 	}
 
 	var chartTypeLabel = config.chart_type || 'bar';
@@ -32,7 +33,8 @@ export function renderChartResult(insightData) {
 		el('div', { className: 'silc-wia-chart-wrapper' },
 			el('canvas', { id: 'insight-chart-canvas', className: 'silc-wia-chart-canvas' })
 		),
-		el('div', { className: 'silc-wia-chart-type-badge' }, 'Chart: ' + chartTypeLabel)
+		/* translators: %s: Chart.js chart type, e.g. bar, line, pie. */
+		el('div', { className: 'silc-wia-chart-type-badge' }, sprintf(__('Chart: %s', 'siphon-store-analytics-for-woocommerce'), chartTypeLabel))
 	);
 }
 
@@ -53,7 +55,7 @@ export function renderListResult(insightData) {
 	var listConfig = insightData.list_config;
 
 	if (!listData || listData.length === 0) {
-		return el('p', { key: 'list-empty', className: 'silc-wia-muted' }, 'No list data available.');
+		return el('p', { key: 'list-empty', className: 'silc-wia-muted' }, __('No list data available.', 'siphon-store-analytics-for-woocommerce'));
 	}
 
 	// Determine display columns (skip internal meta columns).
@@ -124,9 +126,14 @@ function renderOrderItem(row, idx, displayCols) {
 			target: '_blank',
 			rel: 'noopener noreferrer',
 			className: 'silc-wia-list-item-link',
-		}, 'Order #' + orderId);
+		/* translators: %s: WooCommerce order id. */
+		}, sprintf(__('Order #%s', 'siphon-store-analytics-for-woocommerce'), orderId));
 	} else {
-		titleEl = el('span', null, orderId ? ('Order #' + orderId) : ('Item ' + (idx + 1)));
+		titleEl = el('span', null, orderId
+			/* translators: %s: WooCommerce order id. */
+			? sprintf(__('Order #%s', 'siphon-store-analytics-for-woocommerce'), orderId)
+			/* translators: %d: position of the row in the list. */
+			: sprintf(__('Item %d', 'siphon-store-analytics-for-woocommerce'), idx + 1));
 	}
 
 	var details = [];
@@ -178,7 +185,8 @@ function renderProductItem(row, idx, displayCols, listConfig) {
 	} else {
 		titleCol = findTitleCol(row, displayCols, ['product_name', 'name', 'post_title', 'product']);
 	}
-	var titleText = titleCol ? (row[titleCol] || '') : ('Product ' + (idx + 1));
+	/* translators: %d: position of the row in the list. */
+	var titleText = titleCol ? (row[titleCol] || '') : sprintf(__('Product %d', 'siphon-store-analytics-for-woocommerce'), idx + 1);
 
 	var titleEl;
 	if (productUrl) {
@@ -259,7 +267,8 @@ function renderCustomerItem(row, idx, displayCols) {
 
 	// Use a name-like column as title.
 	var titleCol = findTitleCol(row, displayCols, ['customer_name', 'display_name', 'user_name', 'name', 'user_email', 'email', 'billing_email']);
-	var titleText = titleCol ? (row[titleCol] || '') : ('Customer ' + (idx + 1));
+	/* translators: %d: position of the row in the list. */
+	var titleText = titleCol ? (row[titleCol] || '') : sprintf(__('Customer %d', 'siphon-store-analytics-for-woocommerce'), idx + 1);
 
 	var titleEl;
 	if (userUrl) {
@@ -308,7 +317,8 @@ function renderGenericItem(row, idx, displayCols, listConfig) {
 	} else {
 		titleCol = displayCols.length > 0 ? displayCols[0] : null;
 	}
-	var titleText = titleCol ? (row[titleCol] || '') : ('Item ' + (idx + 1));
+	/* translators: %d: position of the row in the list. */
+	var titleText = titleCol ? (row[titleCol] || '') : sprintf(__('Item %d', 'siphon-store-analytics-for-woocommerce'), idx + 1);
 
 	var details = [];
 	displayCols.forEach(function (col) {
@@ -336,8 +346,8 @@ function renderGenericItem(row, idx, displayCols, listConfig) {
 						target: '_blank',
 						rel: 'noopener noreferrer',
 						className: 'silc-wia-list-link',
-						title: l10n.openInNewTab || 'Open',
-					}, '🔗 ' + linkCol)
+						title: __('Open in new tab', 'siphon-store-analytics-for-woocommerce'),
+					}, '\uD83D\uDD17 ' + linkCol)
 				);
 			}
 		});
@@ -449,7 +459,7 @@ export function renderResult(props) {
 				? el(Spinner, {})
 				: el('span', { className: 'silc-wia-btn-content' },
 					el('span', { className: 'dashicons dashicons-update' }),
-					el('span', { className: 'silc-wia-btn-label' }, l10n.refresh || 'Refresh')
+					el('span', { className: 'silc-wia-btn-label' }, __('Refresh', 'siphon-store-analytics-for-woocommerce'))
 				)
 			)
 		);
@@ -465,7 +475,7 @@ export function renderResult(props) {
 		parts.push(
 			el('div', { className: 'silc-wia-result-answer', key: 'empty' },
 				el('p', { style: { margin: 0, color: '#787c82' } },
-					insightData.empty_message || l10n.noResults || 'No results found.'
+					insightData.empty_message || __('No results found.', 'siphon-store-analytics-for-woocommerce')
 				)
 			)
 		);
@@ -477,8 +487,14 @@ export function renderResult(props) {
 	// Metadata bar.
 	if (insightData.sql) {
 		var metaItems = [];
-		if (insightData.sql_time_ms) metaItems.push('Executed in ' + insightData.sql_time_ms + 'ms');
-		if (typeof insightData.rows_returned !== 'undefined') metaItems.push(insightData.rows_returned + ' row(s)');
+		if (insightData.sql_time_ms) {
+			/* translators: %s: query execution time in milliseconds. */
+			metaItems.push(sprintf(__('Executed in %s ms', 'siphon-store-analytics-for-woocommerce'), insightData.sql_time_ms));
+		}
+		if (typeof insightData.rows_returned !== 'undefined') {
+			/* translators: %s: number of rows returned by the query. */
+			metaItems.push(sprintf(_n('%s row', '%s rows', insightData.rows_returned, 'siphon-store-analytics-for-woocommerce'), insightData.rows_returned));
+		}
 		if (metaItems.length > 0) {
 			parts.push(
 				el('div', { className: 'silc-wia-query-info', key: 'meta' },

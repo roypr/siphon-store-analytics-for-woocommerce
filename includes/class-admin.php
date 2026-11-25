@@ -482,6 +482,12 @@ class SILC_WIA_Admin {
 			true
 		);
 
+		// Point the bundle's wp.i18n calls at this plugin's text domain. No path
+		// argument: WordPress then resolves the JSON translation files from the
+		// text domain registry, which is where GlotPress puts them on a
+		// wordpress.org-hosted install (wp-content/languages/plugins).
+		wp_set_script_translations( 'silc-wia-dashboard', 'siphon-store-analytics-for-woocommerce' );
+
 		require_once SILC_WIA_PATH . 'includes/class-api.php';
 		require_once SILC_WIA_PATH . 'includes/class-ai-service.php';
 		require_once SILC_WIA_PATH . 'includes/class-library.php';
@@ -550,42 +556,8 @@ class SILC_WIA_Admin {
 			// request is retried without it, and the error names the levels that
 			// do work.
 			'reasoningEfforts' => SILC_WIA_API::REASONING_EFFORTS,
-			'l10n' => array(
-				'askQuestion'        => __( 'Ask anything about your WooCommerce store...', 'siphon-store-analytics-for-woocommerce' ),
-				'getInsight'         => __( 'Get AI Insight', 'siphon-store-analytics-for-woocommerce' ),
-				'generatingInsight'  => __( 'Generating insight...', 'siphon-store-analytics-for-woocommerce' ),
-				'enterQuestion'      => __( 'Enter your question in plain English', 'siphon-store-analytics-for-woocommerce' ),
-				'results'            => __( 'Results', 'siphon-store-analytics-for-woocommerce' ),
-				'noResults'          => __( 'No results found.', 'siphon-store-analytics-for-woocommerce' ),
-				'errorOccurred'      => __( 'Something went wrong:', 'siphon-store-analytics-for-woocommerce' ),
-				'apiNotConfigured'   => __( 'API not configured', 'siphon-store-analytics-for-woocommerce' ),
-				'apiReady'           => __( 'AI Ready', 'siphon-store-analytics-for-woocommerce' ),
-				'tryAsking'          => __( 'Try asking:', 'siphon-store-analytics-for-woocommerce' ),
-				'clearHistory'       => __( 'Clear', 'siphon-store-analytics-for-woocommerce' ),
-				'noHistory'          => __( 'No past insights yet.', 'siphon-store-analytics-for-woocommerce' ),
-				'openInNewTab'       => __( 'Open in new tab', 'siphon-store-analytics-for-woocommerce' ),
-				'noInsightHistory'   => __( 'No insight history yet.', 'siphon-store-analytics-for-woocommerce' ),
-				'save'               => __( 'Save Settings', 'siphon-store-analytics-for-woocommerce' ),
-				'saving'             => __( 'Saving...', 'siphon-store-analytics-for-woocommerce' ),
-				'saved'              => __( 'Settings saved!', 'siphon-store-analytics-for-woocommerce' ),
-				'testConnection'     => __( 'Test Connection', 'siphon-store-analytics-for-woocommerce' ),
-				'testing'            => __( 'Testing...', 'siphon-store-analytics-for-woocommerce' ),
-				'connectionOk'       => __( 'Connection successful!', 'siphon-store-analytics-for-woocommerce' ),
-				'connectionFail'     => __( 'Connection failed.', 'siphon-store-analytics-for-woocommerce' ),
-				'settingsApiUrl'     => __( 'API URL', 'siphon-store-analytics-for-woocommerce' ),
-				'settingsApiKey'     => __( 'API Key', 'siphon-store-analytics-for-woocommerce' ),
-				'settingsModel'      => __( 'Model', 'siphon-store-analytics-for-woocommerce' ),
-				'settingsMaxTokens'  => __( 'Max Tokens', 'siphon-store-analytics-for-woocommerce' ),
-				'settingsTemp'       => __( 'Temperature', 'siphon-store-analytics-for-woocommerce' ),
-				'settingsTempMode'   => __( 'Send temperature', 'siphon-store-analytics-for-woocommerce' ),
-				'settingsReasoning'  => __( 'Reasoning effort', 'siphon-store-analytics-for-woocommerce' ),
-				'settingsCache'      => __( 'Cache Duration', 'siphon-store-analytics-for-woocommerce' ),
-				'sqlDetails'         => __( 'SQL & Details', 'siphon-store-analytics-for-woocommerce' ),
-				'history'            => __( 'History', 'siphon-store-analytics-for-woocommerce' ),
-				'library'            => __( 'Library', 'siphon-store-analytics-for-woocommerce' ),
-				'settings'           => __( 'Settings', 'siphon-store-analytics-for-woocommerce' ),
-				'refresh'            => __( 'Refresh', 'siphon-store-analytics-for-woocommerce' ),
-			),
+			// UI strings are not localised here: the bundle translates them with
+			// wp.i18n, and wp_set_script_translations() loads the JSON files.
 		) );
 
 		wp_enqueue_style(

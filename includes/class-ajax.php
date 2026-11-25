@@ -291,7 +291,7 @@ class SILC_WIA_Ajax {
 		$chart_config = null;
 
 		if ( isset( $_POST['chart_config'] ) && is_string( $_POST['chart_config'] ) ) {
-			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- A JSON object cannot be run through a text sanitizer; it is decoded and only used as chart data, which React escapes on render.
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- A JSON object cannot be run through a text sanitizer without corrupting it; it is decoded here and sanitized field-by-field in re_execute_sql().
 			$chart_config = json_decode( wp_unslash( $_POST['chart_config'] ), true );
 		}
 
@@ -304,7 +304,7 @@ class SILC_WIA_Ajax {
 		$list_config = null;
 
 		if ( isset( $_POST['list_config'] ) && is_string( $_POST['list_config'] ) ) {
-			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- A JSON object cannot be run through a text sanitizer; it is decoded and only used as list display data, which React escapes on render.
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- A JSON object cannot be run through a text sanitizer without corrupting it; it is decoded here and sanitized field-by-field in re_execute_sql().
 			$list_config = json_decode( wp_unslash( $_POST['list_config'] ), true );
 		}
 
@@ -312,7 +312,9 @@ class SILC_WIA_Ajax {
 			$insight_data['list_config'] = $list_config;
 		}
 
-		$answer_text = isset( $_POST['answer_text'] ) ? sanitize_text_field( wp_unslash( $_POST['answer_text'] ) ) : '';
+		// Answer text is prose: line breaks are part of the output, so the
+		// textarea sanitizer is the right one here.
+		$answer_text = isset( $_POST['answer_text'] ) ? sanitize_textarea_field( wp_unslash( $_POST['answer_text'] ) ) : '';
 		if ( ! empty( $answer_text ) ) {
 			$insight_data['answer_text'] = $answer_text;
 		}

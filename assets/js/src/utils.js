@@ -4,6 +4,10 @@
  * @package SILC_WooInsight_AI
  */
 
+/* global wp */
+
+var __ = wp.i18n.__;
+
 /**
  * Perform an AJAX action via POST.
  *
@@ -35,7 +39,6 @@ export function doAction(action, extra) {
  * Global data shortcut.
  */
 export var data = window.silcWiaData || {};
-export var l10n = data.l10n || {};
 export var settings = data.settings || {};
 export var defaults = data.defaults || {};
 export var apiConfigured = data.apiConfigured || false;
@@ -67,14 +70,18 @@ export var reasoningEfforts = data.reasoningEfforts || ['none', 'minimal', 'low'
 
 /**
  * Suggested prompts that produce different result types.
+ *
+ * These are translated: the chip sends its text as the question, so a user in a
+ * non-English locale asks in their own language rather than in English. The
+ * generated SQL is validated the same way regardless of the question language.
  */
 export var SUGGESTED_PROMPTS = [
-	{ text: 'Best selling products last month', icon: '\uD83D\uDCCA', type: 'chart' },
-	{ text: 'Monthly revenue trend this year', icon: '\uD83D\uDCC8', type: 'chart' },
-	{ text: 'Order status distribution', icon: '\uD83E\uDDFE', type: 'chart' },
-	{ text: 'Top 10 customers by spending', icon: '\uD83C\uDFC6', type: 'list' },
-	{ text: 'Total revenue yesterday', icon: '\uD83D\uDCB0', type: 'answer' },
-	{ text: 'Products low in stock', icon: '\u26A0\uFE0F', type: 'list' },
+	{ text: __('Best selling products last month', 'siphon-store-analytics-for-woocommerce'), icon: '\uD83D\uDCCA', type: 'chart' },
+	{ text: __('Monthly revenue trend this year', 'siphon-store-analytics-for-woocommerce'), icon: '\uD83D\uDCC8', type: 'chart' },
+	{ text: __('Order status distribution', 'siphon-store-analytics-for-woocommerce'), icon: '\uD83E\uDDFE', type: 'chart' },
+	{ text: __('Top 10 customers by spending', 'siphon-store-analytics-for-woocommerce'), icon: '\uD83C\uDFC6', type: 'list' },
+	{ text: __('Total revenue yesterday', 'siphon-store-analytics-for-woocommerce'), icon: '\uD83D\uDCB0', type: 'answer' },
+	{ text: __('Products low in stock', 'siphon-store-analytics-for-woocommerce'), icon: '\u26A0\uFE0F', type: 'list' },
 ];
 
 /**
@@ -85,14 +92,36 @@ export var SUGGESTED_PROMPTS = [
 export var LIBRARY_ITEMS = data.libraryItems || [];
 
 /**
+ * Human-readable label for a result type returned by the server.
+ *
+ * @param {string} type Result type ('chart', 'list', 'answer').
+ * @return {string} Translated label, or the raw value when unknown.
+ */
+export function getTypeLabel(type) {
+	if (type === 'chart') {
+		return __('Chart', 'siphon-store-analytics-for-woocommerce');
+	}
+	if (type === 'list') {
+		return __('List', 'siphon-store-analytics-for-woocommerce');
+	}
+	if (type === 'answer') {
+		return __('Answer', 'siphon-store-analytics-for-woocommerce');
+	}
+	return type || __('Unknown', 'siphon-store-analytics-for-woocommerce');
+}
+
+/**
  * Map of error codes to user-friendly messages.
+ *
+ * The server already returns a translated message for most errors, so these are
+ * only the fallback text for a code that arrives without one.
  */
 export var ERROR_MESSAGES = {
-	FORBIDDEN: 'This action is not allowed. I can only answer questions about your store data \u2014 I cannot modify or delete anything.',
-	OUT_OF_SCOPE: 'I can only help with WooCommerce store questions. Try asking about sales, products, orders, or customers.',
-	NOT_WOOCOMMERCE: 'I only work with WooCommerce store data. That request involves non-store content I cannot access.',
-	SQL_VALIDATION: 'The generated query could not be validated for safety.',
-	QUERY_ERROR: 'The query ran into a database error. Please try rephrasing your question.',
+	FORBIDDEN: __('This action is not allowed. I can only answer questions about your store data \u2014 I cannot modify or delete anything.', 'siphon-store-analytics-for-woocommerce'),
+	OUT_OF_SCOPE: __('I can only help with WooCommerce store questions. Try asking about sales, products, orders, or customers.', 'siphon-store-analytics-for-woocommerce'),
+	NOT_WOOCOMMERCE: __('I only work with WooCommerce store data. That request involves non-store content I cannot access.', 'siphon-store-analytics-for-woocommerce'),
+	SQL_VALIDATION: __('The generated query could not be validated for safety.', 'siphon-store-analytics-for-woocommerce'),
+	QUERY_ERROR: __('The query ran into a database error. Please try rephrasing your question.', 'siphon-store-analytics-for-woocommerce'),
 };
 
 /**
@@ -106,5 +135,5 @@ export function getErrorMessage(errorCode, fallback) {
 	if (errorCode && ERROR_MESSAGES[errorCode]) {
 		return ERROR_MESSAGES[errorCode];
 	}
-	return fallback || 'Something went wrong.';
+	return fallback || __('Something went wrong.', 'siphon-store-analytics-for-woocommerce');
 }

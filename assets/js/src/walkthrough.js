@@ -14,32 +14,35 @@ var useState = wp.element.useState;
 var useEffect = wp.element.useEffect;
 var useCallback = wp.element.useCallback;
 
+var __ = wp.i18n.__;
+var sprintf = wp.i18n.sprintf;
+
 var Button = wp.components.Button;
 
 var STORAGE_KEY = 'silc_wia_walkthrough_done';
 var STEPS = [
 	{
 		target: 'silc-wia-chat-input-row',
-		title: 'Ask a Question',
-		body: 'Type a question about your WooCommerce store in plain English. For example: "Best selling products this month" or "Total revenue yesterday."',
+		title: __('Ask a Question', 'siphon-store-analytics-for-woocommerce'),
+		body: __('Type a question about your WooCommerce store in plain English. For example: "Best selling products this month" or "Total revenue yesterday."', 'siphon-store-analytics-for-woocommerce'),
 		placement: 'top',
 	},
 	{
 		target: 'silc-wia-prompts',
-		title: 'Try a Suggestion',
-		body: 'Click any of these chips to quickly run a pre-built insight. Great way to see what the plugin can do!',
+		title: __('Try a Suggestion', 'siphon-store-analytics-for-woocommerce'),
+		body: __('Click any of these chips to quickly run a pre-built insight. Great way to see what the plugin can do!', 'siphon-store-analytics-for-woocommerce'),
 		placement: 'bottom',
 	},
 	{
 		target: 'silc-wia-sidebar',
-		title: 'Sidebar Panels',
-		body: 'Access your insight history, pre-built library, SQL details, and settings from the sidebar.',
+		title: __('Sidebar Panels', 'siphon-store-analytics-for-woocommerce'),
+		body: __('Access your insight history, pre-built library, SQL details, and settings from the sidebar.', 'siphon-store-analytics-for-woocommerce'),
 		placement: 'right',
 	},
 	{
 		target: 'silc-wia-topbar-status',
-		title: 'Ready to Go!',
-		body: "You're all set. Ask anything about your WooCommerce data. Charts, lists, and answers \u2014 all from plain English.",
+		title: __('Ready to Go!', 'siphon-store-analytics-for-woocommerce'),
+		body: __('You\'re all set. Ask anything about your WooCommerce data. Charts, lists, and answers \u2014 all from plain English.', 'siphon-store-analytics-for-woocommerce'),
 		placement: 'bottom',
 	},
 ];
@@ -83,7 +86,8 @@ export function WalkthroughOverlay(props) {
 			onClick: function (e) { e.stopPropagation(); },
 		},
 			el('div', { className: 'silc-wia-walkthrough-step' },
-				'Step ' + (currentStep + 1) + ' of ' + STEPS.length
+				/* translators: 1: current step number, 2: total number of steps. */
+				sprintf(__('Step %1$d of %2$d', 'siphon-store-analytics-for-woocommerce'), currentStep + 1, STEPS.length)
 			),
 			el('h3', { className: 'silc-wia-walkthrough-title' }, step.title),
 			el('p', { className: 'silc-wia-walkthrough-body' }, step.body),
@@ -91,7 +95,7 @@ export function WalkthroughOverlay(props) {
 				el(Button, {
 					isLink: true,
 					onClick: handleDismiss,
-				}, 'Dismiss'),
+				}, __('Dismiss', 'siphon-store-analytics-for-woocommerce')),
 				el('div', { className: 'silc-wia-walkthrough-dots' },
 					STEPS.map(function (_, i) {
 						return el('span', {
@@ -103,7 +107,9 @@ export function WalkthroughOverlay(props) {
 				el(Button, {
 					isPrimary: true,
 					onClick: handleNext,
-				}, isLast ? 'Get Started' : 'Next')
+				}, isLast
+					? __('Get Started', 'siphon-store-analytics-for-woocommerce')
+					: __('Next', 'siphon-store-analytics-for-woocommerce'))
 			)
 		)
 	);

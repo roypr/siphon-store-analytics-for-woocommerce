@@ -6,9 +6,8 @@
 
 /* global wp */
 
-import { l10n } from './utils.js';
-
 var el = wp.element.createElement;
+var __ = wp.i18n.__;
 
 /**
  * A single sidebar icon item.
@@ -71,14 +70,14 @@ export function renderSidebar(props) {
 		{
 			key: 'new-chat',
 			icon: 'plus',
-			label: l10n.newChat || 'New Chat',
+			label: __('New Chat', 'siphon-store-analytics-for-woocommerce'),
 			onClick: props.onNewChat,
 			disabled: props.newChatDisabled,
 		},
-		{ key: 'history', icon: 'backup', label: l10n.history || 'History', panel: 'history' },
-		{ key: 'library', icon: 'book-alt', label: l10n.library || 'Library', panel: 'library' },
-		{ key: 'suggested', icon: 'lightbulb', label: l10n.suggested || 'Suggested', panel: 'suggested' },
-		{ key: 'sql', icon: 'editor-code', label: l10n.sqlDetails || 'SQL', panel: 'sql' },
+		{ key: 'history', icon: 'backup', label: __('History', 'siphon-store-analytics-for-woocommerce'), panel: 'history' },
+		{ key: 'library', icon: 'book-alt', label: __('Library', 'siphon-store-analytics-for-woocommerce'), panel: 'library' },
+		{ key: 'suggested', icon: 'lightbulb', label: __('Suggested', 'siphon-store-analytics-for-woocommerce'), panel: 'suggested' },
+		{ key: 'sql', icon: 'editor-code', label: __('SQL', 'siphon-store-analytics-for-woocommerce'), panel: 'sql' },
 	];
 
 	return el('div', {
@@ -88,7 +87,9 @@ export function renderSidebar(props) {
 		el('div', {
 			className: 'silc-wia-sidebar-toggle',
 			onClick: toggleSidebar,
-			title: sidebarExpanded ? 'Collapse sidebar' : 'Expand sidebar',
+			title: sidebarExpanded
+				? __('Collapse sidebar', 'siphon-store-analytics-for-woocommerce')
+				: __('Expand sidebar', 'siphon-store-analytics-for-woocommerce'),
 		},
 			el('span', { className: 'dashicons dashicons-menu' })
 		),
@@ -110,7 +111,7 @@ export function renderSidebar(props) {
 		// Settings at bottom.
 		el(SidebarItem, {
 			icon: 'admin-generic',
-			label: l10n.settings || 'Settings',
+			label: __('Settings', 'siphon-store-analytics-for-woocommerce'),
 			panel: 'settings',
 			activePanel: props.activePanel,
 			openPanel: props.openPanel,

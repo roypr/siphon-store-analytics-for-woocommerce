@@ -6,10 +6,12 @@
 
 /* global wp */
 
-import { l10n, defaults, data, coreAiAvailable, coreAiSupported, connectorsUrl, reasoningEfforts } from './utils.js';
+import { defaults, data, coreAiAvailable, coreAiSupported, connectorsUrl, reasoningEfforts } from './utils.js';
 
 var el = wp.element.createElement;
 var Button = wp.components.Button;
+var __ = wp.i18n.__;
+var sprintf = wp.i18n.sprintf;
 
 // Named providers. Picking one auto-fills the endpoint so the user only has to
 // paste a key; "Custom" reveals the URL field for any other OpenAI-compatible
@@ -22,6 +24,9 @@ var Button = wp.components.Button;
 //
 // Claude is detected from its URL server-side (SILC_WIA_Provider_Adapter) and
 // routed to Anthropic's native Messages API, so no extra setting is needed.
+//
+// The labels here are provider names, which are trademarks and stay untranslated
+// ("Custom" is the only generic word and is translated at render time).
 var FALLBACK_PROVIDERS = {
 	openai: {
 		label: 'OpenAI',
@@ -196,7 +201,7 @@ function NumberField(np) {
 			className: 'silc-wia-number-btn silc-wia-number-minus',
 			onClick: dec,
 			disabled: (parseFloat(np.value) || 0) <= np.min,
-			'aria-label': 'Decrease',
+			'aria-label': __('Decrease', 'siphon-store-analytics-for-woocommerce'),
 		}, '\u2212'),
 		el('input', {
 			type: 'number',
@@ -210,7 +215,7 @@ function NumberField(np) {
 			className: 'silc-wia-number-btn silc-wia-number-plus',
 			onClick: inc,
 			disabled: (parseFloat(np.value) || 0) >= np.max,
-			'aria-label': 'Increase',
+			'aria-label': __('Increase', 'siphon-store-analytics-for-woocommerce'),
 		}, '+')
 	);
 }
@@ -272,11 +277,11 @@ export function renderSettingsPanel(props) {
 	var keyHelp;
 
 	if (!!data.hasApiKey && !keyApplies) {
-		keyHelp = 'A key is saved for a different API URL. Enter a key for the selected provider \u2014 saving removes the old one.';
+		keyHelp = __('A key is saved for a different API URL. Enter a key for the selected provider \u2014 saving removes the old one.', 'siphon-store-analytics-for-woocommerce');
 	} else if (hasKey && !formSettings.api_key) {
-		keyHelp = 'A key is already saved. Type a new one to replace it, or leave blank to keep the current key.';
+		keyHelp = __('A key is already saved. Type a new one to replace it, or leave blank to keep the current key.', 'siphon-store-analytics-for-woocommerce');
 	} else {
-		keyHelp = 'Paste your API key here. Need one? Sign up at your AI provider and create a key from their dashboard.';
+		keyHelp = __('Paste your API key here. Need one? Sign up at your AI provider and create a key from their dashboard.', 'siphon-store-analytics-for-woocommerce');
 	}
 
 	// Which backend will actually run. "Automatic" follows what the site can
@@ -291,14 +296,14 @@ export function renderSettingsPanel(props) {
 	var backendOptions = [
 		el('option', { key: 'auto', value: '' },
 			coreAiAvailable
-				? 'Automatic \u2014 use the WordPress AI Client'
-				: 'Automatic \u2014 use your own API key (WordPress AI Client needs WordPress 7.0+)'
+				? __('Automatic \u2014 use the WordPress AI Client', 'siphon-store-analytics-for-woocommerce')
+				: __('Automatic \u2014 use your own API key (WordPress AI Client needs WordPress 7.0+)', 'siphon-store-analytics-for-woocommerce')
 		),
 	];
 	if (coreAiAvailable) {
-		backendOptions.push(el('option', { key: 'core', value: 'core' }, 'WordPress AI Client'));
+		backendOptions.push(el('option', { key: 'core', value: 'core' }, __('WordPress AI Client', 'siphon-store-analytics-for-woocommerce')));
 	}
-	backendOptions.push(el('option', { key: 'byok', value: 'byok' }, 'Your own API key'));
+	backendOptions.push(el('option', { key: 'byok', value: 'byok' }, __('Your own API key', 'siphon-store-analytics-for-woocommerce')));
 
 	// Explains what the chosen Temperature behaviour does for this backend.
 	// "Automatic" is the only option whose result depends on the backend, so
@@ -308,28 +313,29 @@ export function renderSettingsPanel(props) {
 
 	if (tempMode === 'always') {
 		tempModeHelp = usesCore
-			? 'The temperature above is always sent. Only useful for a model you know accepts it: current OpenAI reasoning models reject any value, so a rejected request is retried once without it (Test Connection tells you when that happened).'
-			: 'The temperature above is always sent, even for models the plugin does not recognise. If the provider rejects it, the request is retried once without it.';
+			? __('The temperature above is always sent. Only useful for a model you know accepts it: current OpenAI reasoning models reject any value, so a rejected request is retried once without it (Test Connection tells you when that happened).', 'siphon-store-analytics-for-woocommerce')
+			: __('The temperature above is always sent, even for models the plugin does not recognise. If the provider rejects it, the request is retried once without it.', 'siphon-store-analytics-for-woocommerce');
 	} else if (tempMode === 'never') {
-		tempModeHelp = 'No temperature is ever sent and the provider\u2019s own default is used. The safe choice for reasoning models and for providers that do not document support.';
+		tempModeHelp = __('No temperature is ever sent and the provider\u2019s own default is used. The safe choice for reasoning models and for providers that do not document support.', 'siphon-store-analytics-for-woocommerce');
 	} else {
 		tempModeHelp = usesCore
-			? 'Not sent through the WordPress AI Client: requesting a temperature removes every model that does not advertise support for it, which includes all current reasoning models. Choose "Always" only for a model known to accept it.'
-			: 'Sent only to models known to accept it. Reasoning models (o-series, GPT-5/6, DeepSeek, Claude thinking) get the provider default instead.';
+			? __('Not sent through the WordPress AI Client: requesting a temperature removes every model that does not advertise support for it, which includes all current reasoning models. Choose "Always" only for a model known to accept it.', 'siphon-store-analytics-for-woocommerce')
+			: __('Sent only to models known to accept it. Reasoning models (o-series, GPT-5/6, DeepSeek, Claude thinking) get the provider default instead.', 'siphon-store-analytics-for-woocommerce');
 	}
 
 	var backendHelp;
 	if (!usesCore) {
-		backendHelp = 'Sends requests straight to the provider configured below. Required before WordPress 7.0, for self-hosted endpoints such as Ollama or vLLM, and when AI is disabled with WP_AI_SUPPORT.';
+		backendHelp = __('Sends requests straight to the provider configured below. Required before WordPress 7.0, for self-hosted endpoints such as Ollama or vLLM, and when AI is disabled with WP_AI_SUPPORT.', 'siphon-store-analytics-for-woocommerce');
 	} else if (coreAiSupported) {
-		backendHelp = 'WordPress routes each request to the provider connected under Settings \u2192 Connectors. This plugin stores no API key of its own on this path.';
+		backendHelp = __('WordPress routes each request to the provider connected under Settings \u2192 Connectors. This plugin stores no API key of its own on this path.', 'siphon-store-analytics-for-woocommerce');
 	} else {
+		// Inline link: the sentence is split so the anchor stays a separate node.
 		backendHelp = [
-			'No AI provider is connected yet. Add one under Settings \u2192 Connectors',
+			__('No AI provider is connected yet. Add one under Settings \u2192 Connectors', 'siphon-store-analytics-for-woocommerce'),
 			connectorsUrl
-				? el('a', { key: 'connectors', href: connectorsUrl }, ' (open Connectors)')
+				? el('a', { key: 'connectors', href: connectorsUrl }, __(' (open Connectors)', 'siphon-store-analytics-for-woocommerce'))
 				: null,
-			' \u2014 until then, asking a question returns an error. Or switch to your own API key below.',
+			__(' \u2014 until then, asking a question returns an error. Or switch to your own API key below.', 'siphon-store-analytics-for-woocommerce'),
 		];
 	}
 
@@ -340,15 +346,16 @@ export function renderSettingsPanel(props) {
 		// ---------------------------------------------------------------
 		el('div', { className: 'silc-wia-settings-section' },
 			el('div', { className: 'silc-wia-settings-section-title' },
-				'\uD83E\uDD16 AI Provider'
+				'\uD83E\uDD16 ',
+				__('AI Provider', 'siphon-store-analytics-for-woocommerce')
 			),
 			el('div', { className: 'silc-wia-settings-section-desc' },
-				'Choose which AI service powers your insights. OpenAI-compatible providers and Claude (Anthropic) are supported.'
+				__('Choose which AI service powers your insights. OpenAI-compatible providers and Claude (Anthropic) are supported.', 'siphon-store-analytics-for-woocommerce')
 			),
 
 			// Backend: WordPress AI Client vs. a key saved in this plugin.
 			el(SettingsField, {
-				label: 'Backend',
+				label: __('Backend', 'siphon-store-analytics-for-woocommerce'),
 				help: backendHelp,
 			},
 				el('select', {
@@ -359,26 +366,31 @@ export function renderSettingsPanel(props) {
 
 			// Provider
 			usesCore ? null : el(SettingsField, {
-				label: 'Provider',
-				help: 'Pick a provider to fill in its API URL and default model, or choose Custom to enter any other endpoint.',
+				label: __('Provider', 'siphon-store-analytics-for-woocommerce'),
+				help: __('Pick a provider to fill in its API URL and default model, or choose Custom to enter any other endpoint.', 'siphon-store-analytics-for-woocommerce'),
 			},
 				el('select', {
 					value: providerSlug,
 					onChange: function (e) { handleProviderChange(updateSetting, formSettings, e); },
 				},
 					Object.keys(PROVIDERS).map(function (slug) {
-						return el('option', { key: slug, value: slug }, PROVIDERS[slug].label);
+						// Provider names are trademarks; only "Custom" is translated.
+						return el('option', { key: slug, value: slug },
+							slug === 'custom'
+								? __('Custom', 'siphon-store-analytics-for-woocommerce')
+								: PROVIDERS[slug].label
+						);
 					})
 				)
 			),
 
 			// API URL
 			usesCore ? null : el(SettingsField, {
-				label: l10n.settingsApiUrl || 'API URL',
+				label: __('API URL', 'siphon-store-analytics-for-woocommerce'),
 				help: (providerDef.url
-					? 'Filled in from the provider you selected. Edit it only if you use a proxy or gateway.'
-					: 'The address of your AI provider\u2019s API, for example http://localhost:11434/v1 for Ollama.')
-					+ ' HTTPS is required unless the endpoint is on this machine or your local network.',
+					? __('Filled in from the provider you selected. Edit it only if you use a proxy or gateway.', 'siphon-store-analytics-for-woocommerce')
+					: __('The address of your AI provider\u2019s API, for example http://localhost:11434/v1 for Ollama.', 'siphon-store-analytics-for-woocommerce'))
+					+ ' ' + __('HTTPS is required unless the endpoint is on this machine or your local network.', 'siphon-store-analytics-for-woocommerce'),
 			},
 				el('input', {
 					type: 'url',
@@ -391,16 +403,21 @@ export function renderSettingsPanel(props) {
 			// Model. On both backends this is a preference, never a hard
 			// requirement, so it can be left empty without breaking a request.
 			el(SettingsField, {
-				label: l10n.settingsModel || 'Model',
+				label: __('Model', 'siphon-store-analytics-for-woocommerce'),
 				help: usesCore
-					? 'Preferred model id. WordPress uses it when the provider connected under Settings → Connectors offers that model, and otherwise picks one itself — so a wrong id never breaks a request. Leave it empty to always let WordPress choose.'
-					: 'The model id exactly as your provider lists it.'
-						+ (providerDef.model ? ' The default for ' + providerDef.label + ' is ' + providerDef.model + '.' : ''),
+					? __('Preferred model id. WordPress uses it when the provider connected under Settings \u2192 Connectors offers that model, and otherwise picks one itself \u2014 so a wrong id never breaks a request. Leave it empty to always let WordPress choose.', 'siphon-store-analytics-for-woocommerce')
+					: __('The model id exactly as your provider lists it.', 'siphon-store-analytics-for-woocommerce')
+						+ (providerDef.model
+							? ' ' + (
+								/* translators: 1: provider (brand) name, 2: default model id. */
+								sprintf(__('The default for %1$s is %2$s.', 'siphon-store-analytics-for-woocommerce'), providerDef.label, providerDef.model)
+							)
+							: ''),
 			},
 				el('input', {
 					type: 'text',
 					value: formSettings.model,
-					placeholder: usesCore ? 'Leave empty to let WordPress choose' : providerDef.model,
+					placeholder: usesCore ? __('Leave empty to let WordPress choose', 'siphon-store-analytics-for-woocommerce') : providerDef.model,
 					onChange: function (e) { updateSetting('model', e.target.value); },
 				})
 			),
@@ -411,26 +428,29 @@ export function renderSettingsPanel(props) {
 		// ---------------------------------------------------------------
 		usesCore ? null : el('div', { className: 'silc-wia-settings-section' },
 			el('div', { className: 'silc-wia-settings-section-title' },
-				'\uDDD1\uFE0F\u200D\uD83D\uDD12 Authentication'
+				'\uDDD1\uFE0F\u200D\uD83D\uDD12 ',
+				__('Authentication', 'siphon-store-analytics-for-woocommerce')
 			),
 			el('div', { className: 'silc-wia-settings-section-desc' },
-				'Your API key is stored securely in your WordPress database and is only sent to the API URL above. This plugin makes no other external requests.'
+				__('Your API key is stored securely in your WordPress database and is only sent to the API URL above. This plugin makes no other external requests.', 'siphon-store-analytics-for-woocommerce')
 			),
 
 			// API Key
 			el(SettingsField, {
-				label: l10n.settingsApiKey || 'API Key',
+				label: __('API Key', 'siphon-store-analytics-for-woocommerce'),
 				help: keyHelp,
 			},
 				el('input', {
 					type: 'password',
 					value: formSettings.api_key,
-					placeholder: hasKey ? 'API key is saved \u2014 enter new one to replace' : (providerDef.keyPlaceholder || 'sk-...'),
+					placeholder: hasKey
+						? __('API key is saved \u2014 enter new one to replace', 'siphon-store-analytics-for-woocommerce')
+						: (providerDef.keyPlaceholder || 'sk-...'),
 					onChange: function (e) { updateSetting('api_key', e.target.value); },
 					autoComplete: 'off',
 				}),
 				hasKey && !formSettings.api_key
-					? el('div', { className: 'has-key-indicator' }, '\u2713 API key is saved and active.')
+					? el('div', { className: 'has-key-indicator' }, '\u2713 ', __('API key is saved and active.', 'siphon-store-analytics-for-woocommerce'))
 					: null,
 				// Link to get a key
 				el('div', { className: 'silc-wia-settings-key-links' },
@@ -438,19 +458,19 @@ export function renderSettingsPanel(props) {
 						href: 'https://platform.openai.com/api-keys',
 						target: '_blank',
 						rel: 'noopener noreferrer',
-					}, 'Get an OpenAI API key \u2197'),
+					}, __('Get an OpenAI API key \u2197', 'siphon-store-analytics-for-woocommerce')),
 					' \u00B7 ',
 					el('a', {
 						href: 'https://docs.anthropic.com/en/docs/api-keys',
 						target: '_blank',
 						rel: 'noopener noreferrer',
-					}, 'Anthropic \u2197'),
+					}, __('Anthropic \u2197', 'siphon-store-analytics-for-woocommerce')),
 					' \u00B7 ',
 					el('a', {
 						href: 'https://platform.deepseek.com/api_keys',
 						target: '_blank',
 						rel: 'noopener noreferrer',
-					}, 'DeepSeek \u2197'),
+					}, __('DeepSeek \u2197', 'siphon-store-analytics-for-woocommerce')),
 				)
 			),
 		),
@@ -460,14 +480,15 @@ export function renderSettingsPanel(props) {
 		// ---------------------------------------------------------------
 		el('div', { className: 'silc-wia-settings-section' },
 			el('div', { className: 'silc-wia-settings-section-title' },
-				'\u2699\uFE0F Advanced'
+				'\u2699\uFE0F ',
+				__('Advanced', 'siphon-store-analytics-for-woocommerce')
 			),
 
 			// Max Tokens
 			el(SettingsField, {
-				label: l10n.settingsMaxTokens || 'Max Tokens',
-				help: 'Maximum length of the AI\u2019s response, in tokens. Higher values allow longer answers and chart descriptions. The minimum is 800 so the JSON reply is not cut off mid-object.'
-					+ (usesCore ? ' With the WordPress AI Client at least 2000 tokens are requested, as far as the connected provider allows.' : ''),
+				label: __('Max Tokens', 'siphon-store-analytics-for-woocommerce'),
+				help: __('Maximum length of the AI\u2019s response, in tokens. Higher values allow longer answers and chart descriptions. The minimum is 800 so the JSON reply is not cut off mid-object.', 'siphon-store-analytics-for-woocommerce')
+					+ (usesCore ? ' ' + __('With the WordPress AI Client at least 2000 tokens are requested, as far as the connected provider allows.', 'siphon-store-analytics-for-woocommerce') : ''),
 			},
 				el(NumberField, {
 					value: formSettings.max_tokens,
@@ -479,8 +500,8 @@ export function renderSettingsPanel(props) {
 
 			// Temperature
 			el(SettingsField, {
-				label: l10n.settingsTemp || 'Temperature',
-				help: 'Controls how creative the AI is. Lower values (0.1\u20130.3) produce more consistent SQL. Higher values (0.7+) can be more creative but less reliable. Only used when a temperature is sent (see below).',
+				label: __('Temperature', 'siphon-store-analytics-for-woocommerce'),
+				help: __('Controls how creative the AI is. Lower values (0.1\u20130.3) produce more consistent SQL. Higher values (0.7+) can be more creative but less reliable. Only used when a temperature is sent (see below).', 'siphon-store-analytics-for-woocommerce'),
 			},
 				el(NumberField, {
 					value: formSettings.temperature,
@@ -494,16 +515,16 @@ export function renderSettingsPanel(props) {
 			// models reject any value, so this is a choice rather than a
 			// capability map the plugin has to keep up to date.
 			el(SettingsField, {
-				label: l10n.settingsTempMode || 'Send temperature',
+				label: __('Send temperature', 'siphon-store-analytics-for-woocommerce'),
 				help: tempModeHelp,
 			},
 				el('select', {
 					value: formSettings.temperature_mode || 'auto',
 					onChange: function (e) { updateSetting('temperature_mode', e.target.value); },
 				},
-					el('option', { key: 'auto', value: 'auto' }, 'Automatic (recommended)'),
-					el('option', { key: 'always', value: 'always' }, 'Always'),
-					el('option', { key: 'never', value: 'never' }, 'Never')
+					el('option', { key: 'auto', value: 'auto' }, __('Automatic (recommended)', 'siphon-store-analytics-for-woocommerce')),
+					el('option', { key: 'always', value: 'always' }, __('Always', 'siphon-store-analytics-for-woocommerce')),
+					el('option', { key: 'never', value: 'never' }, __('Never', 'siphon-store-analytics-for-woocommerce'))
 				)
 			),
 
@@ -511,15 +532,16 @@ export function renderSettingsPanel(props) {
 			// an unsupported level is reported by the provider and the request
 			// is retried without it.
 			el(SettingsField, {
-				label: l10n.settingsReasoning || 'Reasoning effort',
-				help: 'How much the model should think before answering. "Provider default" sends nothing at all, which always works. A level your model does not offer returns an error naming the levels it does support \u2014 the plugin then retries without it, and you can pick a supported level here or leave the default.',
+				label: __('Reasoning effort', 'siphon-store-analytics-for-woocommerce'),
+				help: __('How much the model should think before answering. "Provider default" sends nothing at all, which always works. A level your model does not offer returns an error naming the levels it does support \u2014 the plugin then retries without it, and you can pick a supported level here or leave the default.', 'siphon-store-analytics-for-woocommerce'),
 			},
 				el('select', {
 					value: formSettings.reasoning_effort || '',
 					onChange: function (e) { updateSetting('reasoning_effort', e.target.value); },
 				},
-					el('option', { key: 'default', value: '' }, 'Provider default (do not send)'),
+					el('option', { key: 'default', value: '' }, __('Provider default (do not send)', 'siphon-store-analytics-for-woocommerce')),
 					reasoningEfforts.map(function (effort) {
+						// Level ids are API values, shown capitalised as-is.
 						return el('option', { key: effort, value: effort }, effort.charAt(0).toUpperCase() + effort.slice(1));
 					})
 				)
@@ -531,16 +553,17 @@ export function renderSettingsPanel(props) {
 		// ---------------------------------------------------------------
 		el('div', { className: 'silc-wia-settings-section' },
 			el('div', { className: 'silc-wia-settings-section-title' },
-				'\uD83D\uDCBE Caching'
+				'\uD83D\uDCBE ',
+				__('Caching', 'siphon-store-analytics-for-woocommerce')
 			),
 			el('div', { className: 'silc-wia-settings-section-desc' },
-				'Results are cached so asking the same question again loads instantly. Set the duration below, or set to 0 to disable caching.'
+				__('Results are cached so asking the same question again loads instantly. Set the duration below, or set to 0 to disable caching.', 'siphon-store-analytics-for-woocommerce')
 			),
 
 			// Cache Duration
 			el(SettingsField, {
-				label: l10n.settingsCache || 'Cache Duration',
-				help: 'How long to remember results for the same question. Recommended: 1\u20136 hours. Set to 0 to disable caching entirely.',
+				label: __('Cache Duration', 'siphon-store-analytics-for-woocommerce'),
+				help: __('How long to remember results for the same question. Recommended: 1\u20136 hours. Set to 0 to disable caching entirely.', 'siphon-store-analytics-for-woocommerce'),
 			},
 				el('div', { className: 'silc-wia-cache-row' },
 					el(NumberField, {
@@ -553,16 +576,16 @@ export function renderSettingsPanel(props) {
 							updateSetting('cache_ttl', Math.max(0, Math.min(10080, minutes)) * 60);
 						},
 					}),
-					el('span', { className: 'silc-wia-cache-unit' }, 'minutes'),
+					el('span', { className: 'silc-wia-cache-unit' }, __('minutes', 'siphon-store-analytics-for-woocommerce')),
 				),
 				// Quick presets
 				el('div', { className: 'silc-wia-cache-presets' },
-					el('span', { className: 'label' }, 'Quick:'),
-					el('span', { className: 'preset', onClick: function () { updateSetting('cache_ttl', 0); } }, 'Off'),
-					el('span', { className: 'preset', onClick: function () { updateSetting('cache_ttl', 30 * 60); } }, '30 min'),
-					el('span', { className: 'preset', onClick: function () { updateSetting('cache_ttl', 3600); } }, '1 hour'),
-					el('span', { className: 'preset', onClick: function () { updateSetting('cache_ttl', 6 * 3600); } }, '6 hours'),
-					el('span', { className: 'preset', onClick: function () { updateSetting('cache_ttl', 86400); } }, '24 hours'),
+					el('span', { className: 'label' }, __('Quick:', 'siphon-store-analytics-for-woocommerce')),
+					el('span', { className: 'preset', onClick: function () { updateSetting('cache_ttl', 0); } }, __('Off', 'siphon-store-analytics-for-woocommerce')),
+					el('span', { className: 'preset', onClick: function () { updateSetting('cache_ttl', 30 * 60); } }, __('30 min', 'siphon-store-analytics-for-woocommerce')),
+					el('span', { className: 'preset', onClick: function () { updateSetting('cache_ttl', 3600); } }, __('1 hour', 'siphon-store-analytics-for-woocommerce')),
+					el('span', { className: 'preset', onClick: function () { updateSetting('cache_ttl', 6 * 3600); } }, __('6 hours', 'siphon-store-analytics-for-woocommerce')),
+					el('span', { className: 'preset', onClick: function () { updateSetting('cache_ttl', 86400); } }, __('24 hours', 'siphon-store-analytics-for-woocommerce')),
 				)
 			),
 		),
@@ -573,24 +596,28 @@ export function renderSettingsPanel(props) {
 				isPrimary: true,
 				onClick: handleSaveSettings,
 				disabled: saving || !settingsDirty,
-			}, saving ? (l10n.saving || 'Saving...') : (l10n.save || 'Save Settings')),
+			}, saving
+				? __('Saving\u2026', 'siphon-store-analytics-for-woocommerce')
+				: __('Save Settings', 'siphon-store-analytics-for-woocommerce')),
 			el(Button, {
 				isSecondary: true,
 				onClick: handleTestConnection,
 				disabled: testing || connectionDirty,
 				title: connectionDirty
-					? 'Save your changes first \u2014 the connection test uses the saved settings.'
+					? __('Save your changes first \u2014 the connection test uses the saved settings.', 'siphon-store-analytics-for-woocommerce')
 					: undefined,
-			}, testing ? (l10n.testing || 'Testing...') : (l10n.testConnection || 'Test Connection')),
+			}, testing
+				? __('Testing\u2026', 'siphon-store-analytics-for-woocommerce')
+				: __('Test Connection', 'siphon-store-analytics-for-woocommerce')),
 			connectionDirty
 				? el('span', { className: 'silc-wia-test-hint' },
-					'Save your changes to test this configuration.')
+					__('Save your changes to test this configuration.', 'siphon-store-analytics-for-woocommerce'))
 				: null,
 			testResult
 				? el('span', {
 					className: 'silc-wia-test-result ' + (testResult.type === 'success' ? 'success' : 'fail'),
 					key: testResult.text,
-				}, (testResult.type === 'success' ? '✓ ' : '✗ ') + testResult.text)
+				}, (testResult.type === 'success' ? '\u2713 ' : '\u2717 ') + testResult.text)
 				: null,
 		),
 
